@@ -1,0 +1,76 @@
+{
+  "platform": {
+    "name": "test-fixture",
+    "release": "0.0.1"
+  },
+  "profiles": [
+    {
+      "name": "cis-postgresql",
+      "title": "CIS PostgreSQL Profile (mixed-status fixture)",
+      "version": "0.0.1",
+      "controls": [
+        {
+          "id": "fixture-implemented",
+          "title": "Implemented control",
+          "desc": "Real automated check passed.",
+          "tags": {
+            "nist": ["ac-3"],
+            "implementation_status": "implemented"
+          },
+          "results": [{"status": "passed"}]
+        },
+        {
+          "id": "fixture-alternative",
+          "title": "Alternative-implementation control",
+          "desc": "Satisfied via attestation, not technical control.",
+          "tags": {
+            "nist": ["pe-3"],
+            "implementation_status": "alternative"
+          },
+          "results": [{"status": "skipped"}]
+        },
+        {
+          "id": "fixture-not-applicable",
+          "title": "Not-applicable control",
+          "desc": "Architectural mismatch — does not apply.",
+          "tags": {
+            "nist": ["sc-13"],
+            "implementation_status": "not-applicable"
+          },
+          "results": [{"status": "not_applicable"}]
+        },
+        {
+          "id": "fixture-planned",
+          "title": "Planned control (pending)",
+          "desc": "Pending DB connection; not yet checked.",
+          "tags": {
+            "nist": ["ia-5"],
+            "implementation_status": "planned"
+          },
+          "results": [{"status": "skipped"}]
+        },
+        {
+          "id": "fixture-tag-absent",
+          "title": "Control with no implementation_status tag",
+          "desc": "Pre-#187 baseline behaviour expected.",
+          "tags": {
+            "nist": ["au-2"]
+          },
+          "results": [{"status": "passed"}]
+        },
+        {
+          "id": "fixture-pe-3-inherited",
+          "title": "Inherited from AWS (single attestation)",
+          "desc": "AWS satisfies this; one attestation cited.",
+          "tags": {
+            "nist": ["pe-3"],
+            "implementation_status": "inherited",
+            "inherited_from": "aws-shared-responsibility",
+            "attestation_references": ["AWS SOC 2 Type II"]
+          },
+          "results": [{"status": "skipped"}]
+        }
+      ]
+    }
+  ]
+}

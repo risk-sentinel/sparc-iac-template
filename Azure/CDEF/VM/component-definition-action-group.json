@@ -1,0 +1,59 @@
+{
+  "component-definition": {
+    "uuid": "c1d2e3f4-1111-4000-a000-000000000011",
+    "metadata": {
+      "title": "SPARC Azure Action Group Component Definition",
+      "last-modified": "2026-03-20T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "c1d2e3f4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "c1d2e3f4-2222-4000-a000-000000000011",
+        "type": "service",
+        "title": "Azure Monitor Action Group",
+        "description": "Monitor Action Group with dynamic email receivers for alert notifications, connected to all metric alerts in the monitoring module. Deployed via Terraform (Azure/VM/modules/action_group/). <!-- UPDATE: Insert action group ID, short name, and email addresses for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["c1d2e3f4-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "c1d2e3f4-3333-4000-a000-000000000011",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for Azure Monitor Action Group",
+            "implemented-requirements": [
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000100",
+                "control-id": "ir-6",
+                "description": "Incident Reporting: The Action Group provides automated incident notification via email receivers. A dynamic email_receiver block iterates over var.alert_emails to configure multiple notification recipients. When any metric alert fires (VM CPU, App Gateway health/5xx, PostgreSQL CPU/storage, Redis CPU/memory), the action group delivers email notifications to all configured recipients, enabling timely incident awareness and response initiation. The short_name is truncated to 12 characters per Azure requirements. Reference: DISA SRG-APP-000303.",
+                "remarks": "Terraform resource: azurerm_monitor_action_group.main with dynamic email_receiver block iterating var.alert_emails. All 7 metric alerts in the monitoring module reference this action group via var.action_group_id."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000101",
+                "control-id": "si-4",
+                "description": "System Monitoring: The Action Group serves as the notification channel for all monitoring alerts, completing the detection-to-notification pipeline. All 7 metric alerts (VM CPU, App Gateway unhealthy hosts, App Gateway 5xx, PostgreSQL CPU, PostgreSQL storage, Redis CPU, Redis memory) route through this action group. This centralized notification approach ensures consistent alert delivery and prevents gaps in monitoring coverage. Reference: DISA SRG-APP-000340.",
+                "remarks": "Terraform resource: azurerm_monitor_action_group.main. The action group ID is passed to the monitoring module as var.action_group_id and referenced in every azurerm_monitor_metric_alert action block."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

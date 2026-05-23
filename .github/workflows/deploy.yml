@@ -1,0 +1,445 @@
+name: Manual Deploy (bootstrap, hibernate, wake, destroy)
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployment_target:
+        description: 'Deployment target'
+        required: true
+        type: choice
+        options:
+          - aws-ecs
+          - aws-ec2
+          - azure-vm
+          - bootstrap
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      action:
+        description: 'Terraform action'
+        required: true
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+          - hibernate
+          - wake
+
+env:
+  TF_INPUT: false
+  TF_IN_AUTOMATION: true
+
+permissions:
+  id-token: write
+  contents: read
+  security-events: write
+
+jobs:
+  # =========================================================================
+  # Validate + Checkov Scan (consolidated — single container, single checkout)
+  # =========================================================================
+  validate-and-scan:
+    if: vars.SPARC_DEPLOY_ENABLED == 'true'
+    name: Validate & Scan (${{ inputs.deployment_target }} / ${{ inputs.environment }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    container:
+      image: risksentinel/sparc-ci-runner@sha256:f0994371f4f36bbbb9d0e26dc6ff2c6511b15e4415f5b8d17d545808099b86f2
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Select working directory
+        id: workdir
+        run: |
+          case "${{ inputs.deployment_target }}" in
+            aws-ecs) echo "dir=AWS/ECS" >> "$GITHUB_OUTPUT" ;;
+            aws-ec2) echo "dir=AWS/EC2" >> "$GITHUB_OUTPUT" ;;
+            azure-vm) echo "dir=Azure/VM" >> "$GITHUB_OUTPUT" ;;
+            bootstrap) echo "dir=bootstrap" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::error::Unknown deployment target"; exit 1 ;;
+          esac
+
+      # --- Terraform Validation ---
+
+      - name: Terraform Init
+        working-directory: ${{ steps.workdir.outputs.dir }}
+        run: terraform init -backend=false
+
+      - name: Terraform Validate
+        working-directory: ${{ steps.workdir.outputs.dir }}
+        run: terraform validate
+
+      - name: Terraform Format Check
+        working-directory: ${{ steps.workdir.outputs.dir }}
+        run: terraform fmt -check -recursive
+
+      # --- Checkov Scan (skipped for bootstrap) ---
+
+      - name: Run Checkov
+        if: inputs.deployment_target != 'bootstrap'
+        run: |
+          PATTERN="${{ inputs.deployment_target }}"
+          EPOCH=$(date +%s)
+          mkdir -p checkov-results
+          checkov -d ${{ steps.workdir.outputs.dir }} \
+            --framework terraform \
+            --output json \
+            --output sarif \
+            --output-file-path checkov-results/ \
+            --soft-fail \
+            --quiet
+          mv checkov-results/results_json.json \
+            "checkov-results/checkov-${PATTERN}-${EPOCH}.json" || true
+          mv checkov-results/results_sarif.sarif \
+            "checkov-results/checkov-${PATTERN}-${EPOCH}.sarif" || true
+          echo "CHECKOV_RESULTS_FILE=$(ls checkov-results/checkov-${PATTERN}-*.json 2>/dev/null | head -1)" >> "$GITHUB_ENV"
+
+      - name: Checkov Disposition Diff
+        if: inputs.deployment_target != 'bootstrap'
+        run: |
+          if [ -n "$CHECKOV_RESULTS_FILE" ] && [ -f "$CHECKOV_RESULTS_FILE" ]; then
+            # Map deployment target to baseline pattern
+            case "${{ inputs.deployment_target }}" in
+              aws-ecs) PATTERN="ecs" ;;
+              aws-ec2) PATTERN="ec2" ;;
+              *) PATTERN="${{ inputs.deployment_target }}" ;;
+            esac
+            python3 oscal/scripts/checkov_diff.py \
+              --checkov-results "$CHECKOV_RESULTS_FILE" \
+              --baseline checkov-baseline.yml \
+              --pattern "$PATTERN" \
+              --output-summary "checkov-results/checkov-trend-${PATTERN}.json" \
+              --threshold threshold.yml \
+              --strict \
+              --github-step-summary
+          fi
+
+      - name: Upload SARIF
+        if: always() && inputs.deployment_target != 'bootstrap'
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: checkov-results/
+        continue-on-error: true
+
+      - name: Configure AWS Credentials (for S3 upload)
+        if: always() && inputs.deployment_target != 'bootstrap' && inputs.deployment_target != 'azure-vm'
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Upload Checkov to S3
+        if: always() && inputs.deployment_target != 'bootstrap' && inputs.deployment_target != 'azure-vm'
+        run: |
+          BUCKET="your-security-artifacts-bucket"
+          ISO_DATE=$(date -u +%Y-%m-%d)
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          PREFIX="${ISO_DATE}/${SHORT_SHA}"
+          for f in checkov-results/checkov-*.json checkov-results/checkov-*.sarif; do
+            [ -f "$f" ] || continue
+            aws s3 cp "$f" "s3://${BUCKET}/${PREFIX}/$(basename "$f")" \
+              --region ${{ vars.AWS_REGION || 'us-east-1' }}
+            echo "Uploaded to s3://${BUCKET}/${PREFIX}/$(basename "$f")"
+          done
+
+  # =========================================================================
+  # AWS ECS Fargate Deployment
+  # =========================================================================
+  deploy-aws-ecs:
+    name: "${{ inputs.action }} — AWS ECS (${{ inputs.environment }})"
+    if: vars.SPARC_DEPLOY_ENABLED == 'true' && (inputs.deployment_target == 'aws-ecs')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: validate-and-scan
+    environment: ${{ inputs.environment }}
+    container:
+      image: risksentinel/sparc-ci-runner@sha256:f0994371f4f36bbbb9d0e26dc6ff2c6511b15e4415f5b8d17d545808099b86f2
+    defaults:
+      run:
+        shell: bash
+    concurrency:
+      group: aws-ecs-${{ inputs.environment }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Terraform Init
+        working-directory: AWS/ECS
+        run: terraform init -backend-config=backend.hcl
+      - name: Terraform Plan
+        if: inputs.action == 'plan' || inputs.action == 'apply'
+        working-directory: AWS/ECS
+        run: |
+          terraform plan \
+            -var="environment=${{ inputs.environment }}" \
+            -var="sparc_smtp_password=${{ secrets.SPARC_SMTP_PASSWORD }}" \
+            -var="sparc_oidc_client_secret=${{ secrets.SPARC_OIDC_CLIENT_SECRET }}" \
+            -var="sparc_github_client_secret=${{ secrets.SPARC_GITHUB_CLIENT_SECRET }}" \
+            -var="sparc_gitlab_client_secret=${{ secrets.SPARC_GITLAB_CLIENT_SECRET }}" \
+            -var-file="envs/${{ inputs.environment }}/terraform.tfvars" \
+            -out=tfplan
+        continue-on-error: ${{ inputs.action == 'plan' }}
+
+      - name: Terraform Apply
+        if: inputs.action == 'apply'
+        working-directory: AWS/ECS
+        run: terraform apply -auto-approve tfplan
+
+      - name: Terraform Destroy
+        if: inputs.action == 'destroy'
+        working-directory: AWS/ECS
+        run: |
+          terraform destroy \
+            -var="environment=${{ inputs.environment }}" \
+            -var="sparc_smtp_password=${{ secrets.SPARC_SMTP_PASSWORD }}" \
+            -var="sparc_oidc_client_secret=${{ secrets.SPARC_OIDC_CLIENT_SECRET }}" \
+            -var="sparc_github_client_secret=${{ secrets.SPARC_GITHUB_CLIENT_SECRET }}" \
+            -var="sparc_gitlab_client_secret=${{ secrets.SPARC_GITLAB_CLIENT_SECRET }}" \
+            -var-file="envs/${{ inputs.environment }}/terraform.tfvars" \
+            -auto-approve
+
+      - name: Hibernate (stop compute, keep data)
+        if: inputs.action == 'hibernate'
+        working-directory: AWS/ECS
+        run: |
+          terraform apply -auto-approve \
+            -var="environment=${{ inputs.environment }}" \
+            -var="sparc_smtp_password=${{ secrets.SPARC_SMTP_PASSWORD }}" \
+            -var="sparc_oidc_client_secret=${{ secrets.SPARC_OIDC_CLIENT_SECRET }}" \
+            -var="sparc_github_client_secret=${{ secrets.SPARC_GITHUB_CLIENT_SECRET }}" \
+            -var="sparc_gitlab_client_secret=${{ secrets.SPARC_GITLAB_CLIENT_SECRET }}" \
+            -var-file="envs/${{ inputs.environment }}/terraform.tfvars" \
+            -var="hibernate=true"
+
+      - name: Wake (restore compute)
+        if: inputs.action == 'wake'
+        working-directory: AWS/ECS
+        run: |
+          terraform apply -auto-approve \
+            -var="environment=${{ inputs.environment }}" \
+            -var="sparc_smtp_password=${{ secrets.SPARC_SMTP_PASSWORD }}" \
+            -var="sparc_oidc_client_secret=${{ secrets.SPARC_OIDC_CLIENT_SECRET }}" \
+            -var="sparc_github_client_secret=${{ secrets.SPARC_GITHUB_CLIENT_SECRET }}" \
+            -var="sparc_gitlab_client_secret=${{ secrets.SPARC_GITLAB_CLIENT_SECRET }}" \
+            -var-file="envs/${{ inputs.environment }}/terraform.tfvars" \
+            -var="hibernate=false"
+
+      - name: Output Summary
+        if: inputs.action == 'apply' || inputs.action == 'wake'
+        working-directory: AWS/ECS
+        run: |
+          echo "## Deployment Outputs" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Output | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          terraform output -json | jq -r 'to_entries[] | "| \(.key) | `\(.value.value // "n/a")` |"' >> "$GITHUB_STEP_SUMMARY"
+
+  # =========================================================================
+  # AWS EC2 Deployment
+  # =========================================================================
+  deploy-aws-ec2:
+    name: "${{ inputs.action }} — AWS EC2 (${{ inputs.environment }})"
+    if: vars.SPARC_DEPLOY_ENABLED == 'true' && (inputs.deployment_target == 'aws-ec2')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: validate-and-scan
+    environment: ${{ inputs.environment }}
+    container:
+      image: risksentinel/sparc-ci-runner@sha256:f0994371f4f36bbbb9d0e26dc6ff2c6511b15e4415f5b8d17d545808099b86f2
+    defaults:
+      run:
+        shell: bash
+    concurrency:
+      group: aws-ec2-${{ inputs.environment }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Terraform Init
+        working-directory: AWS/EC2
+        run: terraform init -backend-config=backend.hcl
+      - name: Terraform Plan
+        if: inputs.action == 'plan' || inputs.action == 'apply'
+        working-directory: AWS/EC2
+        run: |
+          terraform plan \
+            -var="environment=${{ inputs.environment }}" \
+            -var-file="envs/${{ inputs.environment }}/terraform.tfvars" \
+            -out=tfplan
+        continue-on-error: ${{ inputs.action == 'plan' }}
+
+      - name: Terraform Apply
+        if: inputs.action == 'apply'
+        working-directory: AWS/EC2
+        run: terraform apply -auto-approve tfplan
+
+      - name: Terraform Destroy
+        if: inputs.action == 'destroy'
+        working-directory: AWS/EC2
+        run: |
+          terraform destroy \
+            -var="environment=${{ inputs.environment }}" \
+            -var-file="envs/${{ inputs.environment }}/terraform.tfvars" \
+            -auto-approve
+
+      - name: Output Summary
+        if: inputs.action == 'apply'
+        working-directory: AWS/EC2
+        run: |
+          echo "## Deployment Outputs" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Output | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          terraform output -json | jq -r 'to_entries[] | "| \(.key) | `\(.value.value // "n/a")` |"' >> "$GITHUB_STEP_SUMMARY"
+
+  # =========================================================================
+  # Azure VM Deployment
+  # NOTE: Not containerized — azure/login@v3 OIDC compatibility in container
+  # is unverified. Test before migrating. See issue #135.
+  # =========================================================================
+  deploy-azure-vm:
+    name: "${{ inputs.action }} — Azure VM (${{ inputs.environment }})"
+    if: vars.SPARC_DEPLOY_ENABLED == 'true' && (inputs.deployment_target == 'azure-vm')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: validate-and-scan
+    environment: ${{ inputs.environment }}
+    concurrency:
+      group: azure-vm-${{ inputs.environment }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Azure Login
+        uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: '~> 1.9'
+
+      - name: Terraform Init
+        working-directory: Azure/VM
+        run: terraform init -backend-config=backend.hcl
+      - name: Terraform Plan
+        if: inputs.action == 'plan' || inputs.action == 'apply'
+        working-directory: Azure/VM
+        run: |
+          terraform plan \
+            -var="environment=${{ inputs.environment }}" \
+            -var-file="envs/${{ inputs.environment }}/terraform.tfvars" \
+            -out=tfplan
+        continue-on-error: ${{ inputs.action == 'plan' }}
+
+      - name: Terraform Apply
+        if: inputs.action == 'apply'
+        working-directory: Azure/VM
+        run: terraform apply -auto-approve tfplan
+
+      - name: Terraform Destroy
+        if: inputs.action == 'destroy'
+        working-directory: Azure/VM
+        run: |
+          terraform destroy \
+            -var="environment=${{ inputs.environment }}" \
+            -var-file="envs/${{ inputs.environment }}/terraform.tfvars" \
+            -auto-approve
+
+      - name: Output Summary
+        if: inputs.action == 'apply'
+        working-directory: Azure/VM
+        run: |
+          echo "## Deployment Outputs" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Output | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          terraform output -json | jq -r 'to_entries[] | "| \(.key) | `\(.value.value // "n/a")` |"' >> "$GITHUB_STEP_SUMMARY"
+
+  # =========================================================================
+  # Bootstrap — State Infrastructure (run once)
+  # =========================================================================
+  deploy-bootstrap:
+    name: "${{ inputs.action }} — Bootstrap (${{ inputs.environment }})"
+    if: vars.SPARC_DEPLOY_ENABLED == 'true' && (inputs.deployment_target == 'bootstrap')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: validate-and-scan
+    environment: ${{ inputs.environment }}
+    container:
+      image: risksentinel/sparc-ci-runner@sha256:f0994371f4f36bbbb9d0e26dc6ff2c6511b15e4415f5b8d17d545808099b86f2
+    defaults:
+      run:
+        shell: bash
+    concurrency:
+      group: bootstrap-${{ inputs.environment }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Terraform Init
+        working-directory: bootstrap
+        run: terraform init -backend-config=backend.hcl
+      - name: Terraform Plan
+        if: inputs.action == 'plan' || inputs.action == 'apply'
+        working-directory: bootstrap
+        run: |
+          terraform plan \
+            -var="environment=${{ inputs.environment }}" \
+            -var="aws_region=${{ vars.AWS_REGION || 'us-east-1' }}" \
+            -out=tfplan
+
+      - name: Terraform Apply
+        if: inputs.action == 'apply'
+        working-directory: bootstrap
+        run: terraform apply -auto-approve tfplan
+
+      - name: Output Summary
+        if: inputs.action == 'apply'
+        working-directory: bootstrap
+        run: |
+          echo "## Bootstrap Outputs" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Output | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          terraform output -json | jq -r 'to_entries[] | select(.value.value | type == "string") | "| \(.key) | \(.value.value) |"' >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Next Steps" >> "$GITHUB_STEP_SUMMARY"
+          echo "1. Copy the backend config from the backend_config output" >> "$GITHUB_STEP_SUMMARY"
+          echo "2. Update backend blocks in AWS/ECS/main.tf and AWS/EC2/main.tf" >> "$GITHUB_STEP_SUMMARY"
+          echo "3. Run terraform init -migrate-state in each pattern directory" >> "$GITHUB_STEP_SUMMARY"

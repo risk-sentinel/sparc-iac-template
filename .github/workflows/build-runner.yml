@@ -1,0 +1,140 @@
+name: Build CI Runner
+
+on:
+  schedule:
+    - cron: '0 6 1 * *'  # Monthly 1st of month 6am UTC
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  IMAGE: risksentinel/sparc-ci-runner
+
+jobs:
+  build:
+    if: vars.SPARC_DEPLOY_ENABLED == 'true'
+    name: Build & Push CI Runner
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Login to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" \
+            | docker login --username "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Build Image
+        run: |
+          DATE_TAG=$(date -u +%Y.%m.%d)
+          docker build \
+            -t "${IMAGE}:latest" \
+            -t "${IMAGE}:${DATE_TAG}" \
+            -f .github/runner/Dockerfile \
+            .github/runner/
+          echo "DATE_TAG=${DATE_TAG}" >> "$GITHUB_ENV"
+
+      - name: Trivy Vulnerability Scan
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+            | sh -s -- -b /usr/local/bin
+
+          trivy image --severity HIGH,CRITICAL --format json \
+            -o trivy-results.json "${IMAGE}:latest"
+
+          # Evaluate scan against container-baseline.yml
+          python3 -c "
+          import json, yaml, sys
+
+          with open('trivy-results.json') as f:
+              scan = json.load(f)
+          with open('container-baseline.yml') as f:
+              baseline = yaml.safe_load(f)
+
+          accepted = {f['cve_id'] for f in baseline.get('findings', []) if f.get('disposition') == 'accepted'}
+
+          all_vulns = []
+          for r in scan.get('Results', []):
+              for v in r.get('Vulnerabilities', []):
+                  all_vulns.append(v)
+
+          critical = [v for v in all_vulns if v['Severity'] == 'CRITICAL']
+          high = [v for v in all_vulns if v['Severity'] == 'HIGH']
+          new_critical = [v for v in critical if v['VulnerabilityID'] not in accepted]
+          new_high = [v for v in high if v['VulnerabilityID'] not in accepted]
+
+          with open('$GITHUB_STEP_SUMMARY', 'a') as summary:
+              summary.write('## CI Runner Container Scan\n\n')
+              summary.write('| Severity | Total | Accepted | New |\n')
+              summary.write('|----------|-------|----------|-----|\n')
+              summary.write(f'| Critical | {len(critical)} | {len(critical) - len(new_critical)} | {len(new_critical)} |\n')
+              summary.write(f'| High | {len(high)} | {len(high) - len(new_high)} | {len(new_high)} |\n\n')
+              new_all = new_critical + new_high
+              if new_all:
+                  summary.write('### New CVEs (not in baseline)\n\n')
+                  for v in new_all:
+                      summary.write(f'- **{v[\"Severity\"]}** {v[\"VulnerabilityID\"]}: {v[\"PkgName\"]} ({v.get(\"InstalledVersion\", \"\")})\n')
+
+          if new_critical or new_high:
+              for v in new_critical + new_high:
+                  print(f'::error::NEW {v[\"Severity\"]}: {v[\"VulnerabilityID\"]} in {v[\"PkgName\"]}')
+              print(f'{len(new_critical)} new critical + {len(new_high)} new high CVEs not in baseline — build blocked')
+              sys.exit(1)
+
+          print(f'Scan passed: {len(critical)} critical + {len(high)} high (all accepted in baseline)')
+          "
+
+      - name: Convert Trivy to HDF
+        if: always()
+        run: |
+          docker run --rm -v "$PWD:/work" "${IMAGE}:latest" \
+            saf convert trivy2hdf -i /work/trivy-results.json -o /work/trivy-ci-runner.hdf.json || true
+
+      - name: Push Image
+        run: |
+          docker push "${IMAGE}:latest"
+          docker push "${IMAGE}:${DATE_TAG}"
+          echo "Pushed: ${IMAGE}:latest and ${IMAGE}:${DATE_TAG}"
+
+      - name: Sign Image with cosign
+        run: |
+          curl -sSfL "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64" \
+            -o /usr/local/bin/cosign && chmod +x /usr/local/bin/cosign
+
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "${IMAGE}:latest")
+          cosign sign --yes "$DIGEST"
+          echo "Signed: $DIGEST"
+
+      - name: Upload Scan Results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ci-runner-scan
+          path: |
+            trivy-results.json
+            trivy-ci-runner.hdf.json
+          retention-days: 90
+
+      - name: Build Summary
+        run: |
+          echo "## CI Runner Build" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Detail | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|--------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Image | ${IMAGE}:${DATE_TAG} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Latest | ${IMAGE}:latest |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Signed | Yes (cosign keyless) |" >> "$GITHUB_STEP_SUMMARY"
+
+  bump-pin:
+    name: Open digest-pin PR
+    needs: build
+    if: vars.SPARC_DEPLOY_ENABLED == 'true' && (success())
+    uses: ./.github/workflows/update-runner-digest.yml
+    permissions:
+      contents: write
+      pull-requests: write
+    with:
+      triggered_by: build-runner

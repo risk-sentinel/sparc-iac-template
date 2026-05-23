@@ -1,0 +1,68 @@
+{
+  "platform": {
+    "name": "test-fixture",
+    "release": "0.0.1"
+  },
+  "profiles": [
+    {
+      "name": "cis-postgresql",
+      "title": "CIS PostgreSQL Profile (SAF C-N.N.N.N format fixture, sparc-validate#39)",
+      "version": "0.0.1",
+      "controls": [
+        {
+          "id": "C-2.6",
+          "title": "Ensure PostgreSQL log destination is set",
+          "desc": "PostgreSQL must log to a destination configured by the operator.",
+          "impact": 0.5,
+          "tags": {
+            "nist": ["au-2"],
+            "implementation_status": "implemented"
+          },
+          "results": [
+            {
+              "status": "passed",
+              "code_desc": "log_destination is set",
+              "message": ""
+            }
+          ]
+        },
+        {
+          "id": "C-3.1.4",
+          "title": "Ensure log_connections is enabled",
+          "desc": "Connection attempts must be logged.",
+          "impact": 0.5,
+          "tags": {
+            "nist": ["au-2"],
+            "implementation_status": "implemented"
+          },
+          "results": [
+            {
+              "status": "failed",
+              "code_desc": "log_connections is off",
+              "message": "Expected on, got off"
+            }
+          ]
+        },
+        {
+          "id": "C-1.1",
+          "title": "Physical access (inherited from AWS)",
+          "desc": "Physical access controls for the data center are AWS's responsibility under the shared-responsibility model.",
+          "impact": 0.5,
+          "tags": {
+            "nist": ["pe-2"],
+            "implementation_status": "inherited",
+            "inherited_from": "aws-shared-responsibility",
+            "attestation_references": ["AWS SOC 2 Type II"]
+          },
+          "results": [
+            {
+              "status": "skipped",
+              "code_desc": "Inherited from AWS",
+              "message": "Skipped — AWS satisfies this control."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+# ============================================================================
+# AWS Config — Production
+# ============================================================================
+
+environment  = "prod"
+aws_region   = "us-east-1"
+project_name = "sparc"
+
+# ── AWS Config ────────────────────────────────────────────────────────────
+enable_aws_config = true
+
+# ── NIST 800-53 Rev 5 Conformance Pack (~130 rules, ~$5-10/month) ────────
+enable_conformance_pack = true
+
+# ── Snapshot Frequency (daily | weekly | biweekly) ────────────────────────
+config_snapshot_frequency = "biweekly"
+
+# ── Artifact Delivery ─────────────────────────────────────────────────────
+artifacts_bucket_name = "your-security-artifacts-bucket"

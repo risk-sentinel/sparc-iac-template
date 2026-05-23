@@ -1,0 +1,174 @@
+# =============================================================================
+# Publish Public Template (#270 Phase 6)
+# =============================================================================
+# Tag-triggered cross-repo export. Tagging the private repo with `v<X.Y.Z>`
+# triggers this workflow, which:
+#   1. Snapshots private HEAD via scripts/public_export/export.sh (sanitize →
+#      verify → fresh single-commit init).
+#   2. Force-pushes the snapshot to risk-sentinel/sparc-iac-template/main.
+#   3. Pushes the matching v<X.Y.Z> tag to the public repo.
+#   4. Creates mirrored GitHub Releases on BOTH repos with the CHANGELOG.md
+#      section for v<X.Y.Z> as the body.
+#
+# Gated by `github.repository == 'risk-sentinel/sparc-iac'` so adopter forks
+# never accidentally publish to our template. Further gated by the same
+# vars.SPARC_DEPLOY_ENABLED variable as the rest of the deploy-class workflows.
+#
+# Cross-repo push uses the org-level PUBLIC_TEMPLATE_PUSH_TOKEN secret.
+#
+# The first real run (v0.2.0+) will validate the force-push permissions
+# on sparc-iac-template/main. If the protection rejects the push, the
+# operator runbook in docs/dev/PUBLIC_RELEASE.md describes the temporary-
+# relax → push → re-tighten dance.
+# =============================================================================
+
+name: Publish Public Template
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to publish (e.g. v0.2.0). Must already exist on this repo.'
+        required: true
+        type: string
+      dry_run:
+        description: 'Dry run — generate snapshot + verify but do not push or release.'
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: write   # for creating the mirrored release on this repo
+
+jobs:
+  publish:
+    name: Publish to sparc-iac-template
+    if: github.repository == 'risk-sentinel/sparc-iac' && vars.SPARC_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: risksentinel/sparc-ci-runner@sha256:f0994371f4f36bbbb9d0e26dc6ff2c6511b15e4415f5b8d17d545808099b86f2
+    steps:
+      - name: Resolve tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF##*/}"
+          fi
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag '$TAG' must match v<major>.<minor>.<patch>"
+            exit 1
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Resolved: TAG=$TAG  VERSION=$VERSION"
+
+      - name: Checkout @ tag
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ steps.tag.outputs.tag }}
+
+      - name: Configure git identity (for the export's fresh-init commit)
+        run: |
+          git config --global user.name "sparc-iac-template-export"
+          git config --global user.email "noreply@example.com"
+          git config --global --add safe.directory '*'
+
+      - name: Extract CHANGELOG section for ${{ steps.tag.outputs.tag }}
+        id: changelog
+        run: |
+          python3 scripts/public_export/extract_changelog_section.py \
+            CHANGELOG.md "${{ steps.tag.outputs.version }}" > /tmp/release_notes.md
+          BYTES=$(wc -c < /tmp/release_notes.md)
+          echo "extracted $BYTES bytes for section [${{ steps.tag.outputs.version }}]"
+          if [ "$BYTES" -lt 50 ]; then
+            echo "::warning::CHANGELOG section is suspiciously short (<50 bytes). Verify CHANGELOG.md has a [${{ steps.tag.outputs.version }}] section."
+          fi
+
+      - name: Run export → snapshot + force-push to sparc-iac-template
+        env:
+          PUBLIC_REPO_TOKEN: ${{ secrets.PUBLIC_TEMPLATE_PUSH_TOKEN }}
+        run: |
+          ARGS=("--remote" "https://x-access-token:${PUBLIC_REPO_TOKEN}@github.com/risk-sentinel/sparc-iac-template.git")
+          if [ "${{ github.event_name }}" = "push" ] || [ "${{ inputs.dry_run }}" = "false" ]; then
+            ARGS+=("--push" "--force")
+          else
+            ARGS+=("--keep-temp")
+            echo "::notice::Dry run mode — sanitized tree will be generated but NOT pushed."
+          fi
+          scripts/public_export/export.sh "${ARGS[@]}"
+
+      - name: Push matching tag to sparc-iac-template
+        if: github.event_name == 'push' || inputs.dry_run == 'false'
+        env:
+          PUBLIC_REPO_TOKEN: ${{ secrets.PUBLIC_TEMPLATE_PUSH_TOKEN }}
+        run: |
+          # The export creates a fresh-history single commit on main. Tag that
+          # commit with the same v<X.Y.Z> identifier on the public repo.
+          TMP=$(mktemp -d)
+          git clone --depth=1 \
+            "https://x-access-token:${PUBLIC_REPO_TOKEN}@github.com/risk-sentinel/sparc-iac-template.git" \
+            "$TMP"
+          git -C "$TMP" tag -a "${{ steps.tag.outputs.tag }}" -m "${{ steps.tag.outputs.tag }}"
+          # Force-push the tag in case it already existed from a re-run
+          git -C "$TMP" push origin "${{ steps.tag.outputs.tag }}" --force
+
+      - name: Create mirrored release on sparc-iac-template
+        if: github.event_name == 'push' || inputs.dry_run == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.PUBLIC_TEMPLATE_PUSH_TOKEN }}
+        run: |
+          # Idempotent: delete any pre-existing release for this tag, then create
+          gh release delete "${{ steps.tag.outputs.tag }}" \
+            --repo risk-sentinel/sparc-iac-template \
+            --yes 2>/dev/null || true
+          gh release create "${{ steps.tag.outputs.tag }}" \
+            --repo risk-sentinel/sparc-iac-template \
+            --title "${{ steps.tag.outputs.tag }}" \
+            --notes-file /tmp/release_notes.md \
+            --target main
+
+      - name: Create matching release on sparc-iac (private)
+        if: github.event_name == 'push' || inputs.dry_run == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # The tag already exists (it triggered this workflow). Just create
+          # the release with the same body as the public-side mirror.
+          gh release delete "${{ steps.tag.outputs.tag }}" \
+            --repo risk-sentinel/sparc-iac \
+            --yes 2>/dev/null || true
+          gh release create "${{ steps.tag.outputs.tag }}" \
+            --repo risk-sentinel/sparc-iac \
+            --title "${{ steps.tag.outputs.tag }}" \
+            --notes-file /tmp/release_notes.md
+
+      - name: Summary
+        run: |
+          {
+            echo "## Publish Public Template — ${{ steps.tag.outputs.tag }}"
+            echo ""
+            echo "| Step | Result |"
+            echo "|------|--------|"
+            echo "| Sanitized snapshot | ✅ verified clean |"
+            if [ "${{ github.event_name }}" = "push" ] || [ "${{ inputs.dry_run }}" = "false" ]; then
+              echo "| Force-pushed to public main | ✅ |"
+              echo "| Tag ${{ steps.tag.outputs.tag }} on public | ✅ |"
+              echo "| Mirrored release on public | ✅ |"
+              echo "| Mirrored release on private | ✅ |"
+            else
+              echo "| Mode | dry run (no push, no releases) |"
+            fi
+            echo ""
+            echo "**CHANGELOG section preview:**"
+            echo '```'
+            head -20 /tmp/release_notes.md
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

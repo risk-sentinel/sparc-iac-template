@@ -1,0 +1,33 @@
+{
+  "platform": {
+    "name": "test-fixture",
+    "release": "0.0.1"
+  },
+  "profiles": [
+    {
+      "name": "checkov",
+      "title": "Pre-#187 baseline fixture (no implementation_status tags anywhere)",
+      "version": "0.0.1",
+      "controls": [
+        {
+          "id": "fixture-baseline-1",
+          "title": "Plain finding, no inheritance metadata",
+          "desc": "Standard checkov-style HDF item.",
+          "tags": {
+            "nist": ["cm-6"]
+          },
+          "results": [{"status": "passed"}]
+        },
+        {
+          "id": "fixture-baseline-2",
+          "title": "Failing item, also tag-free",
+          "desc": "Confirms regression-clean behaviour.",
+          "tags": {
+            "nist": ["sc-7"]
+          },
+          "results": [{"status": "failed"}]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,694 @@
+name: FedRAMP 20x Compliance Validation
+
+on:
+  push:
+  repository_dispatch:
+    types: [sparc-compliance-updated]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: write       # Required for performance chart commit on main
+  security-events: write
+  actions: read          # Required for codeql-action/upload-sarif telemetry
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # Pin oscal-cli version for reproducible validation. Bump deliberately when
+  # NIST publishes a new release and the delta has been reviewed (see
+  # docs/FedRAMP_20x/README.md "OSCAL toolchain upgrade" section).
+  OSCAL_CLI_VERSION: "1.0.3"
+
+jobs:
+  # =========================================================================
+  # Validate OSCAL + Security Scans (consolidated — runs ONCE, not per pattern)
+  #
+  # OSCAL validation gates the workflow: any schema/constraint violation fails
+  # before scans run. Security scans (Semgrep, TruffleHog, pip-audit) produce
+  # artifacts consumed by the checkov-scan matrix downstream.
+  # =========================================================================
+  validate-and-scan:
+    # Public template: skip — needs AWS Config / S3 evidence pulls. Adopters opt in via vars.SPARC_DEPLOY_ENABLED.
+    if: vars.SPARC_DEPLOY_ENABLED == 'true'
+    name: Validate & Security Scans
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: prod
+    container:
+      image: risksentinel/sparc-ci-runner@sha256:f0994371f4f36bbbb9d0e26dc6ff2c6511b15e4415f5b8d17d545808099b86f2
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      # --- OSCAL Validation (blocking) ---
+
+      - name: Sanity-check OSCAL JSON parses
+        run: |
+          ERRORS=0
+          for f in $(find AWS/CDEF Azure/CDEF oscal docs/FedRAMP_20x -name "*.json" 2>/dev/null); do
+            if ! python3 -m json.tool "$f" > /dev/null 2>&1; then
+              echo "::error file=$f::Invalid JSON"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "::error::$ERRORS files failed JSON parse"
+            exit 1
+          fi
+
+      - name: Validate all OSCAL artifacts (blocking)
+        run: |
+          bash oscal/scripts/validate_oscal.sh | tee /tmp/oscal-validate.log
+          {
+            echo "## OSCAL Validation"
+            echo ""
+            echo '```'
+            tail -n 40 /tmp/oscal-validate.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # --- Security Scans ---
+
+      - name: Prepare Scan Directory
+        run: mkdir -p scan-results
+
+      - name: oscal/scripts unit tests (pytest)
+        # Folds the Python unit tests into validate-and-scan to keep the job
+        # count down (no separate runner spin-up). pytest + moto are tiny
+        # installs on top of the runner image; if/when the image is rebuilt
+        # with these baked in (#185), drop the install line.
+        # moto is required by test_admin_rotation.py (#199) for Secrets
+        # Manager + SNS mocking.
+        run: |
+          python3 -m pip install --quiet --no-cache-dir pytest moto
+          python3 -m pytest oscal/scripts/tests/ -q --color=no
+
+      - name: Semgrep SAST Scan
+        run: |
+          echo "Running Semgrep on oscal/scripts/..."
+          semgrep scan --config auto --sarif -o semgrep.sarif oscal/scripts/ || true
+          if [ -s semgrep.sarif ]; then
+            saf convert sarif2hdf -i semgrep.sarif -o scan-results/semgrep.hdf.json || true
+          fi
+
+      - name: TruffleHog Secret Scan
+        run: |
+          echo "Running TruffleHog on repository..."
+          trufflehog filesystem . --json \
+            --exclude-paths .trufflehog-ignore \
+            --exclude-detectors Privacy \
+            --no-git \
+            2>/dev/null > trufflehog.json || true
+          if [ -s trufflehog.json ]; then
+            SECRETS=$(wc -l < trufflehog.json | tr -d ' ')
+            echo "TruffleHog findings: $SECRETS"
+            echo "## TruffleHog Secret Scan" >> "$GITHUB_STEP_SUMMARY"
+            echo "Findings: $SECRETS" >> "$GITHUB_STEP_SUMMARY"
+            saf convert trufflehog2hdf -i trufflehog.json -o scan-results/trufflehog.hdf.json || true
+            if [ "$SECRETS" -gt 0 ] 2>/dev/null; then
+              echo "::warning::TruffleHog found $SECRETS potential secret(s)"
+            fi
+          fi
+
+      - name: pip-audit Dependency Scan
+        run: |
+          echo "Running pip-audit on requirements.txt..."
+          pip-audit -r oscal/scripts/requirements.txt --format json -o pip-audit.json || true
+          if [ -s pip-audit.json ]; then
+            VULNS=$(python3 -c "import json; d=json.load(open('pip-audit.json')); print(sum(len(p.get('vulns',[])) for p in d))" 2>/dev/null || echo "0")
+            echo "## pip-audit Dependency Scan" >> "$GITHUB_STEP_SUMMARY"
+            echo "Vulnerabilities: $VULNS" >> "$GITHUB_STEP_SUMMARY"
+            if [ "$VULNS" -gt 0 ] 2>/dev/null; then
+              echo "::warning::pip-audit found $VULNS vulnerability(ies)"
+            fi
+          fi
+
+      - name: Configure AWS Credentials
+        if: vars.ENABLE_AWS_CONFIG == 'true'
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: AWS Config Compliance Results
+        if: vars.ENABLE_AWS_CONFIG == 'true'
+        run: |
+          echo "Pulling AWS Config compliance results..."
+          saf convert aws_config2hdf \
+            -r ${{ vars.AWS_REGION || 'us-east-1' }} \
+            -o scan-results/aws-config.hdf.json || true
+          if [ -f scan-results/aws-config.hdf.json ]; then
+            python3 -c "
+          import json, os
+          d = json.load(open('scan-results/aws-config.hdf.json'))
+          controls = d.get('profiles', [{}])[0].get('controls', [])
+          passed = sum(1 for c in controls if c.get('results', [{}])[0].get('status') == 'passed')
+          failed = sum(1 for c in controls if c.get('results', [{}])[0].get('status') == 'failed')
+          total = len(controls)
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
+              f.write('## AWS Config Compliance\n\n')
+              f.write('| Metric | Count |\n|---|---|\n')
+              f.write(f'| Rules Evaluated | {total} |\n')
+              f.write(f'| Compliant | {passed} |\n')
+              f.write(f'| Non-Compliant | {failed} |\n\n')
+          " 2>/dev/null || true
+          fi
+
+      - name: Upload Scan Results
+        uses: actions/upload-artifact@v7
+        with:
+          name: security-scan-results
+          path: |
+            scan-results/
+            semgrep.sarif
+            trufflehog.json
+            pip-audit.json
+          retention-days: 7
+          if-no-files-found: warn
+
+  # =========================================================================
+  # Checkov Scan + OSCAL Assessment Results (per pattern)
+  # =========================================================================
+  checkov-scan:
+    needs: validate-and-scan
+    # Public-safe: runs in private (validate-and-scan succeeded) AND in public (validate-and-scan was skipped via vars gate).
+    # Skips only if validate-and-scan actually failed in private.
+    if: always() && (needs.validate-and-scan.result == 'success' || needs.validate-and-scan.result == 'skipped')
+    name: "Checkov Scan (${{ matrix.pattern }})"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    container:
+      image: risksentinel/sparc-ci-runner@sha256:f0994371f4f36bbbb9d0e26dc6ff2c6511b15e4415f5b8d17d545808099b86f2
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      matrix:
+        include:
+          - pattern: ecs
+            dir: AWS/ECS
+            cdef_dir: AWS/CDEF/ECS
+            system_name: "SPARC ECS Fargate"
+          - pattern: ec2
+            dir: AWS/EC2
+            cdef_dir: AWS/CDEF/EC2
+            system_name: "SPARC EC2"
+          - pattern: azure-vm
+            dir: Azure/VM
+            cdef_dir: Azure/CDEF/VM
+            system_name: "SPARC Azure VM"
+          - pattern: config
+            dir: AWS/config
+            cdef_dir: AWS/CDEF/Config
+            system_name: "SPARC AWS Config"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Terraform Init
+        working-directory: ${{ matrix.dir }}
+        run: terraform init -backend=false
+
+      - name: Terraform Validate
+        working-directory: ${{ matrix.dir }}
+        run: terraform validate
+
+      - name: Prepare Directories
+        run: |
+          mkdir -p scan-results
+          mkdir -p /tmp/oscal-markers
+          echo "OSCAL_CHANGE_MARKERS=/tmp/oscal-markers" >> "$GITHUB_ENV"
+
+      - name: Run Checkov
+        run: |
+          checkov -d ${{ matrix.dir }} \
+            --framework terraform \
+            --output json \
+            --output sarif \
+            --output-file-path checkov-results/ \
+            --soft-fail
+
+      - name: Rename Results
+        run: |
+          EPOCH=$(date +%s)
+          mv checkov-results/results_json.json \
+            "checkov-results/checkov-${{ matrix.pattern }}-${EPOCH}.json"
+          mv checkov-results/results_sarif.sarif \
+            "checkov-results/checkov-${{ matrix.pattern }}-${EPOCH}.sarif"
+          echo "RESULTS_FILE=checkov-results/checkov-${{ matrix.pattern }}-${EPOCH}.json" >> "$GITHUB_ENV"
+          echo "SARIF_FILE=checkov-results/checkov-${{ matrix.pattern }}-${EPOCH}.sarif" >> "$GITHUB_ENV"
+
+      # =================================================================
+      # Download security scan results (ran once in validate-and-scan job)
+      # =================================================================
+
+      - name: Download Security Scan Results
+        uses: actions/download-artifact@v8
+        with:
+          name: security-scan-results
+          path: security-scan-output/
+        continue-on-error: true
+
+      - name: Merge Scan Results
+        run: |
+          # Copy HDF files from validate-and-scan job into scan-results/
+          cp security-scan-output/scan-results/*.hdf.json scan-results/ 2>/dev/null || true
+          # Copy raw outputs for the security gate
+          cp security-scan-output/semgrep.sarif . 2>/dev/null || true
+          cp security-scan-output/trufflehog.json . 2>/dev/null || true
+          cp security-scan-output/pip-audit.json . 2>/dev/null || true
+
+      - name: Checkov JSON to HDF
+        run: |
+          if [ -f "$RESULTS_FILE" ]; then
+            python3 -c "
+          import json, sys
+
+          with open('$RESULTS_FILE') as f:
+              data = json.load(f)
+
+          # Handle both single-result and array format
+          results = data if isinstance(data, list) else [data]
+          controls = []
+          for r in results:
+              for check in r.get('results', {}).get('passed_checks', []):
+                  controls.append({
+                      'id': check.get('check_id', ''),
+                      'title': check.get('check_id', ''),
+                      'desc': check.get('resource', ''),
+                      'tags': {'nist': [check.get('check_id', '')]},
+                      'results': [{'status': 'passed', 'code_desc': check.get('resource', '')}]
+                  })
+              for check in r.get('results', {}).get('failed_checks', []):
+                  controls.append({
+                      'id': check.get('check_id', ''),
+                      'title': check.get('check_id', ''),
+                      'desc': check.get('resource', ''),
+                      'tags': {'nist': [check.get('check_id', '')]},
+                      'results': [{'status': 'failed', 'code_desc': check.get('resource', '')}]
+                  })
+
+          hdf = {
+              'profiles': [{
+                  'name': 'checkov',
+                  'title': 'Checkov IaC Security Scan',
+                  'controls': controls
+              }],
+              'platform': {'name': 'checkov', 'release': ''},
+              'version': '1.0'
+          }
+
+          with open('scan-results/checkov.hdf.json', 'w') as f:
+              json.dump(hdf, f, indent=2)
+          passed = sum(1 for c in controls if c['results'][0]['status'] == 'passed')
+          failed = sum(1 for c in controls if c['results'][0]['status'] == 'failed')
+          print(f'Checkov HDF: {passed} passed, {failed} failed')
+          " || true
+          fi
+
+      - name: Generate Pipeline SARs from HDF
+        run: |
+          if ls scan-results/*.hdf.json 1>/dev/null 2>&1; then
+            python3 oscal/scripts/hdf_to_oscal.py \
+              --hdf-dir scan-results/ \
+              --system-name "${{ matrix.system_name }}" \
+              --output-dir "oscal/sar/pipeline/"
+          else
+            echo "No HDF files produced — skipping pipeline SAR generation"
+          fi
+
+      # =================================================================
+      # Checkov Disposition Diff — generates trend JSON (does NOT gate)
+      # =================================================================
+
+      - name: Checkov Disposition Diff
+        run: |
+          python3 oscal/scripts/checkov_diff.py \
+            --checkov-results "$RESULTS_FILE" \
+            --baseline checkov-baseline.yml \
+            --pattern ${{ matrix.pattern }} \
+            --output-summary "checkov-results/checkov-trend-${{ matrix.pattern }}.json" \
+            --threshold threshold.yml \
+            --github-step-summary
+        continue-on-error: true
+        id: checkov_diff
+
+      # =================================================================
+      # Security Gate — unified evaluation of ALL scan results
+      # This is the single pass/fail decision point. All scans have
+      # completed. The gate reads their outputs and evaluates against
+      # threshold.yml. If this fails, compliance fails, blocking deploy.
+      # =================================================================
+
+      - name: Security Gate
+        run: |
+          python3 oscal/scripts/evaluate_gate.py \
+            --threshold threshold.yml \
+            --pattern ${{ matrix.pattern }} \
+            --checkov-trend "checkov-results/checkov-trend-${{ matrix.pattern }}.json" \
+            --trufflehog trufflehog.json \
+            --semgrep semgrep.sarif \
+            --pip-audit pip-audit.json \
+            --github-step-summary
+
+      # =================================================================
+      # OSCAL Document Generation (only reached if gate passes)
+      # =================================================================
+
+      - name: Generate OSCAL Assessment Results
+        run: |
+          python3 oscal/scripts/checkov_to_oscal.py \
+            --checkov-results "$RESULTS_FILE" \
+            --system-name "${{ matrix.system_name }}" \
+            --output "oscal/sar/${{ matrix.pattern }}-sar.json"
+
+      - name: Generate OSCAL POA&M
+        run: |
+          python3 oscal/scripts/generate_poam.py \
+            --checkov-results "$RESULTS_FILE" \
+            --system-name "${{ matrix.system_name }}" \
+            --baseline checkov-baseline.yml \
+            --output "oscal/poam/${{ matrix.pattern }}-poam.json"
+
+      - name: Compliance Summary
+        run: |
+          PASSED=$(python3 -c "import json; d=json.load(open('$RESULTS_FILE')); print(d.get('summary',{}).get('passed',0))")
+          FAILED=$(python3 -c "import json; d=json.load(open('$RESULTS_FILE')); print(d.get('summary',{}).get('failed',0))")
+          TOTAL=$((PASSED + FAILED))
+          PCT=$((PASSED * 100 / TOTAL))
+          echo "## ${{ matrix.system_name }} Compliance" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Metric | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Checkov Passed | $PASSED |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Checkov Failed | $FAILED |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Pass Rate | ${PCT}% |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| POA&M Items | $FAILED |" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f "oscal/ssp/${{ matrix.pattern }}-ssp-gaps.md" ]; then
+            GAPS=$(wc -l < "oscal/ssp/${{ matrix.pattern }}-ssp-gaps.md")
+            echo "| SSP Control Gaps | $GAPS |" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload SARIF
+        if: always() && vars.ENABLE_CODE_SCANNING == 'true'
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: ${{ env.SARIF_FILE }}
+
+      - name: Download SPARC Compliance Artifacts (if available)
+        uses: dawidd6/action-download-artifact@v19
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          repo: risk-sentinel/sparc
+          name: sparc-compliance-latest
+          path: sparc-compliance/
+          if_no_artifact_found: warn
+        continue-on-error: true
+
+      - name: Convert App HDF to OSCAL SARs
+        if: hashFiles('sparc-compliance/hdf/') != ''
+        run: |
+          python3 oscal/scripts/hdf_to_oscal.py \
+            --hdf-dir sparc-compliance/hdf/ \
+            --system-name "SPARC Application" \
+            --output-dir oscal/sar/application/
+
+      - name: Assemble SSP with App CDEFs
+        run: |
+          EXTRA_ARGS=""
+          if [ -d "sparc-compliance/cdefs" ]; then
+            EXTRA_ARGS="--extra-cdef-dir sparc-compliance/cdefs"
+          fi
+          python3 oscal/scripts/assemble_ssp.py \
+            --cdef-dir "${{ matrix.cdef_dir }}" \
+            --profile docs/FedRAMP_20x/NIST_SP-800-53_rev5_HIGH-baseline-resolved-profile_catalog.json \
+            --system-name "${{ matrix.system_name }}" \
+            --output "oscal/ssp/${{ matrix.pattern }}-ssp.json" \
+            $EXTRA_ARGS
+
+      - name: Assemble FedRAMP Package
+        run: |
+          SBOM_ARGS=""
+          if [ -d "sparc-compliance/sbom" ]; then
+            SBOM_ARGS="--app-sbom-dir sparc-compliance/sbom"
+          fi
+          # Skips packaging automatically if no OSCAL generator emitted a
+          # change marker for this pattern this run (i.e. prior bundle is
+          # still content-identical — no need to re-ship).
+          python3 oscal/scripts/package_fedramp.py \
+            --pattern "${{ matrix.pattern }}" \
+            --output-dir "fedramp-package-${{ matrix.pattern }}/" \
+            --marker-dir "$OSCAL_CHANGE_MARKERS" \
+            $SBOM_ARGS
+
+      - name: Generate Run Metadata
+        if: always()
+        run: |
+          python3 oscal/scripts/generate_metadata.py \
+            --pattern ${{ matrix.pattern }} \
+            --checkov-results "$RESULTS_FILE" \
+            --trend-json "checkov-results/checkov-trend-${{ matrix.pattern }}.json" \
+            --ssp "oscal/ssp/${{ matrix.pattern }}-ssp.json" \
+            --output "metadata-${{ matrix.pattern }}.json"
+
+      - name: Upload OSCAL Artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: oscal-${{ matrix.pattern }}
+          path: |
+            oscal/ssp/${{ matrix.pattern }}-ssp.json
+            oscal/sar/${{ matrix.pattern }}-sar.json
+            oscal/sar/application/
+            oscal/sar/pipeline/
+            oscal/poam/${{ matrix.pattern }}-poam.json
+            scan-results/
+            checkov-results/checkov-trend-${{ matrix.pattern }}.json
+            metadata-${{ matrix.pattern }}.json
+          retention-days: 90
+
+      - name: Upload FedRAMP Package
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fedramp-package-${{ matrix.pattern }}
+          path: fedramp-package-${{ matrix.pattern }}/
+          retention-days: 90
+
+
+  # =========================================================================
+  # Post-Scan: Upload to S3 + Performance Tracking (consolidated)
+  #
+  # Runs after all checkov-scan matrix jobs complete. Uploads OSCAL artifacts
+  # and FedRAMP packages to S3, then generates and commits the performance
+  # chart. Single container, single checkout, single AWS creds.
+  # =========================================================================
+  post-scan:
+    name: Upload & Performance Tracking
+    needs: checkov-scan
+    # Public template: skip — uploads artifacts to our S3 + tracks pipeline-perf history.
+    # Private: always() preserves previous behavior (run even when checkov-scan failed).
+    if: always() && vars.SPARC_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: prod
+    container:
+      image: risksentinel/sparc-ci-runner@sha256:f0994371f4f36bbbb9d0e26dc6ff2c6511b15e4415f5b8d17d545808099b86f2
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download All OSCAL Artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: oscal-*
+          path: oscal-artifacts/
+          merge-multiple: true
+
+      - name: Download All FedRAMP Packages
+        uses: actions/download-artifact@v8
+        with:
+          pattern: fedramp-package-*
+          path: fedramp-packages/
+          merge-multiple: true
+
+      - name: Download Security Scan Raw Outputs
+        # Used by collect_run_metrics.py to count semgrep/trufflehog/pip-audit
+        # findings. These are produced by the validate-and-scan job above
+        # as the `security-scan-results` artifact (see #135 consolidation).
+        uses: actions/download-artifact@v8
+        with:
+          name: security-scan-results
+          path: security-scan-output/
+        continue-on-error: true
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      # --- Run Metrics (every run) — must run before S3 upload so run-metrics.json
+      #     is archived alongside the other artifacts.
+
+      - name: Fetch AWS Config Compliance Summary
+        # Optional — best-effort. Config may not be recording yet in all envs.
+        if: github.ref == 'refs/heads/main' && vars.ENABLE_AWS_CONFIG == 'true'
+        continue-on-error: true
+        run: |
+          aws configservice describe-compliance-by-config-rule \
+            --region "${{ vars.AWS_REGION || 'us-east-1' }}" \
+            --output json > aws-config-raw.json || echo "{}" > aws-config-raw.json
+
+          # Normalize to the shape collect_run_metrics.py expects.
+          python3 - <<'PY'
+          import json
+          with open('aws-config-raw.json') as f:
+              raw = json.load(f)
+          compliant = 0
+          non_compliant = 0
+          for item in raw.get('ComplianceByConfigRules', []):
+              c = item.get('Compliance', {})
+              ct = c.get('ComplianceType', '')
+              if ct == 'COMPLIANT':
+                  compliant += 1
+              elif ct == 'NON_COMPLIANT':
+                  non_compliant += 1
+          with open('aws-config-summary.json', 'w') as f:
+              json.dump({
+                  'CompliantRuleCount': compliant,
+                  'NonCompliantRuleCount': non_compliant,
+              }, f)
+          print(f"AWS Config: {compliant} compliant / {non_compliant} non-compliant rules")
+          PY
+
+      - name: Collect Run Metrics
+        env:
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          AWS_CONFIG_FLAG=""
+          if [ -f aws-config-summary.json ]; then
+            AWS_CONFIG_FLAG="--aws-config aws-config-summary.json"
+          fi
+
+          SEMGREP_FLAG=""
+          TRUFFLEHOG_FLAG=""
+          PIP_AUDIT_FLAG=""
+          [ -f security-scan-output/semgrep.sarif ] && SEMGREP_FLAG="--semgrep security-scan-output/semgrep.sarif"
+          [ -f security-scan-output/trufflehog.json ] && TRUFFLEHOG_FLAG="--trufflehog security-scan-output/trufflehog.json"
+          [ -f security-scan-output/pip-audit.json ] && PIP_AUDIT_FLAG="--pip-audit security-scan-output/pip-audit.json"
+
+          python3 oscal/scripts/collect_run_metrics.py \
+            --run-id "$GITHUB_RUN_ID" \
+            --timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --checkov-metadata-glob 'oscal-artifacts/metadata-*.json' \
+            --checkov-trend-glob 'oscal-artifacts/checkov-trend-*.json' \
+            $SEMGREP_FLAG $TRUFFLEHOG_FLAG $PIP_AUDIT_FLAG $AWS_CONFIG_FLAG \
+            --history docs/dev/pipeline-perf-history.json \
+            --output run-metrics.json \
+            --github-step-summary
+
+      # --- S3 Upload (main only) ---
+
+      - name: Upload Artifacts to S3
+        if: github.ref == 'refs/heads/main'
+        run: |
+          BUCKET="your-security-artifacts-bucket"
+          ISO_DATE=$(date -u +%Y-%m-%d)
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          PREFIX="${ISO_DATE}/${SHORT_SHA}"
+          REGION="${{ vars.AWS_REGION || 'us-east-1' }}"
+
+          # OSCAL artifacts (all patterns merged)
+          if [ -d "oscal-artifacts/" ]; then
+            aws s3 cp oscal-artifacts/ "s3://${BUCKET}/${PREFIX}/" \
+              --recursive --region "$REGION"
+          fi
+
+          # FedRAMP packages (all patterns merged)
+          if [ -d "fedramp-packages/" ]; then
+            aws s3 cp fedramp-packages/ "s3://${BUCKET}/${PREFIX}/fedramp-packages/" \
+              --recursive --region "$REGION"
+          fi
+
+          # Metadata and trend data
+          for f in oscal-artifacts/metadata-*.json oscal-artifacts/checkov-trend-*.json; do
+            [ -f "$f" ] || continue
+            aws s3 cp "$f" "s3://${BUCKET}/${PREFIX}/$(basename "$f")" --region "$REGION"
+          done
+
+          # Latest pointers per pattern
+          for f in oscal-artifacts/metadata-*.json; do
+            [ -f "$f" ] || continue
+            aws s3 cp "$f" "s3://${BUCKET}/latest/$(basename "$f")" --region "$REGION"
+          done
+
+          # Per-run aggregated metrics (#133)
+          if [ -f run-metrics.json ]; then
+            aws s3 cp run-metrics.json "s3://${BUCKET}/${PREFIX}/run-metrics.json" --region "$REGION"
+            aws s3 cp run-metrics.json "s3://${BUCKET}/latest/run-metrics.json" --region "$REGION"
+          fi
+
+          echo "Uploaded all artifacts to s3://${BUCKET}/${PREFIX}/"
+
+      # --- Performance Tracking (every run) ---
+
+      - name: Generate XmR Control Chart
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 oscal/scripts/pipeline_perf_chart.py \
+            --baseline docs/dev/pipeline-baseline.json \
+            --output pipeline-performance.png
+
+      - name: Generate Performance Comparison
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 oscal/scripts/pipeline_perf_compare.py \
+            --baseline docs/dev/pipeline-baseline.json \
+            --recent 60
+
+      - name: Upload Performance Chart to S3
+        run: |
+          BUCKET="your-security-artifacts-bucket"
+          aws s3 cp pipeline-performance.png \
+            "s3://${BUCKET}/latest/pipeline-performance.png" \
+            --region ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Commit Performance Chart to Repo
+        if: github.ref == 'refs/heads/main'  # Only commit to repo on main
+        run: |
+          cp pipeline-performance.png docs/dev/pipeline-performance.png
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/dev/pipeline-performance.png docs/dev/pipeline-perf-history.json
+          git diff --cached --quiet && echo "No chart changes" || {
+            git commit -m "ci: update pipeline performance chart [skip ci]"
+            # Pull latest main — if a concurrent run committed the same PNG,
+            # the binary can't auto-merge during rebase. In that case abort
+            # the rebase, accept our freshly generated chart, and retry.
+            if ! git pull --rebase origin main 2>/dev/null; then
+              git rebase --abort
+              git pull origin main --no-rebase -X ours || true
+            fi
+            git push || echo "Push failed — another run likely won the race. Safe to ignore."
+          }
+
+      - name: Performance Summary
+        run: |
+          echo "## Pipeline Performance" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "![Pipeline Performance](https://raw.githubusercontent.com/${{ github.repository }}/main/docs/dev/pipeline-performance.png)" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          python3 oscal/scripts/pipeline_perf_compare.py \
+            --baseline docs/dev/pipeline-baseline.json \
+            --recent 60 >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true

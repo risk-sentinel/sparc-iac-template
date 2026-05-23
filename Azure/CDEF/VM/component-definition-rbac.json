@@ -1,0 +1,65 @@
+{
+  "component-definition": {
+    "uuid": "c1d2e3f4-1111-4000-a000-000000000009",
+    "metadata": {
+      "title": "SPARC Azure RBAC and Managed Identity Component Definition",
+      "last-modified": "2026-03-20T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "c1d2e3f4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "c1d2e3f4-2222-4000-a000-000000000009",
+        "type": "service",
+        "title": "Azure Managed Identity and RBAC Role Assignments",
+        "description": "User-assigned managed identity with scoped RBAC role assignments for Key Vault, Storage, and Monitoring access. No passwords or service principal secrets are used. Deployed via Terraform (Azure/VM/modules/rbac/). <!-- UPDATE: Insert managed identity principal ID, client ID, and role assignment scope details for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["c1d2e3f4-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "c1d2e3f4-3333-4000-a000-000000000009",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for Azure Managed Identity and RBAC",
+            "implemented-requirements": [
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000080",
+                "control-id": "ac-2",
+                "description": "Account Management: A user-assigned managed identity is created for the VM, providing an Azure AD identity without passwords or certificates. The identity lifecycle is managed entirely through Terraform — creation, role assignment, and deletion are tracked as infrastructure-as-code. The identity is scoped to the resource group and assigned only to the VM via the identity block (type = UserAssigned). No shared or generic accounts are used. Reference: DISA SRG-APP-000023, CIS Azure 1.1.",
+                "remarks": "Terraform resource: azurerm_user_assigned_identity.main. The identity is assigned to the VM in the vm module via identity_ids."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000081",
+                "control-id": "ac-3",
+                "description": "Access Enforcement: Three scoped RBAC role assignments enforce access control: (1) Key Vault Secrets User — scoped to the Key Vault resource, granting read-only access to secrets for retrieving database credentials and application configuration; (2) Storage Blob Data Contributor — scoped to the Storage Account, granting read/write/delete access to blob data for application file uploads; (3) Monitoring Metrics Publisher — scoped to the resource group, granting permission to publish custom metrics. Each role is assigned to the managed identity's principal_id. Reference: DISA SRG-APP-000033.",
+                "remarks": "Terraform resources: azurerm_role_assignment.key_vault_secrets (Key Vault Secrets User), azurerm_role_assignment.storage_blob (Storage Blob Data Contributor), azurerm_role_assignment.monitoring (Monitoring Metrics Publisher)."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000082",
+                "control-id": "ac-6",
+                "description": "Least Privilege: Each role assignment follows least privilege principles. The Key Vault role is Secrets User (read-only), not Secrets Officer or Administrator. The Storage role is Blob Data Contributor scoped to a single storage account, not a subscription-level Storage Account Contributor. The Monitoring role is Metrics Publisher (write metrics only), not Monitoring Contributor. No passwords, service principal secrets, or connection strings are used — the managed identity authenticates via Azure AD tokens with automatic rotation. Reference: DISA SRG-APP-000062, CIS Azure 1.3.",
+                "remarks": "Terraform resources: All three azurerm_role_assignment resources use specific scope parameters (var.key_vault_id, var.storage_account_id, var.resource_group_id) rather than subscription-level assignments."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

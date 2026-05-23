@@ -1,0 +1,145 @@
+# ============================================================================
+# SPARC ECS Fargate — Production
+# ============================================================================
+
+environment  = "prod"
+aws_region   = "us-east-1"
+project_name = "sparc"
+
+# ── Container Images ───────────────────────────────────────────────────────
+# ECR repos are auto-created. Push images after first deploy.
+# Image URLs auto-derive from ECR: {ecr_repo_url}:{tag}
+sparc_image_tag    = "v1.6.10" # SPARC Rails app — image hardening: Nokogiri XXE upload hardening (sparc#511/#517) + CDEF copy preserves statements + surfaces errors (sparc#519/#521). v1.6.9 deliberately skipped. Image-tag-only bump; no env var changes from v1.6.8. (#266)
+nginx_image_tag    = "v1.0.4"  # NGINX reverse proxy
+heimdall_image_tag = "v2.13.1" # Heimdall Server (mitre/heimdall2)
+
+# Heimdall image source + OAuth — moved out of variable defaults (#270) so the public template ships clean defaults.
+heimdall_image_repo       = "123456789012.dkr.ecr.us-east-1.amazonaws.com/heimdall2" # Prod Heimdall ECR (external — not managed by AWS/ECS/modules/ecr)
+heimdall_github_client_id = "Ov0000000000000000000"                                   # Heimdall GitHub OAuth App client ID (public by design)
+
+# ── ECR ────────────────────────────────────────────────────────────────────
+create_ecr = true
+
+# ── TLS Certificate (auto-provisioned via Route 53 DNS validation) ─────────
+create_certificate = true
+
+# ── Route 53 DNS ──────────────────────────────────────────────────────────
+# Primary domain (.org) — corporate proxies were blocking .info
+hosted_zone_id = "Z00000000000000000000"
+domain_name    = "sparc.example.com"
+
+# Legacy .info domain — kept as 301 redirect to .org for bookmarks
+redirect_hosted_zone_id = "Z11111111111111111111"
+redirect_domain_name    = "sparc.example.net"
+
+# ── ECS Sizing (demo — single task) ───────────────────────────────────────
+task_cpu      = 512
+task_memory   = 1024
+desired_count = 1
+
+# ── RDS ────────────────────────────────────────────────────────────────────
+db_instance_class      = "db.t3.micro"
+db_allocated_storage   = 20
+db_skip_final_snapshot = true
+
+# ── Redis (disabled — SPARC uses Solid Queue/Cable, not Redis) ────────────
+enable_redis = false
+# redis_node_type = "cache.t3.micro"
+
+# ── Admin / Break-Glass ───────────────────────────────────────────────────
+admin_email = "admin@example.com"
+
+# ── SPARC Application ────────────────────────────────────────────────────
+sparc_app_name      = "SPARC"
+sparc_contact_email = "support@example.com"
+sparc_welcome_text  = "Welcome to SPARC"
+
+# ── Organization ────────────────────────────────────────────────────────
+sparc_org_name          = "Risk Sentinel"
+sparc_org_contact_email = "support@example.com"
+sparc_org_description   = "SPARC is supported by private development and is made available for testing purposes only."
+# sparc_org_address        = ""
+# sparc_org_contact_person = ""
+
+# ── Authentication ────────────────────────────────────────────────────────
+sparc_enable_local_login = "true"
+
+# ── API Auth ─────────────────────────────────────────────────────────────
+sparc_api_auth = "hybrid"
+
+# ── OIDC (Okta) ──────────────────────────────────────────────────────────
+sparc_enable_oidc     = "true"
+sparc_oidc_issuer_url = "https://integrator-0000000.okta.com/oauth2/default"
+sparc_oidc_client_id  = "0oa00000000000000000"
+# sparc_oidc_client_secret passed via CI secret: SPARC_OIDC_CLIENT_SECRET
+sparc_oidc_redirect_uri   = "https://sparc.example.com/auth/oidc/callback"
+sparc_oidc_scopes         = "openid profile email"
+sparc_oidc_provider_title = "Okta"
+sparc_oidc_force_mfa      = "true"
+
+# ── GitHub OAuth ────────────────────────────────────────────────────────
+sparc_github_client_id = "Ov0000000000000000000"
+# sparc_github_client_secret passed via CI secret: SPARC_GITHUB_CLIENT_SECRET
+
+# ── GitLab OAuth (disabled) ─────────────────────────────────────────────
+# sparc_gitlab_client_id = ""
+# sparc_gitlab_client_secret passed via CI secret: SPARC_GITLAB_CLIENT_SECRET
+
+# ── SMTP (WorkMail) ──────────────────────────────────────────────────────
+sparc_enable_smtp   = "true"
+sparc_smtp_address  = "smtp.mail.us-east-1.awsapps.com"
+sparc_smtp_port     = "465"
+sparc_smtp_username = "admin@example.com"
+# sparc_smtp_password passed via CI secret: SPARC_SMTP_PASSWORD
+sparc_smtp_auth         = "login"
+sparc_smtp_from_address = "noreply@example.com"
+
+# ── Consent Banner ───────────────────────────────────────────────────────
+sparc_banner_enabled = "true"
+sparc_banner_message = "public/banners/demo-banner.html"
+
+# ── Docker Seeds (first deploy only) ────────────────────────────────────
+sparc_run_seeds = "false"
+sparc_seed_mode = "full"
+
+# ── Service Accounts ────────────────────────────────────────────────────
+sparc_sa_inactivity_days = "90"
+
+# ── AWS Labs CDEF runtime ingestion (sparc PR #469 / sparc-iac #248) ─────
+# SPARC v1.6.2 pulls OSCAL Component Definitions from
+# awslabs/oscal-content-for-aws-services on a recurring schedule and stages
+# them as read-only catalog entries. Master switch on for this environment;
+# air-gapped tenants set sparc_aws_labs_cdef_enabled=false in their env.
+# SPARC_AWS_LABS_GITHUB_TOKEN not wired — 60 req/hr unauth limit is plenty
+# for the weekly refresh of a small upstream repo.
+sparc_aws_labs_cdef_enabled               = true
+sparc_aws_labs_cdef_repo                  = "awslabs/oscal-content-for-aws-services"
+sparc_aws_labs_cdef_branch                = "main"
+sparc_aws_labs_oscal_versions             = ""
+sparc_aws_labs_cdef_refresh_interval_days = 7
+
+# ── Monitoring ────────────────────────────────────────────────────────────
+alarm_emails = ["admin@example.com"]
+
+# ── ECS Exec (disabled for 3PAO — AC-17, CM-7) ──────────────────────────
+enable_ecs_exec = false
+
+# ── Scaling (off for demo) ───────────────────────────────────────────────
+enable_autoscaling = false
+enable_rds_proxy   = false
+
+# ── KMS CMK encryption (SC-8, SC-12, SC-28) ──────────────────────────────
+# $3/month for 3 keys (data, secrets, logs). Required for SNS alarm
+# delivery — alias/aws/sns breaks CloudWatch → SNS publishing.
+enable_cmk = true
+
+# ── sparc-validate scanner role grants (#226 / #234 / #236) ─────────────
+# Opt-in inline policies on the sparc-validate-scanner role for cross-repo
+# evidence flows. Each is independent; flip on per environment as the
+# consumer side (sparc-validate) ships its companion work.
+
+# #236 — ECR pull permissions for cinc-auditor `docker://` target audits.
+# Pull statement scoped to sparc-prod-* ECR repos. Enables sparc-validate
+# cis-docker / cis-nginx image-level audit profiles to inspect the
+# nginx.conf, USER directive, file perms, etc. baked into the image.
+enable_ecr_pull_for_sparc_validate = true

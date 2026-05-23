@@ -1,0 +1,59 @@
+{
+  "component-definition": {
+    "uuid": "c1d2e3f4-1111-4000-a000-000000000001",
+    "metadata": {
+      "title": "SPARC Azure VNet and Networking Component Definition",
+      "last-modified": "2026-03-20T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "c1d2e3f4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "c1d2e3f4-2222-4000-a000-000000000001",
+        "type": "service",
+        "title": "Azure VNet and Networking",
+        "description": "Virtual Network with public/private/database subnet architecture, NAT gateway for private subnet outbound, and four Network Security Groups enforcing layered ingress rules. Deployed via Terraform (Azure/VM/modules/networking/). <!-- UPDATE: Insert VNet ID, CIDR ranges, resource group name, and subscription details for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["c1d2e3f4-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "c1d2e3f4-3333-4000-a000-000000000001",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for Azure VNet networking components",
+            "implemented-requirements": [
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000001",
+                "control-id": "sc-7",
+                "description": "Boundary Protection: The VNet establishes a network boundary with a public subnet (Application Gateway), a private subnet (VM), and a database subnet (PostgreSQL Flexible Server with service delegation). Four Network Security Groups enforce layered ingress rules: App Gateway NSG permits 80/443 from 0.0.0.0/0 and GatewayManager on 65200-65535, VM NSG permits app_port from the public subnet only, DB NSG permits 5432 from the private subnet only, Redis NSG permits 6380 from the private subnet only. Each NSG is associated with its respective subnet or NIC. No direct internet access to private or database subnets. Reference: DISA SRG-NET-000364, CIS Azure 6.1.",
+                "remarks": "Terraform resources: azurerm_virtual_network.main, azurerm_subnet.public, azurerm_subnet.private, azurerm_subnet.database, azurerm_network_security_group.app_gateway, azurerm_network_security_group.vm, azurerm_network_security_group.db, azurerm_network_security_group.redis, azurerm_subnet_network_security_group_association (public, private, database)."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000002",
+                "control-id": "ac-4",
+                "description": "Information Flow Enforcement: Network architecture enforces unidirectional traffic flow: Internet -> Application Gateway (public subnet) -> VM (private subnet) -> PostgreSQL and Redis (database/private subnets). NSGs restrict each hop to specific ports and source address prefixes. NAT gateway provides controlled outbound-only internet access from the private subnet. The VM can reach PostgreSQL (5432) and Redis (6380) but neither data store can initiate connections to the VM. The database subnet uses service delegation for PostgreSQL Flexible Server. Reference: DISA SRG-NET-000019, CIS Azure 6.2.",
+                "remarks": "Terraform resources: azurerm_nat_gateway.main, azurerm_nat_gateway_public_ip_association.main, azurerm_subnet_nat_gateway_association.private. Data stores are in private/delegated subnets with no public routes."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

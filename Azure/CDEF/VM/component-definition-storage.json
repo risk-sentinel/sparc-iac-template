@@ -1,0 +1,59 @@
+{
+  "component-definition": {
+    "uuid": "c1d2e3f4-1111-4000-a000-000000000003",
+    "metadata": {
+      "title": "SPARC Azure Managed Disk Component Definition",
+      "last-modified": "2026-03-20T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "c1d2e3f4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "c1d2e3f4-2222-4000-a000-000000000003",
+        "type": "service",
+        "title": "Azure Managed Disk",
+        "description": "Managed data disk attached to the VM for persistent application data storage, with Azure-managed encryption at rest and configurable storage account type. Deployed via Terraform (Azure/VM/modules/storage/). <!-- UPDATE: Insert managed disk ID, VM attachment details, and disk size for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["c1d2e3f4-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "c1d2e3f4-3333-4000-a000-000000000003",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for Azure Managed Disk",
+            "implemented-requirements": [
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000020",
+                "control-id": "sc-28",
+                "description": "Protection of Information at Rest: The managed data disk is encrypted at rest using Azure Storage Service Encryption with platform-managed AES-256 keys. All data, snapshots, and temporary storage associated with the disk are automatically encrypted. The disk uses a configurable storage account type (e.g., Premium_LRS, StandardSSD_LRS) and is created as an empty disk with a specified size. Reference: DISA SRG-APP-000231, CIS Azure 7.3.",
+                "remarks": "Terraform resources: azurerm_managed_disk.data with configurable storage_account_type, azurerm_virtual_machine_data_disk_attachment.data. Azure encrypts all managed disks by default with platform-managed keys."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000021",
+                "control-id": "cp-9",
+                "description": "System Backup: Azure Managed Disks support Azure Backup integration for automated point-in-time snapshots and recovery. The disk is created with a specified zone for availability. Azure Backup can be configured to perform daily incremental backups with configurable retention policies. Disk snapshots can also be created on-demand for pre-change backup points. Reference: DISA SRG-APP-000065.",
+                "remarks": "Terraform resource: azurerm_managed_disk.data. Azure Backup vault and backup policy should be configured separately for production deployments."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

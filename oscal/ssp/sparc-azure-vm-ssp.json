@@ -1,0 +1,2058 @@
+{
+  "system-security-plan": {
+    "metadata": {
+      "title": "SPARC Azure VM System Security Plan",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "system-owner",
+          "title": "System Owner"
+        },
+        {
+          "id": "authorizing-official",
+          "title": "Authorizing Official"
+        },
+        {
+          "id": "system-admin",
+          "title": "System Administrator"
+        },
+        {
+          "id": "isso",
+          "title": "Information System Security Officer"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "b49cfea8-1e50-56c9-8cc1-7b004d86cce0",
+          "type": "organization",
+          "name": "Organization Name"
+        },
+        {
+          "uuid": "5b081cfc-e113-5d81-afd2-960685bf7aa7",
+          "type": "person",
+          "name": "System Owner"
+        },
+        {
+          "uuid": "11b21300-ad78-5329-95cb-3cbd5c157320",
+          "type": "person",
+          "name": "Authorizing Official"
+        },
+        {
+          "uuid": "51436781-8c8f-543c-997b-be667f15c393",
+          "type": "person",
+          "name": "System Administrator"
+        },
+        {
+          "uuid": "7573edbb-cc47-5e19-985f-aa4ecbf6b4a0",
+          "type": "person",
+          "name": "Information System Security Officer"
+        }
+      ],
+      "last-modified": "2026-04-16T19:30:14Z",
+      "revisions": [
+        {
+          "title": "SPARC Azure VM System Security Plan (superseded)",
+          "version": "1.0.0",
+          "oscal-version": "1.1.2",
+          "props": [
+            {
+              "name": "previous-uuid",
+              "ns": "https://risk-sentinel.io/ns/oscal",
+              "value": "e217fb71-ce78-5052-b0ba-cb888296dcbc"
+            }
+          ],
+          "last-modified": "2026-03-21T20:25:27Z"
+        }
+      ]
+    },
+    "import-profile": {
+      "href": "NIST_SP-800-53_rev5_HIGH-baseline-resolved-profile_catalog.json"
+    },
+    "system-characteristics": {
+      "system-ids": [
+        {
+          "id": "c8c01e23-48b8-5c1c-aebb-e2f044c5fada",
+          "identifier-type": "https://ietf.org/rfc/rfc4122"
+        }
+      ],
+      "system-name": "SPARC",
+      "description": "Systemized Policy and Regulatory Controls",
+      "security-sensitivity-level": "high",
+      "system-information": {
+        "information-types": [
+          {
+            "uuid": "7c011b3a-47f8-5e73-9c89-3c496148ac52",
+            "title": "Compliance Data",
+            "description": "System Assessment Plans (SAP), System Assessment Reports (SAR), Plans of Action and Milestones (POAM), resolved NIST profiles, and validation data.",
+            "confidentiality-impact": {
+              "base": "high"
+            },
+            "integrity-impact": {
+              "base": "high"
+            },
+            "availability-impact": {
+              "base": "high"
+            }
+          }
+        ]
+      },
+      "security-impact-level": {
+        "security-objective-confidentiality": "high",
+        "security-objective-integrity": "high",
+        "security-objective-availability": "high"
+      },
+      "status": {
+        "state": "operational"
+      },
+      "authorization-boundary": {
+        "description": "The SPARC Azure VM deployment boundary encompasses all Terraform-managed infrastructure components defined in the OSCAL CDEFs."
+      }
+    },
+    "system-implementation": {
+      "users": [
+        {
+          "uuid": "8095ff35-a71e-5392-bfd2-804ac34551ee",
+          "title": "System Owner",
+          "role-ids": [
+            "system-owner"
+          ]
+        },
+        {
+          "uuid": "f2fbf3fa-e8c2-54c3-b8b6-2619f5d91991",
+          "title": "Authorizing Official",
+          "role-ids": [
+            "authorizing-official"
+          ]
+        },
+        {
+          "uuid": "30e67cd2-c6e6-554a-938c-bf57bfc29432",
+          "title": "System Administrator",
+          "role-ids": [
+            "system-admin"
+          ]
+        },
+        {
+          "uuid": "eafef9a3-288a-5b3c-9f68-163f3a45ce34",
+          "title": "Information System Security Officer",
+          "role-ids": [
+            "isso"
+          ]
+        }
+      ],
+      "components": [
+        {
+          "uuid": "c1d2e3f4-2222-4000-a000-000000000011",
+          "type": "service",
+          "title": "Azure Monitor Action Group",
+          "description": "Monitor Action Group with dynamic email receivers for alert notifications, connected to all metric alerts in the monitoring module. Deployed via Terraform (Azure/VM/modules/action_group/). <!-- UPDATE: Insert action group ID, short name, and email addresses for your deployment. -->",
+          "status": {
+            "state": "operational"
+          }
+        },
+        {
+          "uuid": "c1d2e3f4-2222-4000-a000-000000000004",
+          "type": "service",
+          "title": "Azure Application Gateway v2",
+          "description": "Application Gateway Standard_v2 with TLS termination on port 443, HTTP-to-HTTPS 301 redirect, backend pool targeting the VM private IP, health probe on the application port, and optional SSL certificate. Deployed via Terraform (Azure/VM/modules/app_gateway/). <!-- UPDATE: Insert Application Gateway resource ID, public IP, backend pool details, and SSL certificate name for your deployment. -->",
+          "status": {
+            "state": "operational"
+          }
+        },
+        {
+          "uuid": "c1d2e3f4-2222-4000-a000-000000000007",
+          "type": "service",
+          "title": "Azure Storage Account and Blob Storage",
+          "description": "Storage Account with TLS 1.2 minimum, private access by default, blob versioning, soft delete retention, and a private blob container. Deployed via Terraform (Azure/VM/modules/blob_storage/). <!-- UPDATE: Insert storage account name, container name, and resource group for your deployment. -->",
+          "status": {
+            "state": "operational"
+          }
+        },
+        {
+          "uuid": "596fd555-075e-5477-9205-80bce00805f5",
+          "type": "service",
+          "title": "AWS Config with NIST 800-53 Compliance Rules",
+          "description": "AWS Config configuration recorder with periodic recording (24-hour snapshots), 10 managed security rules, and optional NIST 800-53 Rev 5 conformance pack (130 rules). Configuration history stored in S3 security artifacts bucket. Provides continuous compliance monitoring and drift detection for all AWS resources. Deployed via Terraform (AWS/config/).",
+          "status": {
+            "state": "operational"
+          }
+        },
+        {
+          "uuid": "c1d2e3f4-2222-4000-a000-000000000005",
+          "type": "service",
+          "title": "Azure PostgreSQL Flexible Server",
+          "description": "PostgreSQL Flexible Server with encrypted storage, SSL enforcement, private DNS zone integration, delegated subnet, auto-generated credentials stored in Azure Key Vault, and configurable high availability. Deployed via Terraform (Azure/VM/modules/database/). <!-- UPDATE: Insert server FQDN, Key Vault secret name, database name, and resource group for your deployment. -->",
+          "status": {
+            "state": "operational"
+          }
+        },
+        {
+          "uuid": "c1d2e3f4-2222-4000-a000-000000000012",
+          "type": "service",
+          "title": "Azure DNS",
+          "description": "Azure DNS zone with A record pointing to the Application Gateway public IP. Uses an existing DNS zone data source and creates the application DNS record. Deployed via Terraform (Azure/VM/modules/dns/). <!-- UPDATE: Insert DNS zone name, record name, and target IP for your deployment. -->",
+          "status": {
+            "state": "operational"
+          }
+        },
+        {
+          "uuid": "c1d2e3f4-2222-4000-a000-000000000008",
+          "type": "service",
+          "title": "Azure Key Vault",
+          "description": "Azure Key Vault with RBAC-based authorization, purge protection, 90-day soft delete retention, and network ACLs allowing Azure service bypass. Deployed via Terraform (Azure/VM/modules/key_vault/). <!-- UPDATE: Insert Key Vault name, URI, tenant ID, and resource group for your deployment. -->",
+          "status": {
+            "state": "operational"
+          }
+        },
+        {
+          "uuid": "c1d2e3f4-2222-4000-a000-000000000010",
+          "type": "service",
+          "title": "Azure Log Analytics, Metric Alerts, and Flow Logs",
+          "description": "Log Analytics workspace with 365-day retention, NSG flow logs with traffic analytics, VM diagnostic settings, and 7 metric alerts covering VM CPU, Application Gateway unhealthy hosts and 5xx errors, PostgreSQL CPU and storage, and Redis CPU and memory. Deployed via Terraform (Azure/VM/modules/monitoring/). <!-- UPDATE: Insert Log Analytics workspace ID, alert rule IDs, and NSG flow log details for your deployment. -->",
+          "status": {
+            "state": "operational"
+          }
+        },
+        {
+          "uuid": "c1d2e3f4-2222-4000-a000-000000000001",
+          "type": "service",
+          "title": "Azure VNet and Networking",
+          "description": "Virtual Network with public/private/database subnet architecture, NAT gateway for private subnet outbound, and four Network Security Groups enforcing layered ingress rules. Deployed via Terraform (Azure/VM/modules/networking/). <!-- UPDATE: Insert VNet ID, CIDR ranges, resource group name, and subscription details for your deployment. -->",
+          "status": {
+            "state": "operational"
+          }
+        },
+        {
+          "uuid": "a1b2c3d4-2222-4000-a000-000000000016",
+          "type": "service",
+          "title": "GitHub Actions CI/CD Pipeline with Security Scanning",
+          "description": "Automated CI/CD pipeline using GitHub Actions with integrated security scanning: Semgrep (SAST), TruffleHog (secrets), pip-audit (SCA), Checkov (IaC), and SAF CLI for HDF conversion. Scan results are converted to OSCAL Assessment Results and bundled into FedRAMP authorization packages. Threshold-based security gate blocks merges/deploys on policy violations. Deployed via .github/workflows/ (compliance.yml, plan-on-push.yml, deploy.yml).",
+          "status": {
+            "state": "operational"
+          }
+        },
+        {
+          "uuid": "c1d2e3f4-2222-4000-a000-000000000009",
+          "type": "service",
+          "title": "Azure Managed Identity and RBAC Role Assignments",
+          "description": "User-assigned managed identity with scoped RBAC role assignments for Key Vault, Storage, and Monitoring access. No passwords or service principal secrets are used. Deployed via Terraform (Azure/VM/modules/rbac/). <!-- UPDATE: Insert managed identity principal ID, client ID, and role assignment scope details for your deployment. -->",
+          "status": {
+            "state": "operational"
+          }
+        },
+        {
+          "uuid": "c1d2e3f4-2222-4000-a000-000000000006",
+          "type": "service",
+          "title": "Azure Cache for Redis",
+          "description": "Azure Cache for Redis with TLS 1.2 minimum, non-SSL port disabled, public network access disabled, and optional VNet integration for Standard/Premium SKUs. Deployed via Terraform (Azure/VM/modules/redis/). <!-- UPDATE: Insert Redis cache hostname, port, SKU, and resource group for your deployment. -->",
+          "status": {
+            "state": "operational"
+          }
+        },
+        {
+          "uuid": "c1d2e3f4-2222-4000-a000-000000000003",
+          "type": "service",
+          "title": "Azure Managed Disk",
+          "description": "Managed data disk attached to the VM for persistent application data storage, with Azure-managed encryption at rest and configurable storage account type. Deployed via Terraform (Azure/VM/modules/storage/). <!-- UPDATE: Insert managed disk ID, VM attachment details, and disk size for your deployment. -->",
+          "status": {
+            "state": "operational"
+          }
+        },
+        {
+          "uuid": "c1d2e3f4-2222-4000-a000-000000000002",
+          "type": "service",
+          "title": "Azure Linux Virtual Machine",
+          "description": "Linux VM (Ubuntu 22.04 LTS) with user-assigned managed identity, Docker and docker-compose bootstrapped via custom_data (user-data.sh), no public IP, Premium_LRS OS disk with encryption, and automatic OS patching. Deployed via Terraform (Azure/VM/modules/vm/). <!-- UPDATE: Insert VM resource ID, NIC ID, managed identity principal ID, and resource group for your deployment. -->",
+          "status": {
+            "state": "operational"
+          }
+        },
+        {
+          "uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+          "type": "leveraged-authorization",
+          "title": "AWS FedRAMP Inherited Controls",
+          "description": "Controls fully inherited from AWS under the AWS FedRAMP authorization. Source: AWS SSP Appendix J \u2014 CIS and CRM Workbook (v26.01.U). These controls cover physical/environmental protection (PE), maintenance (MA), contingency planning (CP), media protection (MP), and select audit/monitoring controls. No customer implementation required.",
+          "status": {
+            "state": "operational"
+          }
+        },
+        {
+          "uuid": "94efa1a4-56a3-5e75-8458-380b25a18d57",
+          "type": "leveraged-authorization",
+          "title": "AWS FedRAMP Shared Responsibility Controls",
+          "description": "Controls with shared responsibility between AWS (platform) and SPARC (configuration/monitoring). These controls are partially inherited from the AWS FedRAMP authorization, with customer-specific implementation documented in individual infrastructure and application CDEFs. Source: AWS SSP Appendix J \u2014 CRM Workbook (v26.01.U).",
+          "status": {
+            "state": "operational"
+          }
+        },
+        {
+          "uuid": "404a99a5-68ec-582f-b656-3374e7056a73",
+          "type": "policy",
+          "title": "Organizational Security Policies and Procedures",
+          "description": "Template for organizational security policies and procedures covering awareness/training (AT), planning (PL), program management (PM), personnel security (PS), risk assessment (RA), and system acquisition (SA) control families. Organizations must customize these templates with their specific policies.",
+          "status": {
+            "state": "operational"
+          }
+        }
+      ]
+    },
+    "control-implementation": {
+      "description": "Control implementations assembled from OSCAL Component Definitions. Each control maps to one or more infrastructure components managed via Terraform IaC.",
+      "implemented-requirements": [
+        {
+          "uuid": "cee10eee-7aee-5c1f-a9e3-89f95c508a98",
+          "control-id": "ac-12",
+          "statements": [
+            {
+              "statement-id": "ac-12_smt",
+              "uuid": "7a05e650-de7a-5d9a-a3fc-ccc56a859ce8",
+              "by-components": [
+                {
+                  "component-uuid": "94efa1a4-56a3-5e75-8458-380b25a18d57",
+                  "uuid": "fed5eb0e-cd24-5fff-b20a-166ea0de0856",
+                  "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: AC-12. Customer responsibility: AWS customers are responsible for configuring their systems to automatically terminate a user session after [Assignment: organization-defined conditions or trigger events requiring session disconnect].",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "4272a313-2212-51be-aa5b-ee0c00b5f954",
+          "control-id": "ac-17",
+          "statements": [
+            {
+              "statement-id": "ac-17_smt",
+              "uuid": "d2b82187-01b4-5c5e-a31f-f015fd25a8a4",
+              "by-components": [
+                {
+                  "component-uuid": "596fd555-075e-5477-9205-80bce00805f5",
+                  "uuid": "cf22145a-3430-5eb4-b55c-8fd6bed134bc",
+                  "description": "Config rule restricted-ssh validates that no security groups allow unrestricted SSH access (0.0.0.0/0 on port 22).",
+                  "remarks": ""
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000002",
+                  "uuid": "374ff4e1-c5d5-56f5-b95a-dc87eef1beff",
+                  "description": "Remote Access: The VM has no public IP address; the network interface uses private IP addressing only (private_ip_address_allocation = Dynamic). Remote access to the VM is only possible through the Application Gateway or Azure Bastion (not provisioned by default). The VM uses a user-assigned managed identity for authentication to Azure services (Key Vault, Storage, Monitoring), eliminating the need for stored credentials. SSH key pair is auto-generated via tls_private_key (4096-bit RSA) \u2014 no local key files or manual key distribution required. Private key is a sensitive Terraform output. Reference: DISA SRG-OS-000033, CIS Azure 7.2.",
+                  "remarks": "Terraform resources: azurerm_network_interface.main (no public_ip_address_id), azurerm_linux_virtual_machine.main with identity type = UserAssigned."
+                },
+                {
+                  "component-uuid": "94efa1a4-56a3-5e75-8458-380b25a18d57",
+                  "uuid": "79d91922-7cbe-5f39-9b22-fd64811ba744",
+                  "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: AC-17.a, AC-17.b. Customer responsibility: AWS customers are responsible for establishing and documenting usage restrictions, configuration/connection requirements, and implementation guidance for each type of remote access allowed.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "67804157-0f60-5a3e-a31e-30314add3433",
+          "control-id": "ac-2",
+          "statements": [
+            {
+              "statement-id": "ac-2_smt",
+              "uuid": "521b36d7-6b21-5dea-ab2a-f2479f2b1063",
+              "by-components": [
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000009",
+                  "uuid": "8907e028-a7be-54b5-927c-0a957896a362",
+                  "description": "Account Management: A user-assigned managed identity is created for the VM, providing an Azure AD identity without passwords or certificates. The identity lifecycle is managed entirely through Terraform \u2014 creation, role assignment, and deletion are tracked as infrastructure-as-code. The identity is scoped to the resource group and assigned only to the VM via the identity block (type = UserAssigned). No shared or generic accounts are used. Reference: DISA SRG-APP-000023, CIS Azure 1.1.",
+                  "remarks": "Terraform resource: azurerm_user_assigned_identity.main. The identity is assigned to the VM in the vm module via identity_ids."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "e6093416-5cff-53dd-bda9-6e1fc3461f43",
+          "control-id": "ac-3",
+          "statements": [
+            {
+              "statement-id": "ac-3_smt",
+              "uuid": "6e3ccaff-e5e3-5ab0-b8b3-001bc443bd1b",
+              "by-components": [
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000007",
+                  "uuid": "f5c38f75-c890-532d-88a7-26cc4e7da686",
+                  "description": "Access Enforcement: The Storage Account denies public access by default (allow_nested_items_to_be_public = false). Network rules enforce a default deny policy (network_rules default_action = Deny), requiring explicit network access grants. The blob container uses private access type (container_access_type = private), preventing anonymous blob access. The VM accesses storage via its managed identity with the Storage Blob Data Contributor RBAC role assignment (defined in the rbac module). Reference: DISA SRG-APP-000033, CIS Azure 3.7.",
+                  "remarks": "Terraform resources: azurerm_storage_account.main with allow_nested_items_to_be_public = false, network_rules default_action = Deny. azurerm_storage_container.main with container_access_type = private. RBAC: azurerm_role_assignment.storage_blob in rbac module."
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000008",
+                  "uuid": "abc5c1d0-4b78-5ef7-80e7-7898a9894db2",
+                  "description": "Access Enforcement: Key Vault uses RBAC authorization (enable_rbac_authorization = true) instead of vault access policies, integrating with Azure AD for fine-grained access control. The VM's managed identity is granted the Key Vault Secrets User role (defined in the rbac module), providing read-only access to secrets. Purge protection prevents unauthorized permanent deletion. Network ACLs default to Allow with Azure service bypass enabled, allowing trusted Azure services to access the vault. Reference: DISA SRG-APP-000033, CIS Azure 8.5.",
+                  "remarks": "Terraform resources: azurerm_key_vault.main with enable_rbac_authorization = true, network_acls (default_action = Allow, bypass = AzureServices). RBAC: azurerm_role_assignment.key_vault_secrets in rbac module with role Key Vault Secrets User."
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000009",
+                  "uuid": "88fa89f3-0102-5f10-9c91-f93460da9c34",
+                  "description": "Access Enforcement: Three scoped RBAC role assignments enforce access control: (1) Key Vault Secrets User \u2014 scoped to the Key Vault resource, granting read-only access to secrets for retrieving database credentials and application configuration; (2) Storage Blob Data Contributor \u2014 scoped to the Storage Account, granting read/write/delete access to blob data for application file uploads; (3) Monitoring Metrics Publisher \u2014 scoped to the resource group, granting permission to publish custom metrics. Each role is assigned to the managed identity's principal_id. Reference: DISA SRG-APP-000033.",
+                  "remarks": "Terraform resources: azurerm_role_assignment.key_vault_secrets (Key Vault Secrets User), azurerm_role_assignment.storage_blob (Storage Blob Data Contributor), azurerm_role_assignment.monitoring (Monitoring Metrics Publisher)."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "889f2b98-ab8f-5796-9b96-f24896df269b",
+          "control-id": "ac-4",
+          "statements": [
+            {
+              "statement-id": "ac-4_smt",
+              "uuid": "6f2d0704-9d20-5769-b365-a10699a94127",
+              "by-components": [
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000001",
+                  "uuid": "2c621374-2239-5fb7-8760-cf20adbe9bf1",
+                  "description": "Information Flow Enforcement: Network architecture enforces unidirectional traffic flow: Internet -> Application Gateway (public subnet) -> VM (private subnet) -> PostgreSQL and Redis (database/private subnets). NSGs restrict each hop to specific ports and source address prefixes. NAT gateway provides controlled outbound-only internet access from the private subnet. The VM can reach PostgreSQL (5432) and Redis (6380) but neither data store can initiate connections to the VM. The database subnet uses service delegation for PostgreSQL Flexible Server. Reference: DISA SRG-NET-000019, CIS Azure 6.2.",
+                  "remarks": "Terraform resources: azurerm_nat_gateway.main, azurerm_nat_gateway_public_ip_association.main, azurerm_subnet_nat_gateway_association.private. Data stores are in private/delegated subnets with no public routes."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "56ae556b-92f0-5d41-a2ba-79fd105b812e",
+          "control-id": "ac-6",
+          "statements": [
+            {
+              "statement-id": "ac-6_smt",
+              "uuid": "2ea6a8c0-ed6a-5d17-8cdc-72918fc000fc",
+              "by-components": [
+                {
+                  "component-uuid": "596fd555-075e-5477-9205-80bce00805f5",
+                  "uuid": "fcf6771c-c6d4-59cd-b906-15fe732dd1d9",
+                  "description": "Config rule iam-no-inline-policy validates that IAM follows least privilege via managed policies rather than inline policies that are harder to audit.",
+                  "remarks": ""
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000009",
+                  "uuid": "e407bed0-b68e-5832-bbb6-d9041ed7ca2f",
+                  "description": "Least Privilege: Each role assignment follows least privilege principles. The Key Vault role is Secrets User (read-only), not Secrets Officer or Administrator. The Storage role is Blob Data Contributor scoped to a single storage account, not a subscription-level Storage Account Contributor. The Monitoring role is Metrics Publisher (write metrics only), not Monitoring Contributor. No passwords, service principal secrets, or connection strings are used \u2014 the managed identity authenticates via Azure AD tokens with automatic rotation. Reference: DISA SRG-APP-000062, CIS Azure 1.3.",
+                  "remarks": "Terraform resources: All three azurerm_role_assignment resources use specific scope parameters (var.key_vault_id, var.storage_account_id, var.resource_group_id) rather than subscription-level assignments."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "c865b4d2-c777-526b-822e-85e2f889cfc3",
+          "control-id": "at-2.2",
+          "statements": [
+            {
+              "statement-id": "at-2.2_smt",
+              "uuid": "0a3b11da-01f4-54a6-ba81-c32e3c322f1e",
+              "by-components": [
+                {
+                  "component-uuid": "404a99a5-68ec-582f-b656-3374e7056a73",
+                  "uuid": "1795792e-fcb1-5747-a841-0d3ab50ebcae",
+                  "description": "Insider Threat. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of AT-02(02). -->",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "bbf9b065-a437-5f8c-989f-d859a12cd969",
+          "control-id": "au-11",
+          "statements": [
+            {
+              "statement-id": "au-11_smt",
+              "uuid": "f5ff35b0-d9dc-5111-91d4-69eb8a990e18",
+              "by-components": [
+                {
+                  "component-uuid": "94efa1a4-56a3-5e75-8458-380b25a18d57",
+                  "uuid": "546b351b-ce6a-5f64-b150-85ffa7f561b7",
+                  "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: AU-11. Customer responsibility: AWS customers are responsible for retaining audit records for a period of [FedRAMP Assignment: at least one (1) year] or for a period defined by their audit and accountability policy to provide support for after-the-fact investigations of security incidents and to meet regulatory and organizational ",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "2121baf3-279a-5715-b0b9-a7ccf8ebf0c5",
+          "control-id": "au-12",
+          "statements": [
+            {
+              "statement-id": "au-12_smt",
+              "uuid": "4ba0d8f6-8bb9-550a-bbde-dd6b6afd30a2",
+              "by-components": [
+                {
+                  "component-uuid": "94efa1a4-56a3-5e75-8458-380b25a18d57",
+                  "uuid": "84982b27-2f63-57ee-8044-9ea8a3503d00",
+                  "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: AU-12.a, AU-12.b, AU-12.c. Customer responsibility: AWS customers are responsible for providing audit record generation capability for the auditable events defined in AU-2 a. at [FedRAMP Assignment: all information system components where audit capability is deployed/available].",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "1eb7acea-34f7-576e-93cf-91635cd847fe",
+          "control-id": "au-2",
+          "statements": [
+            {
+              "statement-id": "au-2_smt",
+              "uuid": "acbce830-fe05-5fc8-9ca5-8e0d52a688d8",
+              "by-components": [
+                {
+                  "component-uuid": "596fd555-075e-5477-9205-80bce00805f5",
+                  "uuid": "e1aa4d1f-2549-5dc2-8c71-19f6ffe3cb90",
+                  "description": "Config rules verify that audit mechanisms are active: cloudtrail-enabled validates CloudTrail recording, vpc-flow-logs-enabled validates VPC flow log capture.",
+                  "remarks": ""
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000005",
+                  "uuid": "bd919cf4-4f4c-5db8-a1b4-895085a42493",
+                  "description": "Event Logging: PostgreSQL Flexible Server provides built-in server logs for query execution, errors, and connection events. CPU and storage utilization are monitored via Azure Monitor metric alerts (cpu_percent > 80%, storage_percent > 80%) configured in the monitoring module. These alerts trigger notifications through the action group for operational awareness. Reference: DISA SRG-APP-000089.",
+                  "remarks": "Metric alerts defined in monitoring module: azurerm_monitor_metric_alert.db_cpu (cpu_percent), azurerm_monitor_metric_alert.db_storage (storage_percent). PostgreSQL server logs are available via Azure Monitor diagnostic settings."
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000008",
+                  "uuid": "57251a38-48bf-5f1f-bca8-3288e1ce6dd4",
+                  "description": "Event Logging: Azure Key Vault provides built-in diagnostic logging for all data plane and management plane operations. All secret read, write, delete, and list operations are logged with caller identity, timestamp, operation type, and result. Key Vault diagnostic settings can be configured to stream logs to Log Analytics for centralized audit analysis and alerting. Reference: DISA SRG-APP-000089, CIS Azure 8.4.",
+                  "remarks": "Azure Key Vault audit logging is enabled by default. Configure azurerm_monitor_diagnostic_setting for Key Vault to stream AuditEvent logs to the Log Analytics workspace for centralized monitoring."
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000010",
+                  "uuid": "cebcbab9-7146-5862-9b01-b74dd7aec468",
+                  "description": "Event Logging: NSG flow logs are enabled for all NSGs (azurerm_network_watcher_flow_log.nsg), capturing accepted and denied network traffic with 90-day retention in a storage account. Traffic Analytics is enabled at 10-minute intervals, streaming flow data to the Log Analytics workspace for query and visualization. VM diagnostic settings (azurerm_monitor_diagnostic_setting.vm) stream AllMetrics to Log Analytics. The Log Analytics workspace (PerGB2018 SKU) provides centralized log aggregation and query capability. Reference: DISA SRG-APP-000089, CIS Azure 6.5.",
+                  "remarks": "Terraform resources: azurerm_log_analytics_workspace.main (retention_in_days = 365), azurerm_network_watcher_flow_log.nsg (count = length(var.nsg_ids), retention 90 days, traffic_analytics interval 10 min), azurerm_monitor_diagnostic_setting.vm (AllMetrics enabled)."
+                },
+                {
+                  "component-uuid": "a1b2c3d4-2222-4000-a000-000000000016",
+                  "uuid": "92e1403b-af70-5ab3-bf8e-1bda0bbd726b",
+                  "description": "All security scan results are archived as OSCAL Assessment Results in S3 (your-security-artifacts-bucket) with date-prefixed paths. Trend JSON tracks finding counts over time. GitHub Actions step summaries provide immediate visibility. CloudTrail monitors API access to admin secrets.",
+                  "remarks": ""
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000002",
+                  "uuid": "fc8785e4-7a5c-5668-91d2-f79ee7a48507",
+                  "description": "Event Logging: Boot diagnostics are enabled on the VM (boot_diagnostics {} block with managed storage), capturing serial console output and screenshot data for boot-time troubleshooting and audit. VM metrics are streamed to Log Analytics via diagnostic settings (azurerm_monitor_diagnostic_setting.vm) with AllMetrics enabled. A CPU utilization alert triggers at 80% threshold. These provide comprehensive visibility into VM health and performance. Reference: DISA SRG-APP-000089, CIS Azure 7.4.",
+                  "remarks": "Terraform resource: azurerm_linux_virtual_machine.main with boot_diagnostics {} (uses managed storage account). Diagnostic settings configured in the monitoring module."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "cd9ec813-4cfa-5ab0-8986-7c179c3a9b63",
+          "control-id": "au-6",
+          "statements": [
+            {
+              "statement-id": "au-6_smt",
+              "uuid": "c13fc4ca-2d33-531e-b367-bcd5d2e96aa5",
+              "by-components": [
+                {
+                  "component-uuid": "596fd555-075e-5477-9205-80bce00805f5",
+                  "uuid": "008f8aa1-d00a-565f-82c1-49184f204f94",
+                  "description": "AWS Config provides a review mechanism for configuration changes. Config timeline shows who changed what and when, supporting audit log review.",
+                  "remarks": ""
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000010",
+                  "uuid": "9b3826ad-8c82-595a-bf84-928077a2ca4d",
+                  "description": "Audit Record Review, Analysis, and Reporting: The Log Analytics workspace retains all logs for 365 days (retention_in_days = 365), supporting long-term audit review and compliance reporting requirements. NSG flow logs provide 90-day retention in storage with Traffic Analytics for network behavior analysis. The centralized workspace enables Kusto Query Language (KQL) queries across all log sources for incident investigation, compliance auditing, and trend analysis. Reference: DISA SRG-APP-000101.",
+                  "remarks": "Terraform resource: azurerm_log_analytics_workspace.main with retention_in_days = 365, sku = PerGB2018. Flow log storage retention: 90 days."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "fa600c63-ec7f-5055-96ba-804ed25aec33",
+          "control-id": "au-6.6",
+          "statements": [
+            {
+              "statement-id": "au-6.6_smt",
+              "uuid": "81f86d45-22c4-5c8f-a5b8-72068a9f522e",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "90882740-8b43-560d-9d68-d171ccccff80",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: AU-06(06). Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "f8e6e15e-1734-56c0-9540-ff85d5818f41",
+          "control-id": "ca-7",
+          "statements": [
+            {
+              "statement-id": "ca-7_smt",
+              "uuid": "3384d16c-066b-5624-910b-260fe70033c8",
+              "by-components": [
+                {
+                  "component-uuid": "596fd555-075e-5477-9205-80bce00805f5",
+                  "uuid": "d6801dcc-89f8-5e85-b3a5-4ba233e28e22",
+                  "description": "AWS Config provides continuous monitoring of compliance posture. Rules evaluate resources periodically (configurable: 1h to 24h) and report compliance status. Conformance pack aggregates results across NIST 800-53 controls.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "71206766-99d5-51e1-b019-4765415116d9",
+          "control-id": "cm-11",
+          "statements": [
+            {
+              "statement-id": "cm-11_smt",
+              "uuid": "75bcbf6a-8f88-5a43-b787-8201152f0ee8",
+              "by-components": [
+                {
+                  "component-uuid": "94efa1a4-56a3-5e75-8458-380b25a18d57",
+                  "uuid": "ff668cd1-1cf1-5201-95dc-9484737d7cc8",
+                  "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: CM-11.a, CM-11.b, CM-11.c. Customer responsibility: AWS customers are responsible for establishing [Assignment: organization-defined policies] governing the installation of software by users.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "12bbe667-32a5-5649-95d5-aa8d54262ea0",
+          "control-id": "cm-2",
+          "statements": [
+            {
+              "statement-id": "cm-2_smt",
+              "uuid": "ce6a4f09-9fe9-5f2e-a883-e615eb594940",
+              "by-components": [
+                {
+                  "component-uuid": "596fd555-075e-5477-9205-80bce00805f5",
+                  "uuid": "f5ae2b3c-5cef-5889-9bfb-094bb128d899",
+                  "description": "AWS Config records baseline configurations for all resources. Configuration snapshots stored in S3 with versioning for historical comparison. Periodic recording captures drift from established baselines.",
+                  "remarks": ""
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000002",
+                  "uuid": "184be30d-bffe-5d2e-8278-b98e8a747188",
+                  "description": "Baseline Configuration: The VM baseline is established through custom_data (user-data.sh) which bootstraps Docker, docker-compose, and the application stack on first boot. The docker-compose.yml defines the immutable application runtime configuration including container images, environment variables, port mappings, and service dependencies. Changes to the baseline require updating the Terraform configuration and redeploying. The source image is pinned to Canonical Ubuntu 22.04 LTS. Reference: DISA SRG-APP-000133.",
+                  "remarks": "Terraform resources: azurerm_linux_virtual_machine.main with custom_data = base64encode(var.user_data). Application baseline defined in docker-compose.yml and user-data.sh."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "0926f8ab-ac03-585d-b9a5-6cfed22de955",
+          "control-id": "cm-3",
+          "statements": [
+            {
+              "statement-id": "cm-3_smt",
+              "uuid": "642aa93a-943a-5da6-b08e-383d634dde75",
+              "by-components": [
+                {
+                  "component-uuid": "596fd555-075e-5477-9205-80bce00805f5",
+                  "uuid": "7feb5318-f4e7-5a1e-b9ad-67e279b10c37",
+                  "description": "AWS Config detects and logs all resource configuration changes. Change history available via Config timeline. SNS notifications can alert on non-compliant changes.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "355d76c4-82b0-5964-8138-67e2ddaae2cd",
+          "control-id": "cm-6",
+          "statements": [
+            {
+              "statement-id": "cm-6_smt",
+              "uuid": "22983997-ca94-586e-ae3f-ac72e04d2ae9",
+              "by-components": [
+                {
+                  "component-uuid": "596fd555-075e-5477-9205-80bce00805f5",
+                  "uuid": "9f548dd2-ae57-53f3-81f0-16f3f57cdca7",
+                  "description": "AWS Config managed rules evaluate resource configurations against security standards. 10 core rules check encryption, access controls, logging, and authentication. NIST 800-53 conformance pack (optional) adds 130 rules.",
+                  "remarks": ""
+                },
+                {
+                  "component-uuid": "a1b2c3d4-2222-4000-a000-000000000016",
+                  "uuid": "83a5507b-9185-5cf7-aafc-c3ef1ff8f15c",
+                  "description": "Checkov validates Terraform configurations against CIS Benchmarks, NIST 800-53, and DISA STIG controls. A disposition-tracked baseline (checkov-baseline.yml) records accepted risks with reviewer, rationale, and review schedule. Threshold-based gate (threshold.yml) enforces minimum pass rates per deployment pattern.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "aa70bcf5-e765-57b6-a244-260cb1fb0997",
+          "control-id": "cm-7",
+          "statements": [
+            {
+              "statement-id": "cm-7_smt",
+              "uuid": "f5b546f6-4bd9-5fbb-892f-1a18c1836d91",
+              "by-components": [
+                {
+                  "component-uuid": "596fd555-075e-5477-9205-80bce00805f5",
+                  "uuid": "f591bc6a-ba48-5e82-a1c6-6c1cf8f94fde",
+                  "description": "Config rules validate that only necessary services and ports are enabled. restricted-ssh rule ensures no unrestricted SSH access. iam-no-inline-policy enforces least-function principle.",
+                  "remarks": ""
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000002",
+                  "uuid": "45cfc523-0136-5845-a621-c8c80ec0e192",
+                  "description": "Least Functionality: The VM uses Ubuntu 22.04 LTS minimal server image (Canonical 0001-com-ubuntu-server-jammy, SKU 22_04-lts) with only Docker and docker-compose installed via user-data. Automatic OS patching is enabled (patch_mode = AutomaticByPlatform), ensuring security updates are applied without manual intervention. No unnecessary services, GUI components, or development tools are installed. SSH access requires an SSH key (no password authentication). Reference: DISA SRG-APP-000141, CIS Azure 7.1.",
+                  "remarks": "Terraform resource: azurerm_linux_virtual_machine.main with patch_mode = AutomaticByPlatform, source_image_reference (Canonical Ubuntu 22.04 LTS), admin_ssh_key block."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "9903037e-6c35-515a-8a67-d586468bdaf8",
+          "control-id": "cm-8",
+          "statements": [
+            {
+              "statement-id": "cm-8_smt",
+              "uuid": "87b71a90-6fff-5fba-9d6a-2f2df6ec7c6f",
+              "by-components": [
+                {
+                  "component-uuid": "596fd555-075e-5477-9205-80bce00805f5",
+                  "uuid": "1e053a00-8d89-5e01-a210-1419fd608f96",
+                  "description": "AWS Config maintains a complete inventory of all AWS resources in the account with configuration details, relationships, and change history.",
+                  "remarks": ""
+                },
+                {
+                  "component-uuid": "a1b2c3d4-2222-4000-a000-000000000016",
+                  "uuid": "43e77bac-79dc-5a75-bef8-56550fcecb97",
+                  "description": "The pipeline generates and consumes Software Bills of Materials (SBOMs) in CycloneDX format. Application container SBOMs are produced by the SPARC app CI pipeline and converted to HDF via cyclonedx_sbom2hdf for inclusion in OSCAL Assessment Results and FedRAMP authorization packages.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "8e14719f-2aa7-5df0-9a8a-5e4bb1b79c09",
+          "control-id": "cp-10",
+          "statements": [
+            {
+              "statement-id": "cp-10_smt",
+              "uuid": "a063b3ac-cd59-5077-bfd1-201f5a4d2636",
+              "by-components": [
+                {
+                  "component-uuid": "596fd555-075e-5477-9205-80bce00805f5",
+                  "uuid": "69b243fe-ae6c-5af6-9597-f60f5300aa37",
+                  "description": "AWS Config recording and S3 delivery channel ensure configuration history is preserved for system recovery. Multi-AZ validation supports information system recovery.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "8a8a76dc-c57a-5e72-bd93-284d87933961",
+          "control-id": "cp-4.2",
+          "statements": [
+            {
+              "statement-id": "cp-4.2_smt",
+              "uuid": "a28751ca-9cb5-5c9d-b718-8ff8eb66e8a2",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "018a1292-2ecf-5cf0-afee-23ecbdcf17da",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-04(02).a, CP-04(02).b. Customer note: This control may be inheritable if the customer system is hosted exclusively in AWS.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "ffaeb2ff-c64f-5e3e-9309-5f23fdf8a025",
+          "control-id": "cp-6.1",
+          "statements": [
+            {
+              "statement-id": "cp-6.1_smt",
+              "uuid": "53414d67-5c1d-5c66-a190-0ef9cd110672",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "7c9724f3-3750-5246-be21-414388b88f52",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-06(01). Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "409d9b2e-5388-519c-9733-4489f90fbd35",
+          "control-id": "cp-6.2",
+          "statements": [
+            {
+              "statement-id": "cp-6.2_smt",
+              "uuid": "36852fb1-dc0e-5903-8d99-b3dfc7fb47bb",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "2bad923e-1104-5ec1-98f5-0a90ba1e7f8d",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-06(02). Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "aff3c897-5324-5281-9cf0-d124a36a6b35",
+          "control-id": "cp-6.3",
+          "statements": [
+            {
+              "statement-id": "cp-6.3_smt",
+              "uuid": "0fce8e48-70d1-5cfa-9be5-eca85d6699fb",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "a292dafa-27f7-53ac-af07-e44c143ff328",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-06(03). Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "30dd1400-5ce9-55d9-88ab-7ce1ab92ec98",
+          "control-id": "cp-7.1",
+          "statements": [
+            {
+              "statement-id": "cp-7.1_smt",
+              "uuid": "1826376f-789b-5018-9d80-f348855c683d",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "ba522ef0-4536-5a69-a305-c4d5db65cd86",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-07(01). Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "72e04970-d732-5adb-91bd-e0a8ca2d9be8",
+          "control-id": "cp-7.2",
+          "statements": [
+            {
+              "statement-id": "cp-7.2_smt",
+              "uuid": "8d66d941-4e1d-5df6-9c1a-9c7d8f5ab82d",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "0e1fa8ce-c56e-58c7-a48e-fb616d5898fb",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-07(02). Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "a2139692-4504-572c-8de9-d1592969cbb7",
+          "control-id": "cp-7.4",
+          "statements": [
+            {
+              "statement-id": "cp-7.4_smt",
+              "uuid": "62986f20-4f81-5e63-915c-b5bc5138bb7d",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "fba696ca-8dda-56d9-9fa6-5db121b91bf8",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-07(04). Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "a531b6ad-0591-54af-ad8e-ba9c12b40ee2",
+          "control-id": "cp-8.1",
+          "statements": [
+            {
+              "statement-id": "cp-8.1_smt",
+              "uuid": "a2c83a77-5420-5d0f-bd14-139e1ca4a50e",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "0b90f7c7-06f5-5f9a-8adf-1c247cbf5db4",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-08(01).a, CP-08(01).b. Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "ec7bae3e-2382-5fe5-a512-168c1ac06c13",
+          "control-id": "cp-8.2",
+          "statements": [
+            {
+              "statement-id": "cp-8.2_smt",
+              "uuid": "98cffa62-0933-5ea5-9c59-ccc23a6b4766",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "0e802f62-7f66-50ae-886d-0d13048fe8c6",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-08(02). Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "5376b126-10ae-50bd-80e9-537df057e398",
+          "control-id": "cp-8.3",
+          "statements": [
+            {
+              "statement-id": "cp-8.3_smt",
+              "uuid": "60ad49d7-f27a-58c9-aab0-8882692c7f33",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "a0632dba-e4be-5641-82c0-a5193c3b6316",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-08(03). Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "df0b6284-02a5-56e2-bef5-6258de6b24cc",
+          "control-id": "cp-8.4",
+          "statements": [
+            {
+              "statement-id": "cp-8.4_smt",
+              "uuid": "e1c120cd-589d-55e2-ba07-85255fa349d7",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "c00fbc35-dfea-524a-98a0-8f84c836885b",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-08(04).a, CP-08(04).b, CP-08(04).c. Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "d327025e-fb65-582f-a43f-0e980a370aa4",
+          "control-id": "cp-9",
+          "statements": [
+            {
+              "statement-id": "cp-9_smt",
+              "uuid": "92e64d56-eb9d-528d-9328-a15c98fcb953",
+              "by-components": [
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000007",
+                  "uuid": "8cf7b4af-83f2-53e8-b4d9-873f6c24e97c",
+                  "description": "System Backup: Blob versioning is enabled (versioning_enabled = true), automatically preserving previous versions of blobs on every overwrite or delete operation. Soft delete retention is configured for 7 days (delete_retention_policy days = 7), allowing recovery of accidentally deleted blobs within the retention window. The storage account replication type is configurable (e.g., LRS, GRS) for geographic redundancy. Reference: DISA SRG-APP-000065.",
+                  "remarks": "Terraform resource: azurerm_storage_account.main blob_properties with versioning_enabled = true, delete_retention_policy days = 7. Replication type configured via var.replication_type."
+                },
+                {
+                  "component-uuid": "596fd555-075e-5477-9205-80bce00805f5",
+                  "uuid": "fc9abb38-1137-54a5-8eb2-863e442bcdf0",
+                  "description": "Config rule rds-multi-az-support validates that RDS instances are deployed in Multi-AZ configuration for system backup and recovery.",
+                  "remarks": ""
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000003",
+                  "uuid": "5c2fc052-6b5f-54c0-a361-927e6bf0489d",
+                  "description": "System Backup: Azure Managed Disks support Azure Backup integration for automated point-in-time snapshots and recovery. The disk is created with a specified zone for availability. Azure Backup can be configured to perform daily incremental backups with configurable retention policies. Disk snapshots can also be created on-demand for pre-change backup points. Reference: DISA SRG-APP-000065.",
+                  "remarks": "Terraform resource: azurerm_managed_disk.data. Azure Backup vault and backup policy should be configured separately for production deployments."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "762c2955-f65b-59df-b792-b0064a7735d3",
+          "control-id": "ia-11",
+          "statements": [
+            {
+              "statement-id": "ia-11_smt",
+              "uuid": "5238514f-d9e6-5975-9a08-7969bb0f19b0",
+              "by-components": [
+                {
+                  "component-uuid": "94efa1a4-56a3-5e75-8458-380b25a18d57",
+                  "uuid": "525f70b6-81b6-5a3e-9ddc-3d102f220f4d",
+                  "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: IA-11. Customer responsibility: Customers are responsible for requiring\u00a0users to re-authenticate when [Assignment: organization-defined circumstances or situations requiring re-authentication].",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "6ba59eb9-28b1-5029-ae87-aa7254561f6a",
+          "control-id": "ia-12",
+          "statements": [
+            {
+              "statement-id": "ia-12_smt",
+              "uuid": "ee3c4306-6aa4-5d5c-a0f7-fad3633d2092",
+              "by-components": [
+                {
+                  "component-uuid": "94efa1a4-56a3-5e75-8458-380b25a18d57",
+                  "uuid": "5b4c250f-ba4a-5606-b142-0d558f861d84",
+                  "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: IA-12.a, IA-12.b, IA-12.c. Customer responsibility: Customers are responsible for identity proofing\u00a0users that require accounts for logical access to systems based on appropriate identity assurance level requirements as specified in applicable standards and guidelines.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "a2320936-8206-5070-a7c8-4b8e554dec09",
+          "control-id": "ia-2",
+          "statements": [
+            {
+              "statement-id": "ia-2_smt",
+              "uuid": "0cd07898-d4d8-5c09-b605-9957ea14de91",
+              "by-components": [
+                {
+                  "component-uuid": "596fd555-075e-5477-9205-80bce00805f5",
+                  "uuid": "0a607900-2bd7-5005-9a2b-58b2ded1cc66",
+                  "description": "Config rule root-account-mfa-enabled validates that the AWS root account has multi-factor authentication enabled.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "6ce09a36-dc51-5e06-805a-6821a437cc0a",
+          "control-id": "ia-5",
+          "statements": [
+            {
+              "statement-id": "ia-5_smt",
+              "uuid": "4ea96a4f-618d-5fca-a9bc-62c81d6b1843",
+              "by-components": [
+                {
+                  "component-uuid": "596fd555-075e-5477-9205-80bce00805f5",
+                  "uuid": "55e2dfdd-1915-5a1a-86b9-0036f7ee6039",
+                  "description": "Config rule secretsmanager-rotation-enabled-check validates that Secrets Manager secrets have automatic rotation configured.",
+                  "remarks": ""
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000005",
+                  "uuid": "d1b29798-849c-500b-b5d2-a3c64e8c7ff1",
+                  "description": "Authenticator Management: Database administrator credentials are generated using Terraform's random_password resource (32 characters, special = false for broad compatibility). The password is immediately stored in Azure Key Vault as a JSON secret containing username, password, host, port, and dbname. Key Vault provides encryption at rest, access auditing via RBAC, and rotation capability. The password is never stored in tfvars files or exposed in Terraform plan output. Reference: DISA SRG-APP-000175.",
+                  "remarks": "Terraform resources: random_password.db (length = 32, special = false), azurerm_key_vault_secret.db_credentials with jsonencode payload. The VM retrieves credentials via managed identity access to Key Vault."
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000008",
+                  "uuid": "a04e1ca6-3acb-5c13-a710-86213f2736d9",
+                  "description": "Authenticator Management: Key Vault serves as the central secret store for the deployment, holding database credentials (username, password, host, port, dbname as JSON) and application configuration secrets. The database module stores auto-generated PostgreSQL credentials directly in Key Vault (azurerm_key_vault_secret.db_credentials). Secrets are encrypted at rest, access-controlled via RBAC, and auditable. No credentials are stored in Terraform state, tfvars, or application code. Reference: DISA SRG-APP-000175.",
+                  "remarks": "Terraform resource: azurerm_key_vault_secret.db_credentials (in database module) stores jsonencoded DB credentials. Additional application secrets can be added as azurerm_key_vault_secret resources."
+                },
+                {
+                  "component-uuid": "a1b2c3d4-2222-4000-a000-000000000016",
+                  "uuid": "c4b09e28-2951-5262-9333-7c8515ce49cf",
+                  "description": "TruffleHog detects leaked authenticators (passwords, API keys, tokens, private keys) across the entire repository history. Zero-tolerance policy ensures no credentials are committed to version control. Scan results converted to HDF via dedicated trufflehog2hdf converter.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "4158b04b-c098-59e9-93ea-00f099f307f3",
+          "control-id": "ir-6",
+          "statements": [
+            {
+              "statement-id": "ir-6_smt",
+              "uuid": "6f07b4f1-21d5-59ff-b90c-585392366ad2",
+              "by-components": [
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000011",
+                  "uuid": "d9f077e7-9700-5cfe-8594-2fe0992d2ee7",
+                  "description": "Incident Reporting: The Action Group provides automated incident notification via email receivers. A dynamic email_receiver block iterates over var.alert_emails to configure multiple notification recipients. When any metric alert fires (VM CPU, App Gateway health/5xx, PostgreSQL CPU/storage, Redis CPU/memory), the action group delivers email notifications to all configured recipients, enabling timely incident awareness and response initiation. The short_name is truncated to 12 characters per Azure requirements. Reference: DISA SRG-APP-000303.",
+                  "remarks": "Terraform resource: azurerm_monitor_action_group.main with dynamic email_receiver block iterating var.alert_emails. All 7 metric alerts in the monitoring module reference this action group via var.action_group_id."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "c44f51af-6363-53f2-823e-a57b5a98cac8",
+          "control-id": "ma-2.2",
+          "statements": [
+            {
+              "statement-id": "ma-2.2_smt",
+              "uuid": "d24ecc66-ec28-5725-9451-224c49cf6732",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "7d7cb4ab-b76d-5bb0-8b97-f2f8a08acd92",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MA-02(02).a, MA-02(02).b. Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "0fae7aa5-0112-5989-936d-d8d6503f2bf6",
+          "control-id": "ma-3.1",
+          "statements": [
+            {
+              "statement-id": "ma-3.1_smt",
+              "uuid": "e7ecda22-4d44-53b9-a429-c8261f78f2e7",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "a4839d92-f534-56f5-a195-61efaab68525",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MA-03(01). Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "2b8177bf-acd7-5e7c-9a14-9a705d9e25fc",
+          "control-id": "ma-3.2",
+          "statements": [
+            {
+              "statement-id": "ma-3.2_smt",
+              "uuid": "b2708d2d-a5e4-5b80-9479-1247a9d72729",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "8049696c-4738-525d-b46e-cb3ce8e33b15",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MA-03(02). Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "e016cac4-4b60-5d25-98fe-ca62b1f6cfd4",
+          "control-id": "ma-3.3",
+          "statements": [
+            {
+              "statement-id": "ma-3.3_smt",
+              "uuid": "3244d0c3-7c69-5518-9517-3c3c742161a5",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "e715f5ee-f436-55ab-b070-77c923131e91",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MA-03(03).a, MA-03(03).b, MA-03(03).c, MA-03(03).d. Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "8ed4d371-f3ab-5d76-b75b-e97cc97d5aec",
+          "control-id": "ma-5.1",
+          "statements": [
+            {
+              "statement-id": "ma-5.1_smt",
+              "uuid": "fce414ba-f459-53c4-ab8f-ac2e7d3eb9b3",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "d930e5cb-397a-54e3-8f3e-695425691d76",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MA-05(01).a, MA-05(01).b. Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "f8fcd2e2-1bc1-5242-826a-498a910bea9c",
+          "control-id": "mp-6.1",
+          "statements": [
+            {
+              "statement-id": "mp-6.1_smt",
+              "uuid": "0dbc17cb-a935-578c-918e-d6faae690d20",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "5929ef53-8504-5800-aab5-dc08a57eb40d",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MP-06(01). Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "a6f1be12-1d24-5b89-8dea-3b96eccb037e",
+          "control-id": "mp-6.2",
+          "statements": [
+            {
+              "statement-id": "mp-6.2_smt",
+              "uuid": "ccc8c2b5-1c2e-572c-941e-671152fca357",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "c9e08765-fc8a-508b-8e9e-8cb669253bdf",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MP-06(02). Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "dfbb3583-0325-5e7e-8673-b76a4480d762",
+          "control-id": "pe-10",
+          "statements": [
+            {
+              "statement-id": "pe-10_smt",
+              "uuid": "3cb389f9-f787-54ca-baf2-c2133851ec33",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "57966772-426e-5abd-aa87-c07a9151a1ea",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-10.a, PE-10.b, PE-10.c. Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "b5b9baf0-dc92-5fbd-90aa-e49301201994",
+          "control-id": "pe-11",
+          "statements": [
+            {
+              "statement-id": "pe-11_smt",
+              "uuid": "2415bb9b-7b09-53f6-8703-7a25ec73d798",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "13396022-ee93-581e-8330-bf9e2bf3d7d4",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-11. Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "890deccc-52c1-5acd-bdaf-5bc8dc83d885",
+          "control-id": "pe-11.1",
+          "statements": [
+            {
+              "statement-id": "pe-11.1_smt",
+              "uuid": "d610f8d8-22a5-5d5c-862c-26b1643839bd",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "d70b4de9-eefb-5223-b624-ae1a16952710",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-11(01). Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "0d857d14-0d92-522b-9b84-62ccbb2654a3",
+          "control-id": "pe-12",
+          "statements": [
+            {
+              "statement-id": "pe-12_smt",
+              "uuid": "88badf36-3875-5571-be83-1ac0484cd6e3",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "8c77719f-b2ed-512d-bec7-e1ce71b5fb56",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-12. Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "e3141e4a-7c6b-5996-984a-1223cc8272d2",
+          "control-id": "pe-13",
+          "statements": [
+            {
+              "statement-id": "pe-13_smt",
+              "uuid": "a54f7e0c-004a-5fa9-90c4-7def31fd52e8",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "155e7e79-f630-5b79-b2dd-5143a9b91335",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-13. Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "22d89083-8e91-57b0-9e55-eb1322c24411",
+          "control-id": "pe-13.1",
+          "statements": [
+            {
+              "statement-id": "pe-13.1_smt",
+              "uuid": "8e693eb4-bea4-5a12-958d-895f8a427e00",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "34ae6fa6-c957-569c-94e7-54d844dfcae6",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-13(01). Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "5b7ba4c3-dd07-55ab-9c07-4fab75a3f782",
+          "control-id": "pe-13.2",
+          "statements": [
+            {
+              "statement-id": "pe-13.2_smt",
+              "uuid": "ea5a0996-14a7-5c1a-8f13-70d703be9f66",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "e91d58c2-c726-5f1e-8ac6-fb8b2e229dcf",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-13(02).a, PE-13(02).b. Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "159ff8d3-656a-5dea-a5c8-0985e96704ba",
+          "control-id": "pe-14",
+          "statements": [
+            {
+              "statement-id": "pe-14_smt",
+              "uuid": "e66c5e52-8d85-5d2f-bff5-44c361b92f99",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "83106345-c08a-52e8-b1a0-55e01d32d002",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-14.a, PE-14.b. Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "33bea5a2-b0ae-5883-a733-1b60656d1161",
+          "control-id": "pe-15",
+          "statements": [
+            {
+              "statement-id": "pe-15_smt",
+              "uuid": "6e95493b-40c6-5c3c-be5d-00e4978dd800",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "87c73a65-f7de-5d71-883a-26e842b9bd5d",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-15. Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "0b396f38-78d8-5a97-b591-e4c944ba8152",
+          "control-id": "pe-15.1",
+          "statements": [
+            {
+              "statement-id": "pe-15.1_smt",
+              "uuid": "e46bcca3-0f22-5cf5-b715-d40893af020e",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "ac17d536-953c-554b-8957-b57094e0c2fa",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-15(01). Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "b57ca9a7-7f5f-5f52-aae8-6ef76d008367",
+          "control-id": "pe-16",
+          "statements": [
+            {
+              "statement-id": "pe-16_smt",
+              "uuid": "ab4d4757-6db6-5322-881e-a53c87bddd5f",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "515676bd-2c4e-57ea-8e49-e37b9cd937a4",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-16.a, PE-16.b. Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "85f9fd5e-682c-5677-be46-0ac59defe89b",
+          "control-id": "pe-17",
+          "statements": [
+            {
+              "statement-id": "pe-17_smt",
+              "uuid": "1fad4f35-f8cb-50f5-81d9-f18259faa6b6",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "0830d155-150d-53ac-b108-fa2dd439f361",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-17.a, PE-17.b, PE-17.c, PE-17.d. Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "6e1e6168-57c2-5de1-95d3-04548789e7c9",
+          "control-id": "pe-18",
+          "statements": [
+            {
+              "statement-id": "pe-18_smt",
+              "uuid": "61c5ec5b-fd71-5195-bb10-2fa8119822c6",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "2c1b1845-cd37-5e3c-b269-79b1042f580d",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-18. Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "e52ea56c-bba0-5388-b9ce-52e2894abce0",
+          "control-id": "pe-3.1",
+          "statements": [
+            {
+              "statement-id": "pe-3.1_smt",
+              "uuid": "e7e54d9a-d5ee-5590-98f1-c0ba740d1bc6",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "393dc7ce-3dbb-51df-afef-cbab93babdcd",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-03(01). Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "600218d3-4c68-571d-9e66-d09af91ca251",
+          "control-id": "pe-6.1",
+          "statements": [
+            {
+              "statement-id": "pe-6.1_smt",
+              "uuid": "136b69ab-7f34-5087-9e23-0b6a594a0e3b",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "7c5eb00f-aa94-5a10-a80d-48fdae4d1ccf",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-06(01). Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "0f673e9c-df28-558f-a501-7a81105e86c6",
+          "control-id": "pe-6.4",
+          "statements": [
+            {
+              "statement-id": "pe-6.4_smt",
+              "uuid": "a6823989-5399-55d7-b342-a926dd71ba23",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "277a1a1a-ab85-563c-af99-ac03e1671bd8",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-06(04). Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "b4f91cee-6d0e-55af-871d-8ae41b8eb66c",
+          "control-id": "pe-8.1",
+          "statements": [
+            {
+              "statement-id": "pe-8.1_smt",
+              "uuid": "00a92195-bca7-58d1-9844-6f5f0eef49bf",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "b107101e-469c-5b9c-a0f8-75f7087ef2fd",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-08(01). Customer note: Can Be Inherited from CSP",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "f64ef177-4e4d-5dfe-9263-5bb36ef6b72a",
+          "control-id": "pl-10",
+          "statements": [
+            {
+              "statement-id": "pl-10_smt",
+              "uuid": "ff1d1c9b-7adf-5b89-9581-9fd969cbeef7",
+              "by-components": [
+                {
+                  "component-uuid": "404a99a5-68ec-582f-b656-3374e7056a73",
+                  "uuid": "6fc24291-8fb4-51bb-82ae-8b0256257256",
+                  "description": "Baseline Selection. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PL-10. -->",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "0154df10-b4a0-5a2a-9a42-f3d21193b56e",
+          "control-id": "pl-11",
+          "statements": [
+            {
+              "statement-id": "pl-11_smt",
+              "uuid": "596c7527-29fc-5176-a083-6c86eb3a6ecf",
+              "by-components": [
+                {
+                  "component-uuid": "404a99a5-68ec-582f-b656-3374e7056a73",
+                  "uuid": "09a831ce-c660-5083-aeb7-7833bd0f3bb1",
+                  "description": "Baseline Tailoring. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PL-11. -->",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "d8293e1d-6641-51b1-a392-510e4dc2f001",
+          "control-id": "pl-4.1",
+          "statements": [
+            {
+              "statement-id": "pl-4.1_smt",
+              "uuid": "430bb1a5-af25-595d-94e8-4e6bd49b1a52",
+              "by-components": [
+                {
+                  "component-uuid": "404a99a5-68ec-582f-b656-3374e7056a73",
+                  "uuid": "f0650be5-7996-57ec-905e-910de942cbc0",
+                  "description": "Social Media and External Site/Application Usage Restrictions. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PL-04(01). -->",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "2a334a3f-281d-5a1f-aa5f-c03f30056c3f",
+          "control-id": "ps-4.2",
+          "statements": [
+            {
+              "statement-id": "ps-4.2_smt",
+              "uuid": "bf251f60-99ee-56e0-947e-048f53c0e500",
+              "by-components": [
+                {
+                  "component-uuid": "404a99a5-68ec-582f-b656-3374e7056a73",
+                  "uuid": "d8014533-cfaf-5d76-8d54-7dd22d43004f",
+                  "description": "Automated Actions. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PS-04(02). -->",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "afad7845-ff3a-5d61-89fb-2cdaf3e9b73a",
+          "control-id": "ra-3.1",
+          "statements": [
+            {
+              "statement-id": "ra-3.1_smt",
+              "uuid": "c70121a7-44a5-5a6f-8b1a-17d21a391937",
+              "by-components": [
+                {
+                  "component-uuid": "404a99a5-68ec-582f-b656-3374e7056a73",
+                  "uuid": "817ebd1b-0634-5776-9057-1246e221a720",
+                  "description": "Supply Chain Risk Assessment. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of RA-03(01). -->",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "485c6fe6-0437-5693-bf74-8b9f331db240",
+          "control-id": "sa-11",
+          "statements": [
+            {
+              "statement-id": "sa-11_smt",
+              "uuid": "432bbc44-2bf2-51fe-ba84-c98b2dd9bc11",
+              "by-components": [
+                {
+                  "component-uuid": "a1b2c3d4-2222-4000-a000-000000000016",
+                  "uuid": "961ad23c-6b18-5d5a-b3ff-09af5cfee2c9",
+                  "description": "The CI/CD pipeline performs automated security testing on every pull request and merge to main. Semgrep runs static analysis on Python scripts, Checkov validates Terraform configurations, pip-audit checks dependencies for known vulnerabilities, and TruffleHog scans for leaked secrets. All findings are converted to HDF via MITRE SAF CLI and then to OSCAL Assessment Results for compliance evidence.",
+                  "remarks": ""
+                },
+                {
+                  "component-uuid": "94efa1a4-56a3-5e75-8458-380b25a18d57",
+                  "uuid": "23787d87-df4d-50cd-9981-47c7c7dd9a90",
+                  "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: SA-11.a, SA-11.b, SA-11.c, SA-11.d, SA-11.e. Customer responsibility: AWS customers are responsible for requiring the developer of the information system, system component, or information system service to create and implement a security assessment plan.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "c42c7811-2006-5862-8285-c84ae20e3f47",
+          "control-id": "sa-15",
+          "statements": [
+            {
+              "statement-id": "sa-15_smt",
+              "uuid": "79498a2e-3778-590a-bdef-2c82c94a4ca2",
+              "by-components": [
+                {
+                  "component-uuid": "a1b2c3d4-2222-4000-a000-000000000016",
+                  "uuid": "00b8fff3-695b-5faf-893b-2cb0fc669869",
+                  "description": "The development pipeline enforces security gates before code can be merged or deployed. threshold.yml defines per-pattern pass rates and finding limits. checkov_diff.py evaluates scan results against thresholds and blocks PRs that introduce new findings or regressions. Strict mode applies additional constraints for production deployments.",
+                  "remarks": ""
+                },
+                {
+                  "component-uuid": "94efa1a4-56a3-5e75-8458-380b25a18d57",
+                  "uuid": "916b135e-4936-553a-bb3a-95c505e7de7b",
+                  "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: SA-15.a, SA-15.b. Customer responsibility: AWS customers are responsible for requiring the developer of the information system, system component, or information system service to follow a documented development process that: (1) Explicitly addresses security requirements; (2) Identifies the standards and tools used in the development process",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "c419cdf2-f7cd-5ffd-a6b1-26cd7b8d8f0c",
+          "control-id": "sc-12",
+          "statements": [
+            {
+              "statement-id": "sc-12_smt",
+              "uuid": "193333c6-1cd2-5a37-a2b6-c43d75458a01",
+              "by-components": [
+                {
+                  "component-uuid": "94efa1a4-56a3-5e75-8458-380b25a18d57",
+                  "uuid": "3fb8a061-f238-5c2f-86dd-ad870d34eafa",
+                  "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: SC-12. Customer responsibility: AWS customers are responsible for establishing and managing cryptographic keys for required cryptography employed within their system in accordance with organization-defined requirements for key generation, distribution, storage, access, and destruction.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "0982772d-d664-5019-b891-9038d6149869",
+          "control-id": "sc-13",
+          "statements": [
+            {
+              "statement-id": "sc-13_smt",
+              "uuid": "aa8ce2fa-9724-5806-bb53-945c7a0e3633",
+              "by-components": [
+                {
+                  "component-uuid": "94efa1a4-56a3-5e75-8458-380b25a18d57",
+                  "uuid": "9325a4fa-794b-5e9f-9fe5-5a43b75ca7e6",
+                  "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: SC-13.a, SC-13.b. Customer responsibility: AWS customers are responsible for determining the [Assignment: organization-defined cryptographic uses].",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "15e4fd78-5037-5ffc-9f2d-cf29b8c14369",
+          "control-id": "sc-17",
+          "statements": [
+            {
+              "statement-id": "sc-17_smt",
+              "uuid": "9799d096-9415-568c-981d-8a87f4f18a46",
+              "by-components": [
+                {
+                  "component-uuid": "94efa1a4-56a3-5e75-8458-380b25a18d57",
+                  "uuid": "e6acfd52-9275-578e-b93b-e949906bd250",
+                  "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: SC-17.a, SC-17.b. Customer responsibility: AWS customers are responsible for issuing public key certificates under an organization-defined certificate policy or obtaining public key certificates from an approved service provider.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "60c565b2-2541-5610-858b-d0f579571282",
+          "control-id": "sc-20",
+          "statements": [
+            {
+              "statement-id": "sc-20_smt",
+              "uuid": "95ce9b0b-e1cc-51fc-982f-735b3108edfa",
+              "by-components": [
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000012",
+                  "uuid": "0ae9bf06-ee3e-5d38-8ae3-54e03b855e9a",
+                  "description": "Secure Name/Address Resolution Service (Authoritative Source): Azure DNS provides authoritative DNS resolution for the application domain. The DNS zone is referenced via data source (data.azurerm_dns_zone.main) and an A record is created pointing the application hostname (var.record_name) to the Application Gateway public IP (var.target_ip) with a 300-second TTL. Azure DNS is hosted on Azure's global anycast network of name servers, providing high availability and fast query resolution. DNS records are managed as infrastructure-as-code via Terraform, preventing unauthorized modification. Reference: DISA SRG-NET-000131.",
+                  "remarks": "Terraform resources: data.azurerm_dns_zone.main (existing zone), azurerm_dns_a_record.main with ttl = 300, records = [var.target_ip]."
+                },
+                {
+                  "component-uuid": "94efa1a4-56a3-5e75-8458-380b25a18d57",
+                  "uuid": "ea9b4ae8-c1e2-56ae-92a0-a0c5873533d9",
+                  "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: SC-20.a, SC-20.b. Customer responsibility: AWS customers are responsible for providing additional data origin authentication and integrity verification artifacts along with the authoritative name resolution data the system returns in response to external name/address resolution queries.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "413bc4c3-6002-5c58-bb3e-143b3ed10afa",
+          "control-id": "sc-21",
+          "statements": [
+            {
+              "statement-id": "sc-21_smt",
+              "uuid": "a02c1093-9946-5753-bdc4-1733985d42ad",
+              "by-components": [
+                {
+                  "component-uuid": "94efa1a4-56a3-5e75-8458-380b25a18d57",
+                  "uuid": "7590e79f-8c18-56d1-b460-6141375be36f",
+                  "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: SC-21. Customer responsibility: AWS customers are responsible for configuring their systems to perform data origin authentication and data integrity verification on DNS resolution responses received from authoritative sources.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "ca8384bb-1005-5c55-a042-30fda85ea8fe",
+          "control-id": "sc-22",
+          "statements": [
+            {
+              "statement-id": "sc-22_smt",
+              "uuid": "98f44618-7073-5b5f-9a44-dc94284956d1",
+              "by-components": [
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000012",
+                  "uuid": "e4cd1b0c-efa7-5836-ba6f-dd4a77eb372e",
+                  "description": "Architecture and Provisioning for Name/Address Resolution Service: Azure DNS provides a 100% availability SLA for DNS query resolution. The service uses a global anycast network with name servers distributed across multiple Azure regions, ensuring DNS resolution remains available even during regional failures. The DNS zone is managed within the same resource group as the deployment, and record changes are version-controlled through Terraform. No single point of failure exists in the DNS resolution path. Reference: DISA SRG-NET-000133.",
+                  "remarks": "Azure DNS 100% SLA: https://azure.microsoft.com/en-us/support/legal/sla/dns/. DNS zone and records managed via Terraform for audit trail and change control."
+                },
+                {
+                  "component-uuid": "94efa1a4-56a3-5e75-8458-380b25a18d57",
+                  "uuid": "9d361128-7b43-54e5-8459-aae74390a346",
+                  "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: SC-22. Customer responsibility: AWS customers are responsible for ensuring that information systems collectively providing name resolution services to their organization are fault-tolerant and have implemented internal/external role separation.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "738755d4-d167-58cc-9173-c7bdc278ca0d",
+          "control-id": "sc-23",
+          "statements": [
+            {
+              "statement-id": "sc-23_smt",
+              "uuid": "d43de4f5-09c2-554d-9e5b-59db13ff4718",
+              "by-components": [
+                {
+                  "component-uuid": "94efa1a4-56a3-5e75-8458-380b25a18d57",
+                  "uuid": "3fbc4cbf-25dc-5706-841b-0f1eeb2f97b4",
+                  "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: SC-23. Customer responsibility: AWS customers are responsible for configuring their systems to protect the authenticity of communications sessions.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "1cff8237-db76-5a6a-85fc-ca3caf7927a0",
+          "control-id": "sc-28",
+          "statements": [
+            {
+              "statement-id": "sc-28_smt",
+              "uuid": "34825582-af04-5c02-ab8b-dd85d8bc367e",
+              "by-components": [
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000007",
+                  "uuid": "b5d0ae10-976d-5dc3-b3a9-de1e3b03ae63",
+                  "description": "Protection of Information at Rest: The Storage Account encrypts all data at rest using Azure Storage Service Encryption with AES-256 platform-managed keys. TLS 1.2 is enforced as the minimum version (min_tls_version = TLS1_2) for all API operations, ensuring encrypted transport for data access. All blob data, metadata, and service data are automatically encrypted. Reference: DISA SRG-APP-000231, CIS Azure 3.1.",
+                  "remarks": "Terraform resource: azurerm_storage_account.main with min_tls_version = TLS1_2. Azure encrypts all storage account data at rest by default."
+                },
+                {
+                  "component-uuid": "596fd555-075e-5477-9205-80bce00805f5",
+                  "uuid": "d5987e18-f37e-5fd7-bf29-882b7913ce8c",
+                  "description": "Config rules encrypted-volumes and rds-storage-encrypted continuously verify that data-at-rest encryption is enabled on EBS and RDS resources.",
+                  "remarks": ""
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000005",
+                  "uuid": "1de01da0-1ecf-5679-a52a-c25b1cc7d494",
+                  "description": "Protection of Information at Rest: PostgreSQL Flexible Server storage is encrypted at rest using Azure-managed keys. SSL/TLS is enforced via server configuration parameter require_secure_transport = on, ensuring all client connections use encrypted transport. Data, backups (7-day retention), and optional geo-redundant backups are all encrypted. Reference: DISA SRG-APP-000231, CIS Azure 4.3.1.",
+                  "remarks": "Terraform resources: azurerm_postgresql_flexible_server.main, azurerm_postgresql_flexible_server_configuration.require_secure_transport with value = on. Backup retention: backup_retention_days = 7."
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000008",
+                  "uuid": "1f27cd6f-9c97-592b-9810-17fce76e9880",
+                  "description": "Protection of Information at Rest: Azure Key Vault encrypts all secrets, keys, and certificates at rest using HSM-backed encryption (FIPS 140-2 validated). The standard SKU uses software-protected keys backed by Azure-managed HSMs. Purge protection is enabled (purge_protection_enabled = true) with a 90-day soft delete retention (soft_delete_retention_days = 90), preventing permanent deletion of vault contents even by administrators during the retention period. Reference: DISA SRG-APP-000231, CIS Azure 8.1.",
+                  "remarks": "Terraform resource: azurerm_key_vault.main with sku_name = standard, purge_protection_enabled = true, soft_delete_retention_days = 90."
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000006",
+                  "uuid": "a4e3c50d-42c4-5a69-8880-5168f5563a18",
+                  "description": "Protection of Information at Rest: Azure Cache for Redis encrypts data at rest using Azure-managed keys. All cached data, RDB persistence files, and AOF logs are encrypted automatically by the Azure platform. The redis_configuration block allows further tuning of persistence and memory policies. Reference: DISA SRG-APP-000231.",
+                  "remarks": "Terraform resource: azurerm_redis_cache.main with redis_configuration {}. Azure encrypts all Redis data at rest by default with platform-managed keys."
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000003",
+                  "uuid": "39803ebb-2866-5d91-a4d2-ee51fba854b2",
+                  "description": "Protection of Information at Rest: The managed data disk is encrypted at rest using Azure Storage Service Encryption with platform-managed AES-256 keys. All data, snapshots, and temporary storage associated with the disk are automatically encrypted. The disk uses a configurable storage account type (e.g., Premium_LRS, StandardSSD_LRS) and is created as an empty disk with a specified size. Reference: DISA SRG-APP-000231, CIS Azure 7.3.",
+                  "remarks": "Terraform resources: azurerm_managed_disk.data with configurable storage_account_type, azurerm_virtual_machine_data_disk_attachment.data. Azure encrypts all managed disks by default with platform-managed keys."
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000002",
+                  "uuid": "03aa7bdd-71d2-5168-89b0-9ebec1966c37",
+                  "description": "Protection of Information at Rest: The OS disk uses Premium_LRS storage with Azure-managed encryption at rest (Azure Storage Service Encryption with platform-managed keys). All data written to the OS disk is automatically encrypted using AES-256. The disk is named explicitly and sized per configuration. Reference: DISA SRG-APP-000231, CIS Azure 7.3.",
+                  "remarks": "Terraform resource: azurerm_linux_virtual_machine.main os_disk block with storage_account_type = Premium_LRS. Azure encrypts all managed disks by default."
+                },
+                {
+                  "component-uuid": "94efa1a4-56a3-5e75-8458-380b25a18d57",
+                  "uuid": "aa54884a-fd8c-53d0-8fa8-103da7ccc34d",
+                  "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: SC-28. Customer responsibility: AWS customers are responsible for configuring their systems to protect the confidentiality and/or integrity of organization-defined information at rest in accordance with their system and communications protection policy.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "4aae7a50-294a-5ac0-847e-57a26308f76c",
+          "control-id": "sc-7",
+          "statements": [
+            {
+              "statement-id": "sc-7_smt",
+              "uuid": "3f786bdd-1cfb-5869-8fee-b7805d97f34d",
+              "by-components": [
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000004",
+                  "uuid": "102d1d77-91e1-50f9-9d9e-9f1a26407188",
+                  "description": "Boundary Protection: The Application Gateway v2 is deployed in the public subnet and serves as the sole internet-facing entry point. The Standard_v2 SKU supports WAF v2 upgrade for OWASP rule-based web application filtering. The backend address pool targets the VM private IP only \u2014 no direct internet access to the application. The health probe monitors backend availability at configurable intervals (30s interval, 30s timeout, 3 unhealthy threshold) and only routes traffic to healthy backends. The App Gateway NSG permits inbound 80/443 and GatewayManager health probes (65200-65535). Reference: DISA SRG-NET-000364.",
+                  "remarks": "Terraform resources: azurerm_application_gateway.main with sku Standard_v2 (upgradeable to WAF_v2), probe block, backend_address_pool targeting var.vm_private_ip. NSG defined in networking module."
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000005",
+                  "uuid": "6116baac-ec29-5d82-aa3c-c30e8de083fb",
+                  "description": "Boundary Protection: The PostgreSQL Flexible Server is deployed in a delegated subnet (Microsoft.DBforPostgreSQL/flexibleServers) with private DNS zone integration (privatelink.postgres.database.azure.com). The server has no public endpoint. Network access is restricted to the VNet via the delegated subnet and private DNS zone virtual network link. The DB NSG permits inbound connections on port 5432 only from the VM private subnet. Reference: DISA SRG-NET-000364.",
+                  "remarks": "Terraform resources: azurerm_postgresql_flexible_server.main with delegated_subnet_id and private_dns_zone_id, azurerm_private_dns_zone.postgres, azurerm_private_dns_zone_virtual_network_link.postgres, azurerm_network_security_group.db (in networking module)."
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000001",
+                  "uuid": "77cb9926-022d-59f9-8b39-5b50981d1bc0",
+                  "description": "Boundary Protection: The VNet establishes a network boundary with a public subnet (Application Gateway), a private subnet (VM), and a database subnet (PostgreSQL Flexible Server with service delegation). Four Network Security Groups enforce layered ingress rules: App Gateway NSG permits 80/443 from 0.0.0.0/0 and GatewayManager on 65200-65535, VM NSG permits app_port from the public subnet only, DB NSG permits 5432 from the private subnet only, Redis NSG permits 6380 from the private subnet only. Each NSG is associated with its respective subnet or NIC. No direct internet access to private or database subnets. Reference: DISA SRG-NET-000364, CIS Azure 6.1.",
+                  "remarks": "Terraform resources: azurerm_virtual_network.main, azurerm_subnet.public, azurerm_subnet.private, azurerm_subnet.database, azurerm_network_security_group.app_gateway, azurerm_network_security_group.vm, azurerm_network_security_group.db, azurerm_network_security_group.redis, azurerm_subnet_network_security_group_association (public, private, database)."
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000006",
+                  "uuid": "bcc72326-ae99-5f1d-b5f6-36a345464b60",
+                  "description": "Boundary Protection: Public network access is disabled (public_network_access_enabled = false), restricting all access to private network paths. For Standard and Premium SKUs, VNet integration is enabled via subnet_id, placing the Redis cache endpoint within the private network. The Redis NSG in the networking module permits inbound connections on port 6380 (TLS port) only from the VM private subnet. Reference: DISA SRG-NET-000364.",
+                  "remarks": "Terraform resource: azurerm_redis_cache.main with public_network_access_enabled = false, subnet_id (conditional on Standard/Premium SKU). NSG: azurerm_network_security_group.redis in networking module."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "f6150cc4-049d-562a-93b1-e99ec3721df2",
+          "control-id": "sc-8",
+          "statements": [
+            {
+              "statement-id": "sc-8_smt",
+              "uuid": "158f4798-7cf2-5fbd-95e5-8482d0643aab",
+              "by-components": [
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000004",
+                  "uuid": "e9daa6c6-db7b-5bdd-b286-5b396b84d541",
+                  "description": "Transmission Confidentiality and Integrity: The Application Gateway terminates TLS on port 443 using an uploaded SSL certificate (dynamic ssl_certificate block). An HTTPS listener accepts encrypted client connections. A separate HTTP listener on port 80 is configured with a permanent (301) redirect to the HTTPS listener, ensuring all client traffic is encrypted in transit. The redirect preserves both path and query string (include_path = true, include_query_string = true). Reference: DISA SRG-APP-000439, CIS Azure 9.1.",
+                  "remarks": "Terraform resources: azurerm_application_gateway.main with http_listener (HTTPS on 443, HTTP on 80), redirect_configuration (Permanent redirect to HTTPS), ssl_certificate (dynamic block). Backend traffic from gateway to VM uses HTTP on the app_port within the private VNet."
+                },
+                {
+                  "component-uuid": "596fd555-075e-5477-9205-80bce00805f5",
+                  "uuid": "1d1b468a-69fc-5b52-aeee-dfcaa242d066",
+                  "description": "Config rule s3-bucket-ssl-requests-only verifies that S3 buckets require HTTPS for all requests, protecting data in transit.",
+                  "remarks": ""
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000006",
+                  "uuid": "b670e6e5-f7ec-567d-a7dd-428f2c628653",
+                  "description": "Transmission Confidentiality and Integrity: Azure Cache for Redis enforces TLS 1.2 as the minimum protocol version (minimum_tls_version = 1.2). The non-SSL port is explicitly disabled (non_ssl_port_enabled = false), ensuring all client connections must use encrypted transport. This prevents plaintext Redis protocol communication and protects data in transit from interception. Reference: DISA SRG-APP-000439, CIS Azure 4.4.",
+                  "remarks": "Terraform resource: azurerm_redis_cache.main with minimum_tls_version = var.minimum_tls_version (default 1.2), non_ssl_port_enabled = false."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "c8cd0dad-d751-596d-837a-3c24c0f7941e",
+          "control-id": "si-10",
+          "statements": [
+            {
+              "statement-id": "si-10_smt",
+              "uuid": "e02e7aac-9961-5290-9f53-b56be15c5d05",
+              "by-components": [
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000004",
+                  "uuid": "32780413-5200-5ea5-aaa4-a5e0809ee446",
+                  "description": "Information Input Validation: The Application Gateway health probe validates backend application responsiveness by sending HTTP requests to a configurable health_check_path at the application port. Backends that fail 3 consecutive health checks (unhealthy_threshold = 3) are removed from the rotation. This ensures only properly functioning application instances receive traffic. The probe validates HTTP response codes to confirm the application is processing requests correctly. Reference: DISA SRG-APP-000266.",
+                  "remarks": "Terraform resource: azurerm_application_gateway.main probe block with host = 127.0.0.1, path = var.health_check_path, interval = 30, timeout = 30, unhealthy_threshold = 3."
+                },
+                {
+                  "component-uuid": "a1b2c3d4-2222-4000-a000-000000000016",
+                  "uuid": "4d8ca9c2-8fa4-5594-a6f8-0cde2cb083a8",
+                  "description": "Semgrep enforces input validation rules on Python scripts that process external data (Checkov JSON, YAML baselines, OSCAL documents). Rules detect command injection, path traversal, and unsafe deserialization patterns.",
+                  "remarks": ""
+                },
+                {
+                  "component-uuid": "94efa1a4-56a3-5e75-8458-380b25a18d57",
+                  "uuid": "e61162f2-1619-5ff1-8691-8c1504821483",
+                  "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: SI-10. Customer responsibility: AWS customers are responsible for configuring their systems to check the validity of organization-defined inputs.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "91df685d-2283-590a-8d3e-9dc9c544df8b",
+          "control-id": "si-2",
+          "statements": [
+            {
+              "statement-id": "si-2_smt",
+              "uuid": "69164c2f-6083-5a2f-b81b-1e8820b66dac",
+              "by-components": [
+                {
+                  "component-uuid": "a1b2c3d4-2222-4000-a000-000000000016",
+                  "uuid": "ffff0c87-0420-5455-ae14-a6d82c225f7f",
+                  "description": "pip-audit scans Python dependency manifests (requirements.txt) against the Python Packaging Advisory Database for known vulnerabilities. Findings are reported in SARIF format, converted to HDF, and included in OSCAL Assessment Results for continuous flaw tracking.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "88375b16-dba0-5d89-ab25-09ea3d7e1964",
+          "control-id": "si-3",
+          "statements": [
+            {
+              "statement-id": "si-3_smt",
+              "uuid": "b4419913-2104-50b8-a459-c16705400c9a",
+              "by-components": [
+                {
+                  "component-uuid": "a1b2c3d4-2222-4000-a000-000000000016",
+                  "uuid": "bba5f8fc-4144-57d2-9e4a-fd62b9010c29",
+                  "description": "Semgrep SAST scanning detects injection vulnerabilities, cross-site scripting, path traversal, and other malicious code patterns in Python scripts that handle security data (OSCAL assembly, Checkov analysis, compliance packaging). Findings block merges via the security gate when thresholds are exceeded.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "02b4f8dd-fa55-517d-aeaa-45b20a52666c",
+          "control-id": "si-4",
+          "statements": [
+            {
+              "statement-id": "si-4_smt",
+              "uuid": "aee86c22-6fe3-5268-8de0-6a826ca77c5a",
+              "by-components": [
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000011",
+                  "uuid": "cf92014f-ff5c-539c-808b-e46f224ca5cf",
+                  "description": "System Monitoring: The Action Group serves as the notification channel for all monitoring alerts, completing the detection-to-notification pipeline. All 7 metric alerts (VM CPU, App Gateway unhealthy hosts, App Gateway 5xx, PostgreSQL CPU, PostgreSQL storage, Redis CPU, Redis memory) route through this action group. This centralized notification approach ensures consistent alert delivery and prevents gaps in monitoring coverage. Reference: DISA SRG-APP-000340.",
+                  "remarks": "Terraform resource: azurerm_monitor_action_group.main. The action group ID is passed to the monitoring module as var.action_group_id and referenced in every azurerm_monitor_metric_alert action block."
+                },
+                {
+                  "component-uuid": "596fd555-075e-5477-9205-80bce00805f5",
+                  "uuid": "c5fc4e49-c0db-559b-85b9-4304234af142",
+                  "description": "AWS Config monitors system configuration for security-relevant changes. VPC flow logs, CloudTrail, and Config together provide comprehensive monitoring coverage.",
+                  "remarks": ""
+                },
+                {
+                  "component-uuid": "c1d2e3f4-2222-4000-a000-000000000010",
+                  "uuid": "d16718fc-c1c0-5854-ad4f-3583e6e56838",
+                  "description": "System Monitoring: Seven metric alerts provide continuous monitoring across all infrastructure tiers: (1) VM CPU > 80% (severity 2, 15-min window); (2) App Gateway unhealthy host count > 0 (severity 1, 5-min window); (3) App Gateway 5xx responses > 10 (severity 2, 5-min window, filtered by HttpStatusGroup=5xx dimension); (4) PostgreSQL CPU > 80% (severity 2, 15-min window); (5) PostgreSQL storage > 80% (severity 2, 15-min window); (6) Redis CPU > 80% (severity 2, 15-min window); (7) Redis memory > 80% (severity 2, 15-min window). All alerts evaluate every 5 minutes and notify via the action group. Reference: DISA SRG-APP-000340.",
+                  "remarks": "Terraform resources: azurerm_monitor_metric_alert.vm_cpu, azurerm_monitor_metric_alert.gateway_unhealthy_hosts, azurerm_monitor_metric_alert.gateway_5xx, azurerm_monitor_metric_alert.db_cpu, azurerm_monitor_metric_alert.db_storage, azurerm_monitor_metric_alert.redis_cpu, azurerm_monitor_metric_alert.redis_memory. All alerts reference var.action_group_id."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "55f94b8c-b3d5-52c2-89cb-55a23a89e539",
+          "control-id": "si-4.14",
+          "statements": [
+            {
+              "statement-id": "si-4.14_smt",
+              "uuid": "7c5c837f-0417-5cc5-bb94-c563cbb13cf2",
+              "by-components": [
+                {
+                  "component-uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+                  "uuid": "688de634-48f7-5a5f-98db-2315e6aeefea",
+                  "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: SI-04(14). Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "uuid": "d4e2fa4e-60e3-5c5f-8840-0c0599fd6271",
+          "control-id": "si-7",
+          "statements": [
+            {
+              "statement-id": "si-7_smt",
+              "uuid": "094267e9-8573-52c8-98c2-93f62cf689cc",
+              "by-components": [
+                {
+                  "component-uuid": "a1b2c3d4-2222-4000-a000-000000000016",
+                  "uuid": "4c816443-bceb-58ff-b5fa-c3308a4b141a",
+                  "description": "TruffleHog scans the full repository for leaked credentials, API keys, and secrets on every compliance run. Zero tolerance threshold (max: 0) blocks merges if secrets are detected. Checkov validates infrastructure configurations have not drifted from security baselines.",
+                  "remarks": ""
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "uuid": "e8875edd-8795-4e25-9ca5-c039b232eef8"
+  }
+}

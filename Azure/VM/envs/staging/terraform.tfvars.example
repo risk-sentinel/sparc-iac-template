@@ -1,0 +1,19 @@
+# ============================================================================
+# SPARC Azure VM — Staging Environment
+# ============================================================================
+environment  = "staging"
+location     = "eastus"
+project_name = "sparc"
+tenant_id    = "00000000-0000-0000-0000-000000000000"
+
+app_image   = "your-registry.azurecr.io/sparc:latest"
+nginx_image = "your-registry.azurecr.io/sparc-nginx:latest"
+
+vm_size        = "Standard_B2ms"
+data_disk_size = 50
+db_sku_name    = "B_Standard_B2s"
+redis_sku      = "Standard"
+redis_family   = "C"
+redis_capacity = 1
+
+alarm_emails = ["staging-alerts@example.com"]

@@ -1,0 +1,65 @@
+{
+  "component-definition": {
+    "uuid": "c1d2e3f4-1111-4000-a000-000000000004",
+    "metadata": {
+      "title": "SPARC Azure Application Gateway Component Definition",
+      "last-modified": "2026-03-20T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "c1d2e3f4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "c1d2e3f4-2222-4000-a000-000000000004",
+        "type": "service",
+        "title": "Azure Application Gateway v2",
+        "description": "Application Gateway Standard_v2 with TLS termination on port 443, HTTP-to-HTTPS 301 redirect, backend pool targeting the VM private IP, health probe on the application port, and optional SSL certificate. Deployed via Terraform (Azure/VM/modules/app_gateway/). <!-- UPDATE: Insert Application Gateway resource ID, public IP, backend pool details, and SSL certificate name for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["c1d2e3f4-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "c1d2e3f4-3333-4000-a000-000000000004",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for Azure Application Gateway",
+            "implemented-requirements": [
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000030",
+                "control-id": "sc-8",
+                "description": "Transmission Confidentiality and Integrity: The Application Gateway terminates TLS on port 443 using an uploaded SSL certificate (dynamic ssl_certificate block). An HTTPS listener accepts encrypted client connections. A separate HTTP listener on port 80 is configured with a permanent (301) redirect to the HTTPS listener, ensuring all client traffic is encrypted in transit. The redirect preserves both path and query string (include_path = true, include_query_string = true). Reference: DISA SRG-APP-000439, CIS Azure 9.1.",
+                "remarks": "Terraform resources: azurerm_application_gateway.main with http_listener (HTTPS on 443, HTTP on 80), redirect_configuration (Permanent redirect to HTTPS), ssl_certificate (dynamic block). Backend traffic from gateway to VM uses HTTP on the app_port within the private VNet."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000031",
+                "control-id": "sc-7",
+                "description": "Boundary Protection: The Application Gateway v2 is deployed in the public subnet and serves as the sole internet-facing entry point. The Standard_v2 SKU supports WAF v2 upgrade for OWASP rule-based web application filtering. The backend address pool targets the VM private IP only — no direct internet access to the application. The health probe monitors backend availability at configurable intervals (30s interval, 30s timeout, 3 unhealthy threshold) and only routes traffic to healthy backends. The App Gateway NSG permits inbound 80/443 and GatewayManager health probes (65200-65535). Reference: DISA SRG-NET-000364.",
+                "remarks": "Terraform resources: azurerm_application_gateway.main with sku Standard_v2 (upgradeable to WAF_v2), probe block, backend_address_pool targeting var.vm_private_ip. NSG defined in networking module."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000032",
+                "control-id": "si-10",
+                "description": "Information Input Validation: The Application Gateway health probe validates backend application responsiveness by sending HTTP requests to a configurable health_check_path at the application port. Backends that fail 3 consecutive health checks (unhealthy_threshold = 3) are removed from the rotation. This ensures only properly functioning application instances receive traffic. The probe validates HTTP response codes to confirm the application is processing requests correctly. Reference: DISA SRG-APP-000266.",
+                "remarks": "Terraform resource: azurerm_application_gateway.main probe block with host = 127.0.0.1, path = var.health_check_path, interval = 30, timeout = 30, unhealthy_threshold = 3."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

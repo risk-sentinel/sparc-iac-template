@@ -1,0 +1,48 @@
+name: Validate
+
+on:
+  push:
+
+jobs:
+  terraform:
+    name: "Terraform (${{ matrix.pattern }})"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    container:
+      image: risksentinel/sparc-ci-runner@sha256:f0994371f4f36bbbb9d0e26dc6ff2c6511b15e4415f5b8d17d545808099b86f2
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      matrix:
+        include:
+          - pattern: ecs
+            dir: AWS/ECS
+          - pattern: ec2
+            dir: AWS/EC2
+          - pattern: azure-vm
+            dir: Azure/VM
+          - pattern: config
+            dir: AWS/config
+          - pattern: bootstrap
+            dir: bootstrap
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Terraform Init
+        working-directory: ${{ matrix.dir }}
+        run: terraform init -backend=false
+
+      - name: Terraform Format Check
+        working-directory: ${{ matrix.dir }}
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        working-directory: ${{ matrix.dir }}
+        run: terraform validate
+
+  # OSCAL validation lives in .github/workflows/compliance.yml (validate-and-scan
+  # job). It runs the pinned oscal-cli against every committed SSP/SAR/POAM/
+  # SAP/CDEF/catalog and is the authoritative gate. Keeping this workflow
+  # focused on Terraform avoids two divergent validation code paths.

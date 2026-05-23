@@ -1,0 +1,252 @@
+#!/bin/bash
+# =============================================================================
+# sparc-validate DB scanner ephemeral runner — bootstrap (#188 + #190)
+#
+# Installs the GitHub actions-runner, mints a fresh GitHub App installation
+# token at boot (1-hour TTL — never persisted), exchanges it for a runner
+# registration token, registers with ${github_org}/${github_repo} as
+# --ephemeral (auto-deregisters after one job), runs the runner in the
+# foreground, and shuts the instance down on exit.
+#
+# Auth flow (#190): GitHub App installation token, NOT a long-lived PAT.
+# - Secrets Manager holds JSON {"app_id", "installation_id", "private_key"}.
+# - This script signs a short-lived JWT with the App's RSA private key,
+#   exchanges it for an installation token, then exchanges that for a
+#   runner registration token. Tokens never touch disk and are scrubbed
+#   from the environment as soon as they're consumed.
+# =============================================================================
+
+set -euo pipefail
+
+log() { echo "[$(date -u +%FT%TZ)] $*"; }
+
+export DEBIAN_FRONTEND=noninteractive
+
+log "Installing prerequisites"
+apt-get update -y
+apt-get install -y --no-install-recommends \
+  curl ca-certificates jq unzip tar gzip openssl \
+  postgresql-client libpq-dev ruby ruby-dev build-essential
+
+# -----------------------------------------------------------------------------
+# AWS CLI v2 — Ubuntu 24.04 dropped the apt `awscli` package (was the
+# deprecated v1). Install v2 directly from AWS per their official path.
+# Architecture is auto-detected (currently aarch64 per #188 AMI).
+# -----------------------------------------------------------------------------
+
+log "Installing AWS CLI v2"
+case "$(uname -m)" in
+  aarch64) AWSCLI_ARCH="aarch64" ;;
+  x86_64)  AWSCLI_ARCH="x86_64" ;;
+  *) log "ERROR: Unsupported architecture for AWS CLI install: $(uname -m)"; shutdown -h now; exit 1 ;;
+esac
+curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-$${AWSCLI_ARCH}.zip" -o /tmp/awscliv2.zip
+unzip -q /tmp/awscliv2.zip -d /tmp
+/tmp/aws/install
+rm -rf /tmp/aws /tmp/awscliv2.zip
+
+# -----------------------------------------------------------------------------
+# cinc-auditor — pinned via cinc_auditor_version Terraform variable so this
+# host's engine version stays coordinated with sparc-validate's
+# cincproject/auditor docker-image digest pin (sparc-validate#26).
+#
+# URL structure on packages.cinc.sh is
+#   /files/stable/cinc-auditor/<version>/ubuntu/<distro>/cinc-auditor_<version>-1_<arch>.deb
+# Architecture is auto-detected via `dpkg --print-architecture` (returns
+# `arm64` on Graviton AMIs and `amd64` on x86 — matches the .deb filename
+# convention). Distro path uses 24.04 to match the AMI; cinc publishes a
+# native 24.04 build for ≥7.0.x.
+# -----------------------------------------------------------------------------
+
+log "Installing cinc-auditor ${cinc_auditor_version}"
+ARCH=$(dpkg --print-architecture)
+curl -fsSL -o /tmp/cinc-auditor.deb \
+  "https://packages.cinc.sh/files/stable/cinc-auditor/${cinc_auditor_version}/ubuntu/24.04/cinc-auditor_${cinc_auditor_version}-1_$${ARCH}.deb"
+dpkg -i /tmp/cinc-auditor.deb
+rm /tmp/cinc-auditor.deb
+
+# pg gem into cinc-auditor's bundled Ruby — required by
+# aws_rds_aurora_psql_query in cis-postgresql Phase-C controls (#219).
+# libpq-dev + build-essential (above) provide the native-extension build
+# toolchain for the gem's compile step.
+log "Installing pg gem into cinc-auditor's bundled gemset"
+/opt/cinc-auditor/embedded/bin/gem install pg --no-document
+
+# -----------------------------------------------------------------------------
+# inspec_scanner bootstrap (#243) — replaces the deprecated ECS-Exec-based
+# create-inspec-scanner-user.sh. The two on-disk files below are written
+# verbatim from AWS/ECS/scripts/ (filebase64 in main.tf) so the same script
+# serves both this first-boot path AND the SSM Run Command path. Idempotent;
+# exits 0 if inspec_scanner already exists in the cluster.
+# -----------------------------------------------------------------------------
+
+log "Writing inspec_scanner bootstrap files to /opt/bootstrap"
+mkdir -p /opt/bootstrap
+# Gzip+base64 keeps user_data under EC2's 16 KiB limit (#245). base64 and
+# gunzip are both in the Ubuntu 24.04 base image.
+echo '${bootstrap_script_b64gz}' | base64 -d | gunzip > /opt/bootstrap/bootstrap-inspec-scanner-runner.sh
+echo '${bootstrap_sql_b64gz}' | base64 -d | gunzip > /opt/bootstrap/inspec_scanner.sql
+chmod 755 /opt/bootstrap/bootstrap-inspec-scanner-runner.sh
+chmod 644 /opt/bootstrap/inspec_scanner.sql
+
+log "Running idempotent inspec_scanner bootstrap"
+export DB_CREDENTIALS_SECRET_NAME="${db_credentials_secret_name}"
+export AWS_REGION="${aws_region}"
+if ! /opt/bootstrap/bootstrap-inspec-scanner-runner.sh; then
+  log "ERROR: inspec_scanner bootstrap failed; shutting down to avoid registering a runner with broken DB-auth state"
+  shutdown -h now
+  exit 1
+fi
+unset DB_CREDENTIALS_SECRET_NAME
+
+# -----------------------------------------------------------------------------
+# actions-runner install (ARM64, version pinned in the module for reproducibility)
+# -----------------------------------------------------------------------------
+
+RUNNER_VERSION="${runner_version}"
+RUNNER_DIR="/opt/actions-runner"
+
+log "Installing actions-runner $${RUNNER_VERSION}"
+mkdir -p "$${RUNNER_DIR}"
+cd "$${RUNNER_DIR}"
+
+curl -fsSL -o runner.tar.gz \
+  "https://github.com/actions/runner/releases/download/v$${RUNNER_VERSION}/actions-runner-linux-arm64-$${RUNNER_VERSION}.tar.gz"
+
+tar xzf runner.tar.gz
+rm runner.tar.gz
+
+# actions-runner's Linux deps (.NET runtime etc.)
+./bin/installdependencies.sh
+
+# Do not run the runner as root — create a dedicated user and re-home.
+useradd -m -d /home/runner -s /bin/bash runner || true
+chown -R runner:runner "$${RUNNER_DIR}"
+
+# -----------------------------------------------------------------------------
+# Fetch the GitHub App credentials JSON from Secrets Manager
+# -----------------------------------------------------------------------------
+
+log "Fetching App credentials from Secrets Manager: ${app_key_secret_name}"
+APP_JSON=$(aws secretsmanager get-secret-value \
+  --secret-id "${app_key_secret_name}" \
+  --region "${aws_region}" \
+  --query SecretString \
+  --output text)
+
+if [ -z "$${APP_JSON}" ] || [ "$${APP_JSON}" = "null" ]; then
+  log "ERROR: App credentials secret is empty. Populate ${app_key_secret_name} per docs/dev/db_scanner.md."
+  shutdown -h now
+  exit 1
+fi
+
+APP_ID=$(echo "$${APP_JSON}" | jq -r .app_id)
+INSTALLATION_ID=$(echo "$${APP_JSON}" | jq -r .installation_id)
+PRIVATE_KEY=$(echo "$${APP_JSON}" | jq -r .private_key)
+
+if [ -z "$${APP_ID}" ] || [ "$${APP_ID}" = "null" ] \
+   || [ -z "$${INSTALLATION_ID}" ] || [ "$${INSTALLATION_ID}" = "null" ] \
+   || [ -z "$${PRIVATE_KEY}" ] || [ "$${PRIVATE_KEY}" = "null" ]; then
+  log "ERROR: App credentials JSON missing one of {app_id, installation_id, private_key}. See runbook for schema."
+  shutdown -h now
+  exit 1
+fi
+
+# Write PEM to a tmpfs-backed file (no disk persistence). /dev/shm is tmpfs
+# on standard Ubuntu AMIs.
+PEM_FILE=$(mktemp /dev/shm/app-key.XXXXXX.pem)
+chmod 600 "$${PEM_FILE}"
+printf '%s\n' "$${PRIVATE_KEY}" > "$${PEM_FILE}"
+unset PRIVATE_KEY APP_JSON
+
+# -----------------------------------------------------------------------------
+# Build a 10-minute JWT signed with the App private key (RS256)
+# -----------------------------------------------------------------------------
+
+log "Building JWT for App ID $${APP_ID}"
+NOW_EPOCH=$(date +%s)
+IAT=$((NOW_EPOCH - 60))    # 60s clock-skew tolerance per GitHub docs
+EXP=$((NOW_EPOCH + 540))   # 9 minutes (max 10)
+
+# JWT header and payload, base64url-encoded (no padding).
+b64url() { openssl base64 -A | tr '+/' '-_' | tr -d '='; }
+HEADER=$(printf '{"alg":"RS256","typ":"JWT"}' | b64url)
+PAYLOAD=$(printf '{"iat":%d,"exp":%d,"iss":"%s"}' "$${IAT}" "$${EXP}" "$${APP_ID}" | b64url)
+SIGNING_INPUT="$${HEADER}.$${PAYLOAD}"
+SIGNATURE=$(printf '%s' "$${SIGNING_INPUT}" \
+  | openssl dgst -sha256 -sign "$${PEM_FILE}" -binary \
+  | b64url)
+JWT="$${SIGNING_INPUT}.$${SIGNATURE}"
+
+# Scrub the PEM as soon as the JWT is built — JWT lifetime is 9 minutes,
+# we only need it for one HTTP exchange.
+shred -u "$${PEM_FILE}" 2>/dev/null || rm -f "$${PEM_FILE}"
+
+# -----------------------------------------------------------------------------
+# Exchange the JWT for an installation token (1h TTL)
+# -----------------------------------------------------------------------------
+
+log "Minting installation token for App installation $${INSTALLATION_ID}"
+INSTALL_TOKEN=$(curl -fsSL -X POST \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer $${JWT}" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  "https://api.github.com/app/installations/$${INSTALLATION_ID}/access_tokens" \
+  | jq -r .token)
+unset JWT
+
+if [ -z "$${INSTALL_TOKEN}" ] || [ "$${INSTALL_TOKEN}" = "null" ]; then
+  log "ERROR: Failed to mint installation token. Check App ID + installation ID + key validity."
+  shutdown -h now
+  exit 1
+fi
+
+# -----------------------------------------------------------------------------
+# Exchange the installation token for a runner registration token
+# -----------------------------------------------------------------------------
+
+log "Minting registration token for ${github_org}/${github_repo}"
+REG_TOKEN=$(curl -fsSL -X POST \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer $${INSTALL_TOKEN}" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  "https://api.github.com/repos/${github_org}/${github_repo}/actions/runners/registration-token" \
+  | jq -r .token)
+unset INSTALL_TOKEN
+
+if [ -z "$${REG_TOKEN}" ] || [ "$${REG_TOKEN}" = "null" ]; then
+  log "ERROR: Failed to mint registration token. Check App permissions (needs Administration: write on ${github_repo})."
+  shutdown -h now
+  exit 1
+fi
+
+# -----------------------------------------------------------------------------
+# Configure and run the runner (ephemeral — one job then exit)
+# -----------------------------------------------------------------------------
+
+INSTANCE_ID=$(curl -fsSL -H "X-aws-ec2-metadata-token: $(curl -fsSL -X PUT http://169.254.169.254/latest/api/token -H 'X-aws-ec2-metadata-token-ttl-seconds: 60')" http://169.254.169.254/latest/meta-data/instance-id)
+RUNNER_NAME="sparc-db-scanner-$${INSTANCE_ID}"
+
+log "Configuring runner $${RUNNER_NAME} with labels: ${runner_labels}"
+sudo -u runner bash -c "cd $${RUNNER_DIR} && ./config.sh \
+  --url 'https://github.com/${github_org}/${github_repo}' \
+  --token '$${REG_TOKEN}' \
+  --name '$${RUNNER_NAME}' \
+  --labels '${runner_labels}' \
+  --ephemeral \
+  --unattended \
+  --replace"
+
+unset REG_TOKEN
+
+log "Runner configured. Starting run.sh (ephemeral — will exit after one job)"
+sudo -u runner bash -c "cd $${RUNNER_DIR} && ./run.sh" || log "run.sh exited with non-zero status (job may have failed; continuing to shutdown)"
+
+# -----------------------------------------------------------------------------
+# Teardown — the ASG stays at whatever desired capacity was set by the
+# orchestration workflow (normally 1 right now). sparc-validate's cleanup
+# job scales back to 0. Shutting down signals "instance is done" to the ASG.
+# -----------------------------------------------------------------------------
+
+log "Runner exited. Shutting instance down."
+shutdown -h now

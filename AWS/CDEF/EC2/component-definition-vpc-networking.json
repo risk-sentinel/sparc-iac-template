@@ -1,0 +1,65 @@
+{
+  "component-definition": {
+    "uuid": "b1c2d3e4-1111-4000-a000-000000000003",
+    "metadata": {
+      "title": "SPARC EC2 VPC and Networking Component Definition",
+      "last-modified": "2026-03-20T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "b1c2d3e4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "b1c2d3e4-2222-4000-a000-000000000003",
+        "type": "service",
+        "title": "AWS VPC and Networking (EC2)",
+        "description": "VPC with public/private subnet architecture, internet gateway, NAT gateway, route tables, and layered security groups for EC2 deployment pattern. Security groups target EC2 instances instead of ECS tasks. Deployed via Terraform (AWS/EC2/modules/networking/). <!-- UPDATE: Insert VPC ID, CIDR ranges, and account details for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["b1c2d3e4-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "b1c2d3e4-3333-4000-a000-000000000003",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for VPC networking components",
+            "implemented-requirements": [
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000020",
+                "control-id": "sc-7",
+                "description": "Boundary Protection: The VPC establishes a network boundary with public subnets (ALB-facing) isolated from private subnets (EC2 instances, RDS, Redis). Four security groups enforce layered ingress rules: ALB SG permits 80/443 from 0.0.0.0/0, EC2 SG permits container_port from ALB SG only, RDS SG permits 5432 from EC2 SG only, Redis SG permits 6379 from EC2 SG only. No direct internet access to private subnets. Reference: DISA SRG-NET-000364, CIS AWS 5.1.",
+                "remarks": "Terraform resources: aws_vpc.main, aws_subnet.public, aws_subnet.private, aws_security_group.alb, aws_security_group.ec2, aws_security_group.rds, aws_security_group.redis"
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000021",
+                "control-id": "sc-7.5",
+                "description": "Boundary Protection | Deny by Default / Allow by Exception: Security groups default-deny all inbound traffic. Only explicitly defined ingress rules are permitted: HTTP/HTTPS to ALB, container port from ALB to EC2 instance, PostgreSQL from EC2 to RDS, Redis from EC2 to ElastiCache. Egress is allowed for operational connectivity (NAT gateway for EC2 outbound). No SSH port (22) is open in any security group. Reference: DISA SRG-NET-000202.",
+                "remarks": "All four security groups (ALB, EC2, RDS, Redis) are created in the networking module to prevent circular dependencies between downstream modules."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000022",
+                "control-id": "ac-4",
+                "description": "Information Flow Enforcement: Network architecture enforces unidirectional traffic flow: Internet → ALB (public subnets) → EC2 instance (private subnets) → RDS and Redis (private subnets). Security groups restrict each hop to specific ports and source security groups. NAT gateway provides controlled outbound-only internet access from private subnets. The EC2 instance can reach both RDS (5432) and Redis (6379) but neither data store can initiate connections to the EC2 instance. Reference: DISA SRG-NET-000019, CIS AWS 5.2.",
+                "remarks": "Terraform resources: aws_route_table.public (→ IGW), aws_route_table.private (→ NAT), aws_nat_gateway.main. Data stores are in private subnets with no public routes."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

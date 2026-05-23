@@ -1,0 +1,149 @@
+{
+  "component-definition": {
+    "uuid": "a1b2c3d4-1111-4000-a000-000000000005",
+    "metadata": {
+      "title": "SPARC IAM Component Definition",
+      "last-modified": "2026-03-20T00:00:00Z",
+      "version": "2.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "a1b2c3d4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "a1b2c3d4-2222-4000-a000-000000000005",
+        "type": "service",
+        "title": "AWS IAM Roles and Policies",
+        "description": "IAM roles for ECS task execution (image pull from both app and NGINX ECR repos, log write, secret read for DB and app secrets) and task runtime (S3 bucket access for ActiveStorage uploads). Deployed via Terraform (AWS/ECS/modules/iam/). <!-- UPDATE: Insert execution role ARN, task role ARN, Secrets Manager ARNs, and S3 bucket ARN for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["a1b2c3d4-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "a1b2c3d4-3333-4000-a000-000000000005",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for IAM",
+            "implemented-requirements": [
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000040",
+                "control-id": "ac-2",
+                "description": "Account Management: Two distinct IAM roles are provisioned for ECS tasks, separating infrastructure concerns from application concerns. The execution role ({project}-{env}-ecs-execution-role) is used by the ECS agent for platform operations. The task role ({project}-{env}-ecs-task-role) is assumed by the running container for application-level AWS API access. Both use ecs-tasks.amazonaws.com as the trusted principal. Reference: DISA SRG-APP-000023, CIS AWS 1.16.",
+                "remarks": "Terraform resources: aws_iam_role.execution, aws_iam_role.task. Both share the same assume-role trust policy for ecs-tasks.amazonaws.com."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000041",
+                "control-id": "ac-3",
+                "description": "Access Enforcement: IAM policies enforce least-privilege access. The execution role receives AmazonECSTaskExecutionRolePolicy (ECR pull for both app and NGINX repos, CloudWatch write) plus a scoped inline policy granting secretsmanager:GetSecretValue on both the DB credentials and app secrets ARNs. The task role has a scoped S3 policy granting s3:GetObject, s3:PutObject, s3:DeleteObject, s3:ListBucket on the specific SPARC uploads bucket only (for Rails ActiveStorage). No static AWS access keys are used. Reference: DISA SRG-APP-000033.",
+                "remarks": "Execution role secrets policy covers both db_secret_arn and app_secret_arn. Task role S3 policy: aws_iam_role_policy.task_s3 with resource constraint on bucket ARN and bucket/*."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000042",
+                "control-id": "ac-6",
+                "description": "Least Privilege: Each IAM role is scoped to the minimum permissions required for its function. The execution role cannot access application data, S3 uploads, or make business-logic API calls. The task role can only access the specific S3 uploads bucket — it cannot pull images, write logs, or read secrets (those are execution role responsibilities). S3 access uses the IAM task role instead of static AWS_ACCESS_KEY_ID credentials. This separation prevents privilege escalation between infrastructure and application layers. Reference: DISA SRG-APP-000062, CIS AWS 1.17.",
+                "remarks": "S3 access via IAM role eliminates static credentials. Review and audit task role policies when adding application-level AWS integrations."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000043",
+                "control-id": "ac-6.1",
+                "description": "Least Privilege | Authorize Access to Security Functions: The execution role's Secrets Manager policy grants only secretsmanager:GetSecretValue (read-only) on exactly two secret resources (DB credentials and app secrets). It cannot create, update, delete, or list secrets. The task role's S3 policy grants only object-level operations (Get, Put, Delete, List) on the specific uploads bucket. Neither role can access secrets or buckets outside its explicit resource scope. Reference: DISA SRG-APP-000340.",
+                "remarks": "Terraform resources: aws_iam_role_policy.execution_secrets (two ARNs), aws_iam_role_policy.task_s3 (one bucket ARN + bucket/*)."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000044",
+                "control-id": "ia-2",
+                "description": "Identification and Authentication: ECS tasks authenticate to AWS services using IAM roles (not static credentials). Role assumption is handled automatically by the ECS agent via the AWS STS service, providing temporary credentials that are rotated automatically. No long-lived access keys or passwords are used for AWS API authentication. Reference: DISA SRG-APP-000148, CIS AWS 1.4.",
+                "remarks": "IAM roles use sts:AssumeRole with ecs-tasks.amazonaws.com as the trusted service principal."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000045",
+                "control-id": "au-2",
+                "description": "Event Logging: All IAM role assumptions and API calls made by ECS tasks are logged in AWS CloudTrail. The execution role's CloudWatch Logs write permissions enable container-level audit logging. IAM policy changes are tracked via CloudTrail and can be alerted on via CloudWatch Events. Reference: DISA SRG-APP-000089.",
+                "remarks": "Ensure CloudTrail is enabled in the account for comprehensive IAM audit logging."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000046",
+                "control-id": "ac-2",
+                "description": "Account Management — sparc-validate DB Scanner Role Separation: A distinct IAM role ({project}-{env}-sparc-validate-db-scanner) is provisioned specifically for compliance database scans by sparc-validate. It is separate from the sparc-validate-scanner role (which reads AWS-wide metadata) so the audit story is clear: the identity that can authenticate to the database is a distinct principal from the identity that reads AWS control-plane metadata. Trust policy is scoped to repo:{github_org}/sparc-validate:* via GitHub OIDC. Reference: NIST SP 800-53 AC-2, DISA SRG-APP-000023.",
+                "remarks": "Terraform resources: aws_iam_role.sparc_validate_db_scanner, aws_iam_role_policy.sparc_validate_db_scanner. Gated on var.enable_db_scanner_role (default false); opt-in per environment."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000047",
+                "control-id": "ac-6",
+                "description": "Least Privilege — DB Scanner Role: The sparc-validate-db-scanner role holds exactly one IAM action: rds-db:connect, scoped by resource ARN to the single inspec_scanner dbuser on the Aurora cluster (arn:aws:rds-db:<region>:<account>:dbuser:<db_resource_id>/inspec_scanner). It cannot connect as any other database user, cannot assume any other role, and has no AWS control-plane permissions. The inspec_scanner database user itself is granted SELECT on a narrow set of pg_catalog and information_schema tables only — no access to user data, no write permissions. Reference: NIST SP 800-53 AC-6, DISA SRG-APP-000062.",
+                "remarks": "IAM policy resource constraint pins the role to a specific dbuser ARN. Database-level GRANTs applied via AWS/ECS/scripts/create-inspec-scanner-user.sh. pg_authid grant explicitly omitted — the password-hash-algorithm CIS control is checked via the cluster parameter group (SHOW password_encryption), not the hash table."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000048",
+                "control-id": "ia-2",
+                "description": "Identification and Authentication — IAM DB Auth for Scanner: The inspec_scanner PostgreSQL user authenticates exclusively via IAM database authentication (rds_iam grant), using short-lived tokens minted from the scanner role's STS credentials. No password is provisioned for the user; password-based auth is not possible for this identity. Tokens are valid for 15 minutes and scoped to the specific dbuser ARN in the IAM policy resource constraint. Reference: NIST SP 800-53 IA-2, DISA SRG-APP-000148.",
+                "remarks": "The role's rds-db:connect permission combined with the dbuser's rds_iam grant is the minimum configuration required for IAM DB auth on Aurora PostgreSQL. Cluster-level iam_database_authentication_enabled = true is set in the RDS module."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000049",
+                "control-id": "ac-2",
+                "description": "Account Management — DB Scanner Runner Role Split: The ephemeral runner module provisions two additional IAM identities with separated concerns. The instance profile role ({project}-{env}-db-scanner-runner-instance) is attached to the EC2 runner and holds only AmazonSSMManagedInstanceCore + read of the runner GitHub App credentials secret; it has no data-plane AWS access and is not a reachable identity from outside AWS. The orchestrator role ({project}-{env}-db-scanner-runner-orchestrator) is OIDC-trusted to sparc-validate's repo and holds only ASG scale + describe permissions scoped to the runner ASG ARN. Reference: NIST SP 800-53 AC-2, DISA SRG-APP-000023.",
+                "remarks": "The orchestrator role deliberately does NOT have GetSecretValue on the App key secret — the credentials are fetched by the runner instance at boot, not by the orchestrator. Keeps the orchestrator's blast radius tight. Terraform resources: aws_iam_role.runner_instance, aws_iam_role.runner_orchestrator (both in modules/iam/db_scanner_runner.tf — relocated from modules/db_scanner_runner/iam.tf in #238 per the IAM-locality rule). Auth uses GitHub App installation tokens (1h TTL minted at boot via JWT signed by App private key in Secrets Manager) rather than a long-lived PAT — see #190 for the architectural decision."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000050",
+                "control-id": "ac-6",
+                "description": "Least Privilege — Runner Orchestrator Scope: The orchestrator role's inline policy grants exactly three action sets: autoscaling:SetDesiredCapacity + UpdateAutoScalingGroup + DescribeAutoScalingGroups (the last is unscoped as IAM requires, but the scale-down actions are resource-scoped to the single db-scanner ASG ARN), and ec2:DescribeInstances read-only. The role cannot launch new ASGs, modify other autoscaling groups, terminate arbitrary instances, or access any data plane. Reference: NIST SP 800-53 AC-6, DISA SRG-APP-000062.",
+                "remarks": "Terraform resource: aws_iam_role_policy.runner_orchestrator with resource = aws_autoscaling_group.runner.arn on the scale-action statement."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000051",
+                "control-id": "ca-7",
+                "description": "Continuous Monitoring — sparc-validate Scanner AWS Config Evidence Grant (#226): An additional inline policy ('aws-config-read') is attached to the sparc-validate-scanner role to enable read-only access to AWS Config's compliance evaluation surface. This grants nine read-only Config actions (DescribeConfigRules, DescribeConfigRuleEvaluationStatus, GetComplianceDetailsByConfigRule, GetComplianceSummaryByConfigRule, GetComplianceDetailsByResource, DescribeConformancePacks, DescribeConformancePackCompliance, GetConformancePackComplianceDetails, DescribeConfigurationRecorders) so sparc-validate can call SAF CLI's aws_config2hdf converter and produce HDF artefacts from the conformance pack evaluations sparc-iac provisions. The grant complements (does not replace) the SecurityAudit + ViewOnlyAccess AWS-managed policies already attached to the role; it is opt-in via var.enable_aws_config_evidence_for_sparc_validate (default false) so adopters can stage the cross-repo enablement with sparc-validate#2. Resources are '*' because Config rules and conformance packs are account-scoped and the SAF tool walks the full evaluation surface. Reference: NIST SP 800-53 CA-7, DISA SRG-APP-000516.",
+                "remarks": "Terraform resources: aws_iam_role_policy.sparc_validate_aws_config (gated on var.enable_scanner_role && var.enable_aws_config_evidence_for_sparc_validate). Companion to sparc-validate#2; pairs with the existing AWS Config provisioning surface (recorder, rules, conformance packs) already managed by sparc-iac. Read-only — no Config control-plane modification capabilities granted."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000052",
+                "control-id": "ac-6",
+                "description": "Least Privilege — Optional Scanner Extra Service Reads (#234): An optional inline policy ('extra-service-reads') is attached to the sparc-validate-scanner role for adopters who have actually deployed services that sparc-validate's profiles cover but that SPARC does not operate by default. Opt-in via the scanner_extra_service_reads list-of-strings variable (default empty list = no policy resource created = identical posture to the baseline). Each entry in the list emits exactly one Allow statement granting <service>:Describe*, <service>:List*, <service>:Get* with Resource='*'. The valid entries are constrained by Terraform variable validation to ten services (workspaces-web, appstream, workdocs, cassandra, keyspaces, memorydb, timestream, simspaceweaver, lightsail, apprunner) — the surface that sparc-validate#86's expanded exec matrix covers. The variable's default empty list preserves least-privilege for adopters (including SPARC itself) who don't operate any of these services. Reference: NIST SP 800-53 AC-6, DISA SRG-APP-000062.",
+                "remarks": "Terraform resources: aws_iam_role_policy.sparc_validate_extra_reads (gated on var.enable_scanner_role && length(var.scanner_extra_service_reads) > 0; uses for-comprehension to emit one statement per requested service). Default-off keeps SPARC's posture unchanged; SPARC itself does not opt in to any of these services today. Adopter-side opt-in is the operating model — when SPARC or another adopter deploys, e.g., AppStream, the operator adds 'appstream' to scanner_extra_service_reads in env tfvars and the grant appears at next apply. Read-only — Describe/List/Get only, no mutating actions."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000053",
+                "control-id": "ac-6",
+                "description": "Least Privilege — Optional ECR Image Pull for Image-Level Audits (#236): An optional inline policy ('ecr-image-pull') is attached to the sparc-validate-scanner role to enable cinc-auditor's `docker://` target against SPARC's ECR-stored container images. Used by upcoming cis-docker and cis-nginx profiles to inspect image-immutable surface (nginx.conf, USER directive, file permissions, baseline OS posture). Two statements: (a) ecr:GetAuthorizationToken with Resource='*' (account-scoped per AWS API contract — the auth token is account-level, not resource-level); (b) ecr:BatchCheckLayerAvailability + ecr:GetDownloadUrlForLayer + ecr:BatchGetImage scoped to ECR repositories matching arn:aws:ecr:<region>:<account>:repository/<project>-<environment>-* (e.g., sparc-prod-*). Resource scoping ensures the scanner role can only pull SPARC's own images, not other tenants' or unrelated workload images on the same account. Opt-in via var.enable_ecr_pull_for_sparc_validate (default false; SPARC prod opts in via env tfvars). Reference: NIST SP 800-53 AC-6, DISA SRG-APP-000062.",
+                "remarks": "Terraform resources: data.aws_iam_policy_document.sparc_validate_ecr_pull + aws_iam_role_policy.sparc_validate_ecr_pull (both gated on var.enable_scanner_role && var.enable_ecr_pull_for_sparc_validate). Companion to sparc-validate's cis-docker / cis-nginx profiles which run cinc-auditor exec with -t docker://<image>. The Fargate-immutable property means image-level audit IS the runtime audit for any image-determined check — no shell-into-container needed. Pull-only; no push, no mutate, no delete capabilities granted."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000054",
+                "control-id": "ac-6",
+                "description": "Least Privilege — RDS IAM DB Auth for Scanner Role (#241): An inline policy ('rds-iam-db-connect') is attached to the sparc-validate-scanner role granting exactly one IAM action — rds-db:connect — scoped by resource ARN to the inspec_scanner PostgreSQL dbuser (arn:aws:rds-db:<region>:<account>:dbuser:*/inspec_scanner). The DbiResourceId segment is wildcarded so the policy survives DB rebuilds (point-in-time restore, blue/green promotion); the dbuser segment remains pinned, which combined with the DB-side `GRANT rds_iam TO inspec_scanner` confines the role to authenticating as that single read-only PostgreSQL user. The scanner role cannot connect as the application user (sparc_admin/sparc), cannot connect as any other dbuser, and has no other RDS data-plane permissions. Gated on var.enable_scanner_role && var.enable_rds_iam_auth (both default true) so non-prod stacks that disable RDS IAM auth automatically suppress the grant. Unblocks sparc-validate's cis-postgresql controls C-4.3, 4.4, 4.5, 4.6, 4.7, 4.10, 5.5, 6.11. Reference: NIST SP 800-53 AC-6, IA-2, DISA SRG-APP-000062, SRG-APP-000148.",
+                "remarks": "Terraform resources: data.aws_iam_policy_document.sparc_validate_rds_iam_connect + aws_iam_role_policy.sparc_validate_rds_iam_connect. Companion to the existing db-scanner-role split (statements 000046–000048) — this grant lives on the main scanner role so sparc-validate's current GitHub Actions workflow path can exercise IAM-DB auth without role-chaining. The DB-side rds_iam grant is provisioned by AWS/ECS/scripts/create-inspec-scanner-user.sh (idempotent)."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000055",
+                "control-id": "ac-17",
+                "description": "Remote Access — EC2/SSM Bootstrap Path Replacing ECS Exec (#243): The inspec_scanner PostgreSQL user is bootstrapped on the RDS cluster via an EC2-resident idempotent script (`/opt/bootstrap/bootstrap-inspec-scanner-runner.sh`) executed in two prod-acceptable invocation contexts: (a) first-boot path — runner user_data invokes the script during EC2 bootstrap, before the GitHub Actions runner registers, gated by an idempotent `SELECT 1 FROM pg_catalog.pg_roles` check; (b) on-demand path — operator or workflow triggers AWS Systems Manager Send Command against the `<project>-<environment>-inspec-scanner-bootstrap` SSM Document, which invokes the same script with the same idempotency contract. The path explicitly replaces the deprecated `create-inspec-scanner-user.sh` script that used `aws ecs execute-command` (ECS Exec) — ECS Exec is forbidden in prod and the legacy script is functionally dead there. No interactive shell access to the runner or to the Rails task is created at any point; SSM Send Command runs a fixed-content document with a single parameter (the DB credentials secret name, validated by regex). Reference: NIST SP 800-53 AC-17, AC-2, DISA SRG-APP-000142, SRG-APP-000023.",
+                "remarks": "Terraform resources: aws_ssm_document.inspec_scanner_bootstrap (modules/db_scanner_runner/ssm.tf), AWS/ECS/scripts/bootstrap-inspec-scanner-runner.sh, AWS/ECS/scripts/inspec_scanner.sql. Idempotent contract verified by the early-exit gate in the script: re-invocation against an already-bootstrapped cluster is a no-op. On bootstrap failure the EC2 runner shuts itself down (consistent with other failure paths in user_data.sh.tftpl) rather than registering a runner with broken DB-auth state — surfaces via the existing stuck-runner CloudWatch alarm. Legacy create-inspec-scanner-user.sh stamped DEPRECATED in-place; file retained for non-prod / historical reference."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000056",
+                "control-id": "ac-6",
+                "description": "Least Privilege — Runner Instance Profile Gains DB Credentials Read (#243, extended in #245): The db-scanner-runner instance profile role (`<project>-<environment>-db-scanner-runner-instance`) gains a second inline policy (`read-db-credentials`) granting `secretsmanager:GetSecretValue` scoped to a single secret ARN pattern: `arn:aws:secretsmanager:<region>:<account>:secret:<project>-<environment>/db-credentials-*`. The wildcard covers only the 6-char hash suffix Secrets Manager appends; the secret name segment is pinned to `db-credentials` so the role cannot reach any other secret. A conditional KMS-decrypt statement is emitted only when the secrets CMK is in use, scoped via `kms:ViaService = secretsmanager.<region>.amazonaws.com`. This is the only IAM grant required for the EC2/SSM bootstrap path to read admin DB credentials at first-boot. The existing `read-runner-app-key` policy (GitHub App credentials for runner registration) is preserved unchanged. The orchestrator role gains a separate `ssm-bootstrap-send-command` policy with three statements: (a) `ssm:SendCommand` scoped to the bootstrap SSM Document ARN; (b) `ssm:SendCommand` scoped to EC2 instance ARNs tagged with `aws:autoscaling:groupName = <project>-<environment>-db-scanner-runner`; (c) `ssm:GetCommandInvocation` with `Resource = '*'` so workflow steps can poll bootstrap completion via `aws ssm wait command-executed` and `aws ssm get-command-invocation` (#245). The orchestrator cannot invoke SendCommand against any other document or any instance outside the runner ASG, and AWS implicitly confines `GetCommandInvocation` results to the principal that issued the command — the wildcard resource scope cannot read other principals' invocations. Reference: NIST SP 800-53 AC-6, DISA SRG-APP-000062.",
+                "remarks": "Terraform resources: data.aws_iam_policy_document.runner_instance_db_credentials_read + aws_iam_role_policy.runner_instance_db_credentials_read + data.aws_iam_policy_document.runner_orchestrator_ssm + aws_iam_role_policy.runner_orchestrator_ssm (modules/iam/db_scanner_runner.tf). ARNs constructed from name_prefix+region+account per #238 IAM-locality + constructed-ARN pattern; no cross-module variable plumbing introduced. The `ssm:GetCommandInvocation` polling statement (#245) uses `Resource = '*'` because the SSM API has no ARN format for this action; AWS-side principal-scoping is the controlling guard. `ssm:ListCommandInvocations` deliberately NOT granted — Pattern A only needs targeted get-by-id polling, not enumeration."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

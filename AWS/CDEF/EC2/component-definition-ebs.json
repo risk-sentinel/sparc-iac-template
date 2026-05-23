@@ -1,0 +1,71 @@
+{
+  "component-definition": {
+    "uuid": "b1c2d3e4-1111-4000-a000-000000000002",
+    "metadata": {
+      "title": "SPARC EC2 EBS Volumes Component Definition",
+      "last-modified": "2026-03-20T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "b1c2d3e4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "b1c2d3e4-2222-4000-a000-000000000002",
+        "type": "service",
+        "title": "AWS EBS Encrypted Volumes",
+        "description": "Encrypted EBS volumes attached to the EC2 instance for persistent data storage. All volumes use AES-256 encryption via AWS KMS. EBS snapshots provide backup capability. Deployed via Terraform (AWS/EC2/modules/ebs/). <!-- UPDATE: Insert volume IDs, KMS key ARN, and snapshot policy for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["b1c2d3e4-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "b1c2d3e4-3333-4000-a000-000000000002",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for EBS volumes",
+            "implemented-requirements": [
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000010",
+                "control-id": "sc-28",
+                "description": "Protection of Information at Rest: All EBS data volumes use AES-256 encryption at rest via AWS KMS (encrypted = true). Encryption covers all data written to the volume, including Docker container data, application uploads, and temporary files. Snapshots created from encrypted volumes are automatically encrypted with the same KMS key. This ensures data confidentiality even if physical storage media is compromised. Reference: DISA SRG-APP-000231, CIS AWS EC2 2.2.1.",
+                "remarks": "Terraform resources: aws_ebs_volume.data with encrypted=true, kms_key_id. Consider using a customer-managed KMS key for additional control over key lifecycle and cross-account sharing."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000011",
+                "control-id": "cp-9",
+                "description": "System Backup: EBS snapshots provide point-in-time backups of all data volumes. Automated snapshot schedules can be configured via AWS Data Lifecycle Manager (DLM) policies with configurable retention periods. Snapshots are incremental (only changed blocks are stored), reducing storage costs while maintaining full recovery capability. Encrypted snapshots can be copied across regions for disaster recovery. Reference: DISA SRG-APP-000065, CIS AWS 2.2.2.",
+                "remarks": "Configure aws_dlm_lifecycle_policy for automated snapshot scheduling. Snapshots inherit encryption from the source volume."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000012",
+                "control-id": "mp-6",
+                "description": "Media Sanitization: EBS encrypted volumes achieve cryptographic erasure when deleted — data cannot be recovered without the KMS encryption key. When a KMS key is disabled or scheduled for deletion, all associated EBS data becomes permanently inaccessible. AWS handles physical media sanitization per their data center security practices (SOC 2, FedRAMP, ISO 27001). Reference: DISA SRG-APP-000516.",
+                "remarks": "Cryptographic erasure is inherent to KMS-encrypted EBS volumes. Deleting or disabling the KMS key renders all encrypted data irrecoverable."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000013",
+                "control-id": "sc-7",
+                "description": "Boundary Protection: EBS volumes are attached only to the authorized EC2 instance via Terraform-managed aws_volume_attachment resources. Volumes cannot be accessed over the network — they are block devices accessible only from the attached instance. IAM policies restrict ec2:AttachVolume and ec2:DetachVolume actions to authorized principals. Unattached volumes remain encrypted and inaccessible without both the KMS key and an authorized EC2 instance. Reference: DISA SRG-NET-000364.",
+                "remarks": "Terraform resources: aws_volume_attachment.data binding specific volume IDs to the EC2 instance. IAM policies should restrict volume management actions."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

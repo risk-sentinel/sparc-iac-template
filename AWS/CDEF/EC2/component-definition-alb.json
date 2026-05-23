@@ -1,0 +1,65 @@
+{
+  "component-definition": {
+    "uuid": "b1c2d3e4-1111-4000-a000-000000000004",
+    "metadata": {
+      "title": "SPARC EC2 Application Load Balancer Component Definition",
+      "last-modified": "2026-03-20T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "b1c2d3e4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "b1c2d3e4-2222-4000-a000-000000000004",
+        "type": "service",
+        "title": "AWS Application Load Balancer (EC2)",
+        "description": "Public-facing ALB with HTTPS listener (ACM certificate), HTTP-to-HTTPS redirect, and instance-type target group for EC2 instances running Docker containers. Deployed via Terraform (AWS/EC2/modules/alb/). <!-- UPDATE: Insert ALB ARN, DNS name, ACM certificate ARN, and domain name for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["b1c2d3e4-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "b1c2d3e4-3333-4000-a000-000000000004",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for ALB",
+            "implemented-requirements": [
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000030",
+                "control-id": "sc-8",
+                "description": "Transmission Confidentiality and Integrity: All external client traffic is encrypted via TLS. The HTTPS listener on port 443 uses an ACM-managed certificate with TLS 1.3 policy (ELBSecurityPolicy-TLS13-1-2-2021-06). HTTP requests on port 80 receive a 301 redirect to HTTPS, ensuring no unencrypted client communication. Reference: DISA SRG-NET-000062, CIS AWS 2.1.2.",
+                "remarks": "Terraform resources: aws_lb_listener.https (TLS termination), aws_lb_listener.http_redirect (301 redirect). TLS policy enforces TLS 1.2 minimum with TLS 1.3 preferred."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000031",
+                "control-id": "sc-7",
+                "description": "Boundary Protection: The ALB drops invalid HTTP headers (drop_invalid_header_fields=true), preventing header injection attacks from reaching the EC2 instance. Deletion protection is enabled (enable_deletion_protection=true), preventing accidental or unauthorized removal of the network boundary. Access logging is configurable via an S3 bucket for forensic analysis of all requests. Reference: DISA SRG-NET-000364.",
+                "remarks": "Terraform resource: aws_lb.main with drop_invalid_header_fields=true, enable_deletion_protection=true, access_logs block."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000032",
+                "control-id": "si-10",
+                "description": "Information Input Validation: ALB health checks validate application availability by checking the /nginx-health endpoint on the EC2 instance's NGINX Docker container. This lightweight endpoint returns HTTP 200 without proxying to Rails, verifying that the reverse proxy layer is functional. Unhealthy targets are automatically removed from the target group rotation. The ALB routes to the NGINX container (port 8080) on the EC2 instance, which then proxies to Rails (port 3000 on localhost).",
+                "remarks": "Health check settings: interval=30s, healthy_threshold=3, unhealthy_threshold=3, timeout=5s, matcher=200, path=/nginx-health. ALB target group uses instance type targeting the EC2 instance on the NGINX container port."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

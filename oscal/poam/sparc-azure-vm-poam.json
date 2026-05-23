@@ -1,0 +1,647 @@
+{
+  "plan-of-action-and-milestones": {
+    "uuid": "89dac8f2-9ad7-417e-ad06-3e37d3cf19b8",
+    "metadata": {
+      "title": "SPARC Azure VM Plan of Action and Milestones",
+      "last-modified": "2026-04-16T19:31:17Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "revisions": [
+        {
+          "title": "SPARC Azure VM Plan of Action and Milestones (superseded)",
+          "version": "1.0.0",
+          "oscal-version": "1.1.2",
+          "props": [
+            {
+              "name": "previous-uuid",
+              "ns": "https://risk-sentinel.io/ns/oscal",
+              "value": "3c7bcdda-5404-547a-96ce-8b4f52e44e44"
+            }
+          ],
+          "last-modified": "2026-03-21T20:36:04Z"
+        }
+      ]
+    },
+    "import-ssp": {
+      "href": "#system-security-plan"
+    },
+    "observations": [
+      {
+        "uuid": "df79c5cb-e181-5a01-81d7-cccd985448fe",
+        "description": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "7826764f-0c31-5e38-abff-1f49d9eaf396",
+        "description": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "1edeb838-0027-57ed-99c4-5fa68e2aa337",
+        "description": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "2e246ed0-135e-5234-9d03-749cd3862a3e",
+        "description": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "69256398-8b3b-5f5b-8349-8f4a37b3996c",
+        "description": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "22522243-524b-5147-b712-133c9363dc99",
+        "description": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "3ae52b42-015e-5afa-a38b-cbc64d5efaa4",
+        "description": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "58823761-a791-508e-b484-13b88f764954",
+        "description": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "d765c704-b33a-5d72-86c2-4cdcbe32973d",
+        "description": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "5381510c-bd2a-5eeb-ad92-184abf01876d",
+        "description": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "75aac6f3-186e-5f9b-b526-4e54e442460d",
+        "description": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "65def049-dccc-55b2-8c07-b8f53ebe6eef",
+        "description": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "a9e79080-b34c-59b5-88f3-0ec7d38937b8",
+        "description": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "8091ef28-20f1-5e4b-824d-881a2d634a44",
+        "description": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "f8d1488e-ce24-5429-89f1-f9e9409f9938",
+        "description": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "eabdc605-a7cb-5d9b-a0e1-e4d0c1bdf416",
+        "description": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "bb50af40-4674-54ae-a067-4131071ab4bb",
+        "description": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "7b58aba3-d020-573f-b8c5-1df16b78e6ac",
+        "description": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      }
+    ],
+    "risks": [
+      {
+        "uuid": "05e783ab-8ada-57df-876f-c5ad22dc5d16",
+        "title": "CKV_AZURE_218: module.app_gateway.azurerm_application_gateway.main",
+        "description": "Checkov finding CKV_AZURE_218 on resource module.app_gateway.azurerm_application_gateway.main. Mapped to NIST 800-53 control sc-8.",
+        "statement": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "23da941c-bb7f-58ac-ad7c-bfcbb41af9f3",
+        "title": "CKV_AZURE_206: module.blob_storage.azurerm_storage_account.main",
+        "description": "Checkov finding CKV_AZURE_206 on resource module.blob_storage.azurerm_storage_account.main. Mapped to NIST 800-53 control cp-9.",
+        "statement": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "6c58c9ae-2dce-5121-befd-a5c007c79a3c",
+        "title": "CKV_AZURE_136: module.database.azurerm_postgresql_flexible_server.main",
+        "description": "Checkov finding CKV_AZURE_136 on resource module.database.azurerm_postgresql_flexible_server.main. Mapped to NIST 800-53 control cp-9.",
+        "statement": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "0578d652-5a6c-5f83-970a-77be6dabcaa9",
+        "title": "CKV_AZURE_189: module.key_vault.azurerm_key_vault.main",
+        "description": "Checkov finding CKV_AZURE_189 on resource module.key_vault.azurerm_key_vault.main. Mapped to NIST 800-53 control sc-7.",
+        "statement": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "d03a8c24-3d90-5fe4-adef-7ba083bbea2c",
+        "title": "CKV_AZURE_109: module.key_vault.azurerm_key_vault.main",
+        "description": "Checkov finding CKV_AZURE_109 on resource module.key_vault.azurerm_key_vault.main. Mapped to NIST 800-53 control sc-7.",
+        "statement": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "80da91af-e6ca-58d6-b199-82fdad9cb538",
+        "title": "CKV_AZURE_183: module.networking.azurerm_virtual_network.main",
+        "description": "Checkov finding CKV_AZURE_183 on resource module.networking.azurerm_virtual_network.main. Mapped to NIST 800-53 control sc-20.",
+        "statement": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "55ae8530-afb4-5301-a95d-178a40f825cc",
+        "title": "CKV_AZURE_182: module.networking.azurerm_virtual_network.main",
+        "description": "Checkov finding CKV_AZURE_182 on resource module.networking.azurerm_virtual_network.main. Mapped to NIST 800-53 control sc-20.",
+        "statement": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "e500c461-b631-545a-9d60-704104c67ca0",
+        "title": "CKV_AZURE_160: module.networking.azurerm_network_security_group.app_gateway",
+        "description": "Checkov finding CKV_AZURE_160 on resource module.networking.azurerm_network_security_group.app_gateway. Mapped to NIST 800-53 control ac-3.",
+        "statement": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "40a1d455-7581-5441-8218-eb9f1903aff2",
+        "title": "CKV_AZURE_230: module.redis.azurerm_redis_cache.main",
+        "description": "Checkov finding CKV_AZURE_230 on resource module.redis.azurerm_redis_cache.main. Mapped to NIST 800-53 control cp-9.",
+        "statement": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "3d374395-d5f2-58c8-9cde-d19e6cb3eb2d",
+        "title": "CKV_AZURE_93: module.storage.azurerm_managed_disk.data",
+        "description": "Checkov finding CKV_AZURE_93 on resource module.storage.azurerm_managed_disk.data. Mapped to NIST 800-53 control cm-2.",
+        "statement": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "7719ee67-d753-5061-bba5-6b2fbe9d55bb",
+        "title": "CKV2_AZURE_41: module.blob_storage.azurerm_storage_account.main",
+        "description": "Checkov finding CKV2_AZURE_41 on resource module.blob_storage.azurerm_storage_account.main. Mapped to NIST 800-53 control cm-2.",
+        "statement": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "24063cb5-0b71-56cf-aede-d91c7adc7a6e",
+        "title": "CKV2_AZURE_32: module.key_vault.azurerm_key_vault.main",
+        "description": "Checkov finding CKV2_AZURE_32 on resource module.key_vault.azurerm_key_vault.main. Mapped to NIST 800-53 control cm-2.",
+        "statement": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "dedb097c-a10c-53c0-8c5e-7ae7f0676bef",
+        "title": "CKV2_AZURE_33: module.blob_storage.azurerm_storage_account.main",
+        "description": "Checkov finding CKV2_AZURE_33 on resource module.blob_storage.azurerm_storage_account.main. Mapped to NIST 800-53 control cm-2.",
+        "statement": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "4b71a4d6-796b-5409-a973-443d6c353c31",
+        "title": "CKV2_AZURE_40: module.blob_storage.azurerm_storage_account.main",
+        "description": "Checkov finding CKV2_AZURE_40 on resource module.blob_storage.azurerm_storage_account.main. Mapped to NIST 800-53 control cm-2.",
+        "statement": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "f0d2cca2-5717-532f-b362-77115351dadf",
+        "title": "CKV2_AZURE_57: module.database.azurerm_postgresql_flexible_server.main",
+        "description": "Checkov finding CKV2_AZURE_57 on resource module.database.azurerm_postgresql_flexible_server.main. Mapped to NIST 800-53 control cm-2.",
+        "statement": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "c90f82cd-d54a-5339-be3d-2b87adf52ac7",
+        "title": "CKV2_AZURE_21: module.blob_storage.azurerm_storage_container.main",
+        "description": "Checkov finding CKV2_AZURE_21 on resource module.blob_storage.azurerm_storage_container.main. Mapped to NIST 800-53 control cm-2.",
+        "statement": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "8cc757b6-0060-5dee-8daa-304d48051865",
+        "title": "CKV_AZURE_120: module.app_gateway.azurerm_application_gateway.main",
+        "description": "Checkov finding CKV_AZURE_120 on resource module.app_gateway.azurerm_application_gateway.main. Mapped to NIST 800-53 control sc-7.",
+        "statement": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "b39b8430-9cdb-5c7f-81bf-e0e1b958a335",
+        "title": "CKV2_AZURE_1: module.blob_storage.azurerm_storage_account.main",
+        "description": "Checkov finding CKV2_AZURE_1 on resource module.blob_storage.azurerm_storage_account.main. Mapped to NIST 800-53 control cm-2.",
+        "statement": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "status": "deviation-approved"
+      }
+    ],
+    "poam-items": [
+      {
+        "uuid": "4f9385be-9458-5f5d-986e-d379556e793c",
+        "title": "CKV_AZURE_218: module.app_gateway.azurerm_application_gateway.main",
+        "description": "Checkov finding CKV_AZURE_218 on resource module.app_gateway.azurerm_application_gateway.main. Mapped to NIST 800-53 control sc-8.",
+        "related-observations": [
+          {
+            "observation-uuid": "df79c5cb-e181-5a01-81d7-cccd985448fe"
+          }
+        ],
+        "remarks": "Control: sc-8. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "05e783ab-8ada-57df-876f-c5ad22dc5d16"
+          }
+        ]
+      },
+      {
+        "uuid": "67a6a90a-5931-5b35-aac4-c1812d337b33",
+        "title": "CKV_AZURE_206: module.blob_storage.azurerm_storage_account.main",
+        "description": "Checkov finding CKV_AZURE_206 on resource module.blob_storage.azurerm_storage_account.main. Mapped to NIST 800-53 control cp-9.",
+        "related-observations": [
+          {
+            "observation-uuid": "7826764f-0c31-5e38-abff-1f49d9eaf396"
+          }
+        ],
+        "remarks": "Control: cp-9. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "23da941c-bb7f-58ac-ad7c-bfcbb41af9f3"
+          }
+        ]
+      },
+      {
+        "uuid": "22c273e4-1511-53dc-ab1e-e1dc6a152598",
+        "title": "CKV_AZURE_136: module.database.azurerm_postgresql_flexible_server.main",
+        "description": "Checkov finding CKV_AZURE_136 on resource module.database.azurerm_postgresql_flexible_server.main. Mapped to NIST 800-53 control cp-9.",
+        "related-observations": [
+          {
+            "observation-uuid": "1edeb838-0027-57ed-99c4-5fa68e2aa337"
+          }
+        ],
+        "remarks": "Control: cp-9. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "6c58c9ae-2dce-5121-befd-a5c007c79a3c"
+          }
+        ]
+      },
+      {
+        "uuid": "80e8341a-83fc-5ea4-98de-85c175e9efac",
+        "title": "CKV_AZURE_189: module.key_vault.azurerm_key_vault.main",
+        "description": "Checkov finding CKV_AZURE_189 on resource module.key_vault.azurerm_key_vault.main. Mapped to NIST 800-53 control sc-7.",
+        "related-observations": [
+          {
+            "observation-uuid": "2e246ed0-135e-5234-9d03-749cd3862a3e"
+          }
+        ],
+        "remarks": "Control: sc-7. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "0578d652-5a6c-5f83-970a-77be6dabcaa9"
+          }
+        ]
+      },
+      {
+        "uuid": "a8f20cef-1b70-57d5-822b-dbb805e6a3ac",
+        "title": "CKV_AZURE_109: module.key_vault.azurerm_key_vault.main",
+        "description": "Checkov finding CKV_AZURE_109 on resource module.key_vault.azurerm_key_vault.main. Mapped to NIST 800-53 control sc-7.",
+        "related-observations": [
+          {
+            "observation-uuid": "69256398-8b3b-5f5b-8349-8f4a37b3996c"
+          }
+        ],
+        "remarks": "Control: sc-7. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "d03a8c24-3d90-5fe4-adef-7ba083bbea2c"
+          }
+        ]
+      },
+      {
+        "uuid": "845f9487-611b-5372-8c18-69576d0e04d8",
+        "title": "CKV_AZURE_183: module.networking.azurerm_virtual_network.main",
+        "description": "Checkov finding CKV_AZURE_183 on resource module.networking.azurerm_virtual_network.main. Mapped to NIST 800-53 control sc-20.",
+        "related-observations": [
+          {
+            "observation-uuid": "22522243-524b-5147-b712-133c9363dc99"
+          }
+        ],
+        "remarks": "Control: sc-20. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "80da91af-e6ca-58d6-b199-82fdad9cb538"
+          }
+        ]
+      },
+      {
+        "uuid": "7a634b87-07e3-5b6c-ac5b-30d3b6a7d416",
+        "title": "CKV_AZURE_182: module.networking.azurerm_virtual_network.main",
+        "description": "Checkov finding CKV_AZURE_182 on resource module.networking.azurerm_virtual_network.main. Mapped to NIST 800-53 control sc-20.",
+        "related-observations": [
+          {
+            "observation-uuid": "3ae52b42-015e-5afa-a38b-cbc64d5efaa4"
+          }
+        ],
+        "remarks": "Control: sc-20. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "55ae8530-afb4-5301-a95d-178a40f825cc"
+          }
+        ]
+      },
+      {
+        "uuid": "a39dc191-210a-5cab-b575-372e7708a49c",
+        "title": "CKV_AZURE_160: module.networking.azurerm_network_security_group.app_gateway",
+        "description": "Checkov finding CKV_AZURE_160 on resource module.networking.azurerm_network_security_group.app_gateway. Mapped to NIST 800-53 control ac-3.",
+        "related-observations": [
+          {
+            "observation-uuid": "58823761-a791-508e-b484-13b88f764954"
+          }
+        ],
+        "remarks": "Control: ac-3. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "e500c461-b631-545a-9d60-704104c67ca0"
+          }
+        ]
+      },
+      {
+        "uuid": "d4acaf55-a384-56c7-94b8-125ce4c78a15",
+        "title": "CKV_AZURE_230: module.redis.azurerm_redis_cache.main",
+        "description": "Checkov finding CKV_AZURE_230 on resource module.redis.azurerm_redis_cache.main. Mapped to NIST 800-53 control cp-9.",
+        "related-observations": [
+          {
+            "observation-uuid": "d765c704-b33a-5d72-86c2-4cdcbe32973d"
+          }
+        ],
+        "remarks": "Control: cp-9. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "40a1d455-7581-5441-8218-eb9f1903aff2"
+          }
+        ]
+      },
+      {
+        "uuid": "50673338-ba39-524b-8ac9-b9ecb4e64fe2",
+        "title": "CKV_AZURE_93: module.storage.azurerm_managed_disk.data",
+        "description": "Checkov finding CKV_AZURE_93 on resource module.storage.azurerm_managed_disk.data. Mapped to NIST 800-53 control cm-2.",
+        "related-observations": [
+          {
+            "observation-uuid": "5381510c-bd2a-5eeb-ad92-184abf01876d"
+          }
+        ],
+        "remarks": "Control: cm-2. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "3d374395-d5f2-58c8-9cde-d19e6cb3eb2d"
+          }
+        ]
+      },
+      {
+        "uuid": "1b6df33d-3555-54a8-b963-0f2cdcd88a97",
+        "title": "CKV2_AZURE_41: module.blob_storage.azurerm_storage_account.main",
+        "description": "Checkov finding CKV2_AZURE_41 on resource module.blob_storage.azurerm_storage_account.main. Mapped to NIST 800-53 control cm-2.",
+        "related-observations": [
+          {
+            "observation-uuid": "75aac6f3-186e-5f9b-b526-4e54e442460d"
+          }
+        ],
+        "remarks": "Control: cm-2. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "7719ee67-d753-5061-bba5-6b2fbe9d55bb"
+          }
+        ]
+      },
+      {
+        "uuid": "e54a199c-9d4b-5ff8-ad27-3c181c0a0168",
+        "title": "CKV2_AZURE_32: module.key_vault.azurerm_key_vault.main",
+        "description": "Checkov finding CKV2_AZURE_32 on resource module.key_vault.azurerm_key_vault.main. Mapped to NIST 800-53 control cm-2.",
+        "related-observations": [
+          {
+            "observation-uuid": "65def049-dccc-55b2-8c07-b8f53ebe6eef"
+          }
+        ],
+        "remarks": "Control: cm-2. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "24063cb5-0b71-56cf-aede-d91c7adc7a6e"
+          }
+        ]
+      },
+      {
+        "uuid": "bfba5a87-d9af-5b88-8685-92ac5bc836d6",
+        "title": "CKV2_AZURE_33: module.blob_storage.azurerm_storage_account.main",
+        "description": "Checkov finding CKV2_AZURE_33 on resource module.blob_storage.azurerm_storage_account.main. Mapped to NIST 800-53 control cm-2.",
+        "related-observations": [
+          {
+            "observation-uuid": "a9e79080-b34c-59b5-88f3-0ec7d38937b8"
+          }
+        ],
+        "remarks": "Control: cm-2. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "dedb097c-a10c-53c0-8c5e-7ae7f0676bef"
+          }
+        ]
+      },
+      {
+        "uuid": "5f641954-ee2a-515c-ba51-96a877c7e739",
+        "title": "CKV2_AZURE_40: module.blob_storage.azurerm_storage_account.main",
+        "description": "Checkov finding CKV2_AZURE_40 on resource module.blob_storage.azurerm_storage_account.main. Mapped to NIST 800-53 control cm-2.",
+        "related-observations": [
+          {
+            "observation-uuid": "8091ef28-20f1-5e4b-824d-881a2d634a44"
+          }
+        ],
+        "remarks": "Control: cm-2. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "4b71a4d6-796b-5409-a973-443d6c353c31"
+          }
+        ]
+      },
+      {
+        "uuid": "abb3512f-e58c-51f8-8634-c646c2c89d15",
+        "title": "CKV2_AZURE_57: module.database.azurerm_postgresql_flexible_server.main",
+        "description": "Checkov finding CKV2_AZURE_57 on resource module.database.azurerm_postgresql_flexible_server.main. Mapped to NIST 800-53 control cm-2.",
+        "related-observations": [
+          {
+            "observation-uuid": "f8d1488e-ce24-5429-89f1-f9e9409f9938"
+          }
+        ],
+        "remarks": "Control: cm-2. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "f0d2cca2-5717-532f-b362-77115351dadf"
+          }
+        ]
+      },
+      {
+        "uuid": "ba0a3aee-c154-57d6-bf59-725f285c6822",
+        "title": "CKV2_AZURE_21: module.blob_storage.azurerm_storage_container.main",
+        "description": "Checkov finding CKV2_AZURE_21 on resource module.blob_storage.azurerm_storage_container.main. Mapped to NIST 800-53 control cm-2.",
+        "related-observations": [
+          {
+            "observation-uuid": "eabdc605-a7cb-5d9b-a0e1-e4d0c1bdf416"
+          }
+        ],
+        "remarks": "Control: cm-2. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "c90f82cd-d54a-5339-be3d-2b87adf52ac7"
+          }
+        ]
+      },
+      {
+        "uuid": "9b0df67f-0c50-507b-9e02-bfa2ec2b081f",
+        "title": "CKV_AZURE_120: module.app_gateway.azurerm_application_gateway.main",
+        "description": "Checkov finding CKV_AZURE_120 on resource module.app_gateway.azurerm_application_gateway.main. Mapped to NIST 800-53 control sc-7.",
+        "related-observations": [
+          {
+            "observation-uuid": "bb50af40-4674-54ae-a067-4131071ab4bb"
+          }
+        ],
+        "remarks": "Control: sc-7. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "8cc757b6-0060-5dee-8daa-304d48051865"
+          }
+        ]
+      },
+      {
+        "uuid": "394abfae-5a32-556e-a522-2aee29de9167",
+        "title": "CKV2_AZURE_1: module.blob_storage.azurerm_storage_account.main",
+        "description": "Checkov finding CKV2_AZURE_1 on resource module.blob_storage.azurerm_storage_account.main. Mapped to NIST 800-53 control cm-2.",
+        "related-observations": [
+          {
+            "observation-uuid": "7b58aba3-d020-573f-b8c5-1df16b78e6ac"
+          }
+        ],
+        "remarks": "Control: cm-2. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "b39b8430-9cdb-5c7f-81bf-e0e1b958a335"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,42 @@
+# ============================================================================
+# SPARC EC2 — Dev Environment
+# ============================================================================
+# cp envs/dev/terraform.tfvars.example terraform.tfvars
+# ============================================================================
+
+environment  = "dev"
+aws_region   = "us-east-1"
+project_name = "sparc"
+
+# ── Container Images ───────────────────────────────────────────────────────
+app_image   = "123456789012.dkr.ecr.us-east-1.amazonaws.com/sparc:latest"
+nginx_image = "123456789012.dkr.ecr.us-east-1.amazonaws.com/sparc-nginx:latest"
+
+# ── EC2 ────────────────────────────────────────────────────────────────────
+instance_type   = "t3.small"
+root_volume_size = 20
+
+# ── EBS ────────────────────────────────────────────────────────────────────
+ebs_volume_size = 20
+
+# ── TLS Certificate ────────────────────────────────────────────────────────
+certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/xxx"
+
+# ── Route 53 (optional) ───────────────────────────────────────────────────
+# hosted_zone_id = "Z0123456789ABCDEFGHIJ"
+# domain_name    = "dev.sparc.example.com"
+
+# ── RDS ────────────────────────────────────────────────────────────────────
+db_instance_class      = "db.t3.micro"
+db_allocated_storage   = 20
+db_skip_final_snapshot = true
+
+# ── Redis ──────────────────────────────────────────────────────────────────
+redis_node_type = "cache.t3.micro"
+
+# ── SPARC ──────────────────────────────────────────────────────────────────
+sparc_app_name           = "SPARC"
+sparc_enable_local_login = "true"
+
+# ── Monitoring (optional) ──────────────────────────────────────────────────
+# alarm_emails = ["dev-alerts@example.com"]

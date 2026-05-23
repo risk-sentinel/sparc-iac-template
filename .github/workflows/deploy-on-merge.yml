@@ -1,0 +1,335 @@
+name: Deploy on Merge
+
+# Trigger AFTER compliance validation completes successfully.
+# This ensures non-compliant code cannot be deployed to production.
+on:
+  workflow_run:
+    workflows: ["FedRAMP 20x Compliance Validation"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  # =========================================================================
+  # Gate: only deploy if compliance passed
+  # =========================================================================
+  compliance-gate:
+    name: Compliance Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: vars.SPARC_DEPLOY_ENABLED == 'true' && (github.event.workflow_run.conclusion == 'success')
+    steps:
+      - name: Compliance passed
+        run: |
+          echo "## Compliance Gate: PASSED" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "FedRAMP 20x Compliance Validation completed successfully." >> "$GITHUB_STEP_SUMMARY"
+          echo "Proceeding with deployment." >> "$GITHUB_STEP_SUMMARY"
+
+  # =========================================================================
+  # Block: compliance failed or was cancelled
+  # =========================================================================
+  compliance-failed:
+    name: Compliance Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: vars.SPARC_DEPLOY_ENABLED == 'true' && (github.event.workflow_run.conclusion != 'success')
+    steps:
+      - name: Compliance did not pass
+        run: |
+          echo "## Compliance Gate: BLOCKED" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "FedRAMP 20x Compliance Validation result: **${{ github.event.workflow_run.conclusion }}**" >> "$GITHUB_STEP_SUMMARY"
+          echo "Deployment blocked. Fix compliance issues and re-merge." >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::Deployment blocked — compliance validation ${{ github.event.workflow_run.conclusion }}"
+          exit 1
+
+  # =========================================================================
+  # Deploy ECS — plan and apply. Always.
+  # The plan was reviewed by a human on the PR. The PR approval is the
+  # approval to apply. Compliance passed. Just plan and apply.
+  # =========================================================================
+  deploy-ecs:
+    if: vars.SPARC_DEPLOY_ENABLED == 'true'
+    name: Deploy ECS
+    needs: compliance-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: prod
+    container:
+      image: risksentinel/sparc-ci-runner@sha256:f0994371f4f36bbbb9d0e26dc6ff2c6511b15e4415f5b8d17d545808099b86f2
+    defaults:
+      run:
+        shell: bash
+    concurrency:
+      group: ecs-prod-deploy
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Terraform Init
+        working-directory: AWS/ECS
+        run: terraform init -backend-config=backend.hcl
+      - name: Terraform Plan
+        working-directory: AWS/ECS
+        run: |
+          terraform plan \
+            -var="environment=prod" \
+            -var="sparc_smtp_password=${{ secrets.SPARC_SMTP_PASSWORD }}" \
+            -var="sparc_oidc_client_secret=${{ secrets.SPARC_OIDC_CLIENT_SECRET }}" \
+            -var="sparc_github_client_secret=${{ secrets.SPARC_GITHUB_CLIENT_SECRET }}" \
+            -var="sparc_gitlab_client_secret=${{ secrets.SPARC_GITLAB_CLIENT_SECRET }}" \
+            -var-file="envs/prod/terraform.tfvars" \
+            -out=tfplan
+
+      - name: Terraform Apply
+        working-directory: AWS/ECS
+        run: terraform apply -auto-approve tfplan
+
+      - name: Export Terraform State JSON
+        working-directory: AWS/ECS
+        run: terraform show -json > /tmp/state.json
+
+      - name: Generate Architecture Diagrams
+        run: |
+          python3 oscal/scripts/generate_diagrams.py \
+            --state-json /tmp/state.json \
+            --output docs/diagrams/ecs-architecture.md \
+            --github-step-summary
+
+      - name: Force New ECS Deployment (only when task def changed)
+        # Gate force-new-deployment on an actual task definition revision
+        # change (#250). The deploy-on-merge workflow runs via workflow_run
+        # off the compliance pipeline, which fires far more often than the
+        # task def actually changes — without this gate every compliance
+        # completion cycles the ECS task even when nothing changed, producing
+        # ~5 no-op deployments per day on sparc-prod. The diff check below
+        # only triggers force-new-deployment when the deployed revision
+        # differs from the latest registered revision for the family.
+        run: |
+          set -euo pipefail
+          REGION="${{ vars.AWS_REGION || 'us-east-1' }}"
+          CLUSTER="sparc-prod"
+          SERVICE="sparc-prod"
+          FAMILY="sparc-prod"
+
+          DEPLOYED_ARN=$(aws ecs describe-services \
+            --cluster "$CLUSTER" --services "$SERVICE" \
+            --region "$REGION" \
+            --query 'services[0].taskDefinition' --output text)
+          DEPLOYED_REV="${DEPLOYED_ARN##*:}"
+
+          LATEST_REV=$(aws ecs describe-task-definition \
+            --task-definition "$FAMILY" \
+            --region "$REGION" \
+            --query 'taskDefinition.revision' --output text)
+
+          if [ "$DEPLOYED_REV" = "$LATEST_REV" ]; then
+            echo "Service already on task def revision $LATEST_REV; skipping force-new-deployment."
+            exit 0
+          fi
+
+          echo "Deployed revision: $DEPLOYED_REV; latest: $LATEST_REV. Forcing new deployment."
+          aws ecs update-service --cluster "$CLUSTER" \
+            --service "$SERVICE" --force-new-deployment \
+            --region "$REGION" > /dev/null
+          echo "Forced new ECS deployment."
+
+      - name: Task Definition Cleanup
+        run: |
+          FAMILY="sparc-prod"
+          KEEP=5
+          OLD=$(aws ecs list-task-definitions \
+            --family-prefix "$FAMILY" \
+            --sort DESC \
+            --query "taskDefinitionArns[$KEEP:]" \
+            --output text --region ${{ vars.AWS_REGION || 'us-east-1' }})
+          for ARN in $OLD; do
+            echo "Deregistering: $ARN"
+            aws ecs deregister-task-definition \
+              --task-definition "$ARN" \
+              --region ${{ vars.AWS_REGION || 'us-east-1' }} > /dev/null
+          done
+          echo "Kept last $KEEP revisions"
+
+      - name: Deploy Summary
+        if: always()
+        working-directory: AWS/ECS
+        run: |
+          echo "## ECS Deploy" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Output | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          terraform output -json | jq -r 'to_entries[] | select(.value.value | type == "string") | "| \(.key) | \(.value.value) |"' >> "$GITHUB_STEP_SUMMARY" || true
+
+      # Mint a token from the sparc-iac-diagram-bot GitHub App so the next
+      # step can push directly to main. The bot is added to ruleset 14527069
+      # bypass_actors, scoped to this repo with contents:write only — narrower
+      # than granting bypass to the generic github-actions[bot]. See #204.
+      #
+      # Inline mint (not actions/create-github-app-token) because both v1 and
+      # v2 of that action sent the JWT `iss` claim as a string, which GitHub
+      # rejects with "'Issuer' claim ('iss') must be an Integer". This
+      # implementation uses python stdlib + openssl — no third-party deps.
+      - name: Mint Diagram Bot Token
+        if: always()
+        id: diagram_bot_token
+        env:
+          DIAGRAM_BOT_APP_ID: ${{ secrets.DIAGRAM_BOT_APP_ID }}
+          DIAGRAM_BOT_INSTALLATION_ID: ${{ secrets.DIAGRAM_BOT_INSTALLATION_ID }}
+          DIAGRAM_BOT_PRIVATE_KEY: ${{ secrets.DIAGRAM_BOT_PRIVATE_KEY }}
+        run: |
+          python3 - <<'PY'
+          import base64, json, os, re, subprocess, sys, tempfile, time, urllib.request
+
+          # Defensive parse: regex-extract digits from each ID secret.
+          # Previous mint attempts failed because the secret value was
+          # whitespace-or-quote-wrapped after .strip(), producing
+          # "invalid literal for int() with base 10: '***'" (the secret
+          # value got masked in the error message). Extracting just digits
+          # tolerates leading/trailing junk, BOMs, accidental quoting, etc.
+          def parse_id(env_name: str) -> int:
+              raw = os.environ.get(env_name, "")
+              match = re.search(r"\d+", raw)
+              if not match:
+                  print(f"::error::{env_name} contains no digits (length={len(raw)})")
+                  sys.exit(1)
+              return int(match.group())
+
+          app_id = parse_id("DIAGRAM_BOT_APP_ID")
+          installation_id = parse_id("DIAGRAM_BOT_INSTALLATION_ID")
+          private_key = os.environ["DIAGRAM_BOT_PRIVATE_KEY"]
+
+          def b64url(data: bytes) -> str:
+              return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
+
+          now = int(time.time())
+          header = json.dumps({"alg": "RS256", "typ": "JWT"}, separators=(",", ":")).encode()
+          payload = json.dumps(
+              {"iss": app_id, "iat": now - 60, "exp": now + 540},
+              separators=(",", ":"),
+          ).encode()
+          signing_input = f"{b64url(header)}.{b64url(payload)}".encode()
+
+          with tempfile.NamedTemporaryFile(mode="w", suffix=".pem", delete=False) as f:
+              f.write(private_key)
+              key_path = f.name
+          try:
+              proc = subprocess.run(
+                  ["openssl", "dgst", "-sha256", "-sign", key_path],
+                  input=signing_input,
+                  capture_output=True,
+                  check=True,
+              )
+          finally:
+              os.unlink(key_path)
+          jwt = f"{signing_input.decode()}.{b64url(proc.stdout)}"
+
+          req = urllib.request.Request(
+              f"https://api.github.com/app/installations/{installation_id}/access_tokens",
+              method="POST",
+              headers={
+                  "Authorization": f"Bearer {jwt}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+              },
+          )
+          with urllib.request.urlopen(req) as r:
+              token = json.loads(r.read())["token"]
+
+          # Mask the token in subsequent log output, then export to step output.
+          print(f"::add-mask::{token}")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"token={token}\n")
+          PY
+
+      - name: Commit Updated Diagrams
+        if: always() && steps.diagram_bot_token.outputs.token != ''
+        env:
+          BOT_TOKEN: ${{ steps.diagram_bot_token.outputs.token }}
+        run: |
+          git config user.name "sparc-iac-diagram-bot[bot]"
+          git config user.email "${{ secrets.DIAGRAM_BOT_APP_ID }}+sparc-iac-diagram-bot[bot]@users.noreply.github.com"
+          # Strip every credential path that actions/checkout left behind
+          # so our bot-token `-c` override is the sole Authorization header.
+          # Checkout v4+ writes GITHUB_TOKEN auth into a temp config file
+          # and includes it via `includeIf.gitdir`. Setting `-c` alone
+          # *appends* a second Authorization header, which GitHub rejects
+          # with `Duplicate header: "Authorization"`.
+          git config --local --unset-all "http.https://github.com/.extraheader" 2>/dev/null || true
+          git config --local --name-only --get-regexp '^includeif\.gitdir' 2>/dev/null | while read -r key; do
+            git config --local --unset-all "$key" 2>/dev/null || true
+          done
+          BOT_AUTH=$(printf 'x-access-token:%s' "$BOT_TOKEN" | base64 -w0)
+          HEADER_OVERRIDE="http.https://github.com/.extraheader=AUTHORIZATION: basic ${BOT_AUTH}"
+          git add docs/diagrams/
+          git diff --cached --quiet && echo "No diagram changes" || {
+            git commit -m "ci: auto-update ECS architecture diagrams [skip ci]"
+            git stash --include-untracked
+            git -c "$HEADER_OVERRIDE" pull --rebase origin main
+            git stash pop || true
+            git -c "$HEADER_OVERRIDE" push
+          }
+
+  # =========================================================================
+  # Deploy AWS Config — parallel with ECS, separate state file.
+  # Gated by ENABLE_AWS_CONFIG repository variable.
+  # =========================================================================
+  deploy-config:
+    name: Deploy AWS Config
+    needs: compliance-gate
+    if: vars.SPARC_DEPLOY_ENABLED == 'true' && (vars.ENABLE_AWS_CONFIG == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: prod
+    container:
+      image: risksentinel/sparc-ci-runner@sha256:f0994371f4f36bbbb9d0e26dc6ff2c6511b15e4415f5b8d17d545808099b86f2
+    defaults:
+      run:
+        shell: bash
+    concurrency:
+      group: config-prod-deploy
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Terraform Init
+        working-directory: AWS/config
+        run: terraform init -backend-config=backend.hcl
+      - name: Terraform Plan
+        working-directory: AWS/config
+        run: |
+          terraform plan \
+            -var-file="envs/prod/terraform.tfvars" \
+            -out=tfplan
+
+      - name: Terraform Apply
+        working-directory: AWS/config
+        run: terraform apply -auto-approve tfplan
+
+      - name: Deploy Summary
+        if: always()
+        working-directory: AWS/config
+        run: |
+          echo "## AWS Config Deploy" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Output | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          terraform output -json | jq -r 'to_entries[] | select(.value.value | type == "string") | "| \(.key) | \(.value.value) |"' >> "$GITHUB_STEP_SUMMARY" || true

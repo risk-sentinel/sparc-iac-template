@@ -1,0 +1,5 @@
+# sparc-ci-runner pinned digest — single source of truth.
+# Managed by .github/workflows/update-runner-digest.yml.
+# DO NOT edit manually; the pin-bump PR workflow overwrites this file.
+# Format: the last non-comment, non-blank line is the active digest.
+sha256:f0994371f4f36bbbb9d0e26dc6ff2c6511b15e4415f5b8d17d545808099b86f2

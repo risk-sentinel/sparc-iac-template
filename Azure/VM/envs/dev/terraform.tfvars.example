@@ -1,0 +1,37 @@
+# ============================================================================
+# SPARC Azure VM — Dev Environment
+# ============================================================================
+# cp envs/dev/terraform.tfvars.example terraform.tfvars
+# ============================================================================
+
+environment  = "dev"
+location     = "eastus"
+project_name = "sparc"
+tenant_id    = "00000000-0000-0000-0000-000000000000"
+
+# ── Container Images ───────────────────────────────────────────────────────
+app_image   = "your-registry.azurecr.io/sparc:latest"
+nginx_image = "your-registry.azurecr.io/sparc-nginx:latest"
+
+# ── VM ─────────────────────────────────────────────────────────────────────
+vm_size      = "Standard_B2s"
+data_disk_size = 20
+
+# ── TLS Certificate (PFX) ─────────────────────────────────────────────────
+# certificate_data     = filebase64("cert.pfx")
+# certificate_password = "changeme"
+
+# ── DNS (optional) ─────────────────────────────────────────────────────────
+# dns_zone_name   = "example.com"
+# dns_record_name = "dev-sparc"
+
+# ── Database ───────────────────────────────────────────────────────────────
+db_sku_name = "B_Standard_B1ms"
+
+# ── Redis ──────────────────────────────────────────────────────────────────
+redis_sku    = "Basic"
+redis_family = "C"
+
+# ── SPARC ──────────────────────────────────────────────────────────────────
+sparc_app_name           = "SPARC"
+sparc_enable_local_login = "true"

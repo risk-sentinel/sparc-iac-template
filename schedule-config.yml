@@ -1,0 +1,26 @@
+# schedule-config.yml — Hibernate/wake schedule configuration
+#
+# Controls which environments participate in scheduled hibernate/wake.
+# The cron schedule itself is in .github/workflows/schedule-hibernate.yml
+# (GitHub requires cron expressions to be static in the workflow file).
+#
+# Wake:      05:00 EST (10:00 UTC) weekdays
+# Hibernate: 21:00 EST (02:00 UTC+1) weekdays
+# Weekends:  stay hibernated
+
+environments:
+  dev:
+    enabled: false                # No dev environment deployed
+    deployment_target: aws-ecs    # Must match deploy.yml input options
+  staging:
+    enabled: false                # No staging environment deployed
+    deployment_target: aws-ecs
+  prod:
+    enabled: false                # Always-on by default — opt in explicitly
+    deployment_target: aws-ecs
+
+# Health check settings (after wake)
+health_check:
+  ecs_wait_timeout: 600           # seconds for aws ecs wait services-stable
+  alb_retries: 5                  # number of ALB health check attempts
+  alb_retry_interval: 30          # seconds between retries
