@@ -1,0 +1,39 @@
+{
+  "platform": {
+    "name": "test-fixture",
+    "release": "0.0.1"
+  },
+  "profiles": [
+    {
+      "name": "cis-postgresql",
+      "title": "CIS PostgreSQL Profile (test fixture)",
+      "version": "0.0.1",
+      "controls": [
+        {
+          "id": "fixture-pe-2",
+          "title": "Physical access authorizations (inherited)",
+          "desc": "Physical access controls for the data center are AWS's responsibility under the shared-responsibility model.",
+          "impact": 0.5,
+          "tags": {
+            "nist": ["pe-2"],
+            "implementation_status": "inherited",
+            "inherited_from": "aws-shared-responsibility",
+            "attestation_references": [
+              "AWS SOC 2 Type II",
+              "AWS FedRAMP Moderate",
+              "AWS FedRAMP High",
+              "AWS ISO 27001"
+            ]
+          },
+          "results": [
+            {
+              "status": "skipped",
+              "code_desc": "Inherited from AWS — see attestations",
+              "message": "Skipped because AWS satisfies this control."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

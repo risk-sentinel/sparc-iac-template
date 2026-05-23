@@ -1,0 +1,65 @@
+{
+  "component-definition": {
+    "uuid": "c1d2e3f4-1111-4000-a000-000000000010",
+    "metadata": {
+      "title": "SPARC Azure Monitoring Component Definition",
+      "last-modified": "2026-03-20T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "c1d2e3f4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "c1d2e3f4-2222-4000-a000-000000000010",
+        "type": "service",
+        "title": "Azure Log Analytics, Metric Alerts, and Flow Logs",
+        "description": "Log Analytics workspace with 365-day retention, NSG flow logs with traffic analytics, VM diagnostic settings, and 7 metric alerts covering VM CPU, Application Gateway unhealthy hosts and 5xx errors, PostgreSQL CPU and storage, and Redis CPU and memory. Deployed via Terraform (Azure/VM/modules/monitoring/). <!-- UPDATE: Insert Log Analytics workspace ID, alert rule IDs, and NSG flow log details for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["c1d2e3f4-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "c1d2e3f4-3333-4000-a000-000000000010",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for Azure monitoring and logging",
+            "implemented-requirements": [
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000090",
+                "control-id": "au-2",
+                "description": "Event Logging: NSG flow logs are enabled for all NSGs (azurerm_network_watcher_flow_log.nsg), capturing accepted and denied network traffic with 90-day retention in a storage account. Traffic Analytics is enabled at 10-minute intervals, streaming flow data to the Log Analytics workspace for query and visualization. VM diagnostic settings (azurerm_monitor_diagnostic_setting.vm) stream AllMetrics to Log Analytics. The Log Analytics workspace (PerGB2018 SKU) provides centralized log aggregation and query capability. Reference: DISA SRG-APP-000089, CIS Azure 6.5.",
+                "remarks": "Terraform resources: azurerm_log_analytics_workspace.main (retention_in_days = 365), azurerm_network_watcher_flow_log.nsg (count = length(var.nsg_ids), retention 90 days, traffic_analytics interval 10 min), azurerm_monitor_diagnostic_setting.vm (AllMetrics enabled)."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000091",
+                "control-id": "si-4",
+                "description": "System Monitoring: Seven metric alerts provide continuous monitoring across all infrastructure tiers: (1) VM CPU > 80% (severity 2, 15-min window); (2) App Gateway unhealthy host count > 0 (severity 1, 5-min window); (3) App Gateway 5xx responses > 10 (severity 2, 5-min window, filtered by HttpStatusGroup=5xx dimension); (4) PostgreSQL CPU > 80% (severity 2, 15-min window); (5) PostgreSQL storage > 80% (severity 2, 15-min window); (6) Redis CPU > 80% (severity 2, 15-min window); (7) Redis memory > 80% (severity 2, 15-min window). All alerts evaluate every 5 minutes and notify via the action group. Reference: DISA SRG-APP-000340.",
+                "remarks": "Terraform resources: azurerm_monitor_metric_alert.vm_cpu, azurerm_monitor_metric_alert.gateway_unhealthy_hosts, azurerm_monitor_metric_alert.gateway_5xx, azurerm_monitor_metric_alert.db_cpu, azurerm_monitor_metric_alert.db_storage, azurerm_monitor_metric_alert.redis_cpu, azurerm_monitor_metric_alert.redis_memory. All alerts reference var.action_group_id."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000092",
+                "control-id": "au-6",
+                "description": "Audit Record Review, Analysis, and Reporting: The Log Analytics workspace retains all logs for 365 days (retention_in_days = 365), supporting long-term audit review and compliance reporting requirements. NSG flow logs provide 90-day retention in storage with Traffic Analytics for network behavior analysis. The centralized workspace enables Kusto Query Language (KQL) queries across all log sources for incident investigation, compliance auditing, and trend analysis. Reference: DISA SRG-APP-000101.",
+                "remarks": "Terraform resource: azurerm_log_analytics_workspace.main with retention_in_days = 365, sku = PerGB2018. Flow log storage retention: 90 days."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

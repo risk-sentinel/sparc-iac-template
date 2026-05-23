@@ -1,0 +1,205 @@
+name: Scheduled Hibernate/Wake
+
+on:
+  schedule:
+    - cron: "0 10 * * 1-5"    # Wake:      05:00 EST (10:00 UTC) Mon-Fri
+    - cron: "0 2 * * 2-6"     # Hibernate: 21:00 EST (02:00 UTC+1) Tue-Sat (= Mon-Fri evenings)
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Action to perform"
+        required: true
+        type: choice
+        options:
+          - wake
+          - hibernate
+      environment:
+        description: "Target environment (blank = all enabled)"
+        required: false
+        type: choice
+        options:
+          - ""
+          - dev
+          - staging
+          - prod
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  hibernate-wake:
+    # Job name resolves the action inline from the triggering event so we
+    # can avoid a separate resolve-action job (see #181). The cron strings
+    # here must match the `on.schedule` entries above.
+    name: "${{ inputs.action || (github.event.schedule == '0 10 * * 1-5' && 'wake' || 'hibernate') }} — ${{ matrix.environment }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: risksentinel/sparc-ci-runner@sha256:f0994371f4f36bbbb9d0e26dc6ff2c6511b15e4415f5b8d17d545808099b86f2
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - environment: dev
+            deployment_target: aws-ecs
+          - environment: staging
+            deployment_target: aws-ecs
+    steps:
+      - name: Resolve action
+        id: resolve
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "action=${{ inputs.action }}" >> "$GITHUB_OUTPUT"
+          else
+            CRON="${{ github.event.schedule }}"
+            if [ "$CRON" = "0 10 * * 1-5" ]; then
+              echo "action=wake" >> "$GITHUB_OUTPUT"
+            else
+              echo "action=hibernate" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Check if environment is enabled
+        id: check
+        run: |
+          # Manual dispatch with specific environment — skip others
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.environment }}" ]; then
+            if [ "${{ inputs.environment }}" != "${{ matrix.environment }}" ]; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              echo "Skipping ${{ matrix.environment }} — manual dispatch targets ${{ inputs.environment }}"
+              exit 0
+            fi
+          fi
+
+          # Check schedule-config.yml for opt-in
+          ENABLED=$(python3 -c "
+          import yaml
+          with open('schedule-config.yml') as f:
+              config = yaml.safe_load(f)
+          env = config.get('environments', {}).get('${{ matrix.environment }}', {})
+          print('true' if env.get('enabled', False) else 'false')
+          ")
+          if [ "$ENABLED" = "false" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "${{ matrix.environment }} is not enabled in schedule-config.yml"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure AWS Credentials
+        if: steps.check.outputs.skip != 'true'
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Terraform Init
+        if: steps.check.outputs.skip != 'true'
+        working-directory: AWS/ECS
+        run: terraform init -backend-config=backend.hcl
+      - name: Terraform Plan
+        if: steps.check.outputs.skip != 'true'
+        working-directory: AWS/ECS
+        run: |
+          ACTION="${{ steps.resolve.outputs.action }}"
+          HIBERNATE_VAR=$( [ "$ACTION" = "hibernate" ] && echo "true" || echo "false" )
+          echo "## ${{ matrix.environment }}: $ACTION" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          terraform plan \
+            -var="environment=${{ matrix.environment }}" \
+            -var="sparc_smtp_password=${{ secrets.SPARC_SMTP_PASSWORD }}" \
+            -var="sparc_oidc_client_secret=${{ secrets.SPARC_OIDC_CLIENT_SECRET }}" \
+            -var="sparc_github_client_secret=${{ secrets.SPARC_GITHUB_CLIENT_SECRET }}" \
+            -var="sparc_gitlab_client_secret=${{ secrets.SPARC_GITLAB_CLIENT_SECRET }}" \
+            -var-file="envs/${{ matrix.environment }}/terraform.tfvars" \
+            -var="hibernate=$HIBERNATE_VAR" \
+            -out=tfplan 2>&1 | tee /tmp/plan.txt
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          tail -20 /tmp/plan.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Terraform Apply
+        if: steps.check.outputs.skip != 'true'
+        working-directory: AWS/ECS
+        run: terraform apply -auto-approve tfplan
+
+      - name: Health Check (wake only)
+        if: steps.check.outputs.skip != 'true' && steps.resolve.outputs.action == 'wake'
+        run: |
+          REGION="${{ vars.AWS_REGION || 'us-east-1' }}"
+          CLUSTER="sparc-${{ matrix.environment }}"
+          SERVICE="sparc-${{ matrix.environment }}"
+
+          echo "Waiting for ECS service to stabilize..."
+          aws ecs wait services-stable \
+            --cluster "$CLUSTER" \
+            --services "$SERVICE" \
+            --region "$REGION" || {
+              echo "::warning::ECS service did not stabilize within timeout"
+            }
+
+          # ALB health check
+          ALB_DNS=$(cd AWS/ECS && terraform output -raw alb_dns_name 2>/dev/null || echo "")
+          if [ -n "$ALB_DNS" ]; then
+            echo "Checking ALB health at https://$ALB_DNS/up..."
+            for i in $(seq 1 5); do
+              STATUS=$(curl -sk -o /dev/null -w "%{http_code}" "https://$ALB_DNS/up" 2>/dev/null || echo "000")
+              if [ "$STATUS" = "200" ]; then
+                echo "Health check passed (attempt $i)"
+                echo "| Health Check | PASS (HTTP $STATUS) |" >> "$GITHUB_STEP_SUMMARY"
+                exit 0
+              fi
+              echo "Attempt $i: HTTP $STATUS — retrying in 30s..."
+              sleep 30
+            done
+            echo "::error::ALB health check failed after 5 attempts"
+            echo "| Health Check | FAIL |" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          else
+            echo "::warning::Could not determine ALB DNS — skipping health check"
+          fi
+
+      - name: Notify on Failure
+        if: failure() && steps.check.outputs.skip != 'true'
+        run: |
+          ACTION="${{ steps.resolve.outputs.action }}"
+          ENV="${{ matrix.environment }}"
+          REGION="${{ vars.AWS_REGION || 'us-east-1' }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          # Get SNS topic ARN from Terraform output
+          TOPIC_ARN=$(cd AWS/ECS && terraform output -raw sns_topic_arn 2>/dev/null || echo "")
+          if [ -n "$TOPIC_ARN" ]; then
+            aws sns publish \
+              --topic-arn "$TOPIC_ARN" \
+              --subject "[SPARC] ${ACTION^^} FAILED — $ENV" \
+              --message "Scheduled $ACTION failed for $ENV environment.
+
+          Run: $RUN_URL
+
+          Action required: Check the workflow logs and manually $ACTION if needed.
+          Manual override: Actions → Scheduled Hibernate/Wake → Run workflow" \
+              --region "$REGION" || echo "::warning::SNS publish failed"
+          else
+            echo "::warning::SNS topic ARN not available — skipping notification"
+          fi
+
+      - name: Summary
+        if: always() && steps.check.outputs.skip != 'true'
+        run: |
+          ACTION="${{ steps.resolve.outputs.action }}"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Environment | Action | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "| ${{ matrix.environment }} | $ACTION | PASS |" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "| ${{ matrix.environment }} | $ACTION | **FAIL** |" >> "$GITHUB_STEP_SUMMARY"
+          fi

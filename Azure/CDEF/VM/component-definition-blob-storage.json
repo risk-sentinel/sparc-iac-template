@@ -1,0 +1,65 @@
+{
+  "component-definition": {
+    "uuid": "c1d2e3f4-1111-4000-a000-000000000007",
+    "metadata": {
+      "title": "SPARC Azure Blob Storage Component Definition",
+      "last-modified": "2026-03-20T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "c1d2e3f4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "c1d2e3f4-2222-4000-a000-000000000007",
+        "type": "service",
+        "title": "Azure Storage Account and Blob Storage",
+        "description": "Storage Account with TLS 1.2 minimum, private access by default, blob versioning, soft delete retention, and a private blob container. Deployed via Terraform (Azure/VM/modules/blob_storage/). <!-- UPDATE: Insert storage account name, container name, and resource group for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["c1d2e3f4-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "c1d2e3f4-3333-4000-a000-000000000007",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for Azure Blob Storage",
+            "implemented-requirements": [
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000060",
+                "control-id": "sc-28",
+                "description": "Protection of Information at Rest: The Storage Account encrypts all data at rest using Azure Storage Service Encryption with AES-256 platform-managed keys. TLS 1.2 is enforced as the minimum version (min_tls_version = TLS1_2) for all API operations, ensuring encrypted transport for data access. All blob data, metadata, and service data are automatically encrypted. Reference: DISA SRG-APP-000231, CIS Azure 3.1.",
+                "remarks": "Terraform resource: azurerm_storage_account.main with min_tls_version = TLS1_2. Azure encrypts all storage account data at rest by default."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000061",
+                "control-id": "ac-3",
+                "description": "Access Enforcement: The Storage Account denies public access by default (allow_nested_items_to_be_public = false). Network rules enforce a default deny policy (network_rules default_action = Deny), requiring explicit network access grants. The blob container uses private access type (container_access_type = private), preventing anonymous blob access. The VM accesses storage via its managed identity with the Storage Blob Data Contributor RBAC role assignment (defined in the rbac module). Reference: DISA SRG-APP-000033, CIS Azure 3.7.",
+                "remarks": "Terraform resources: azurerm_storage_account.main with allow_nested_items_to_be_public = false, network_rules default_action = Deny. azurerm_storage_container.main with container_access_type = private. RBAC: azurerm_role_assignment.storage_blob in rbac module."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000062",
+                "control-id": "cp-9",
+                "description": "System Backup: Blob versioning is enabled (versioning_enabled = true), automatically preserving previous versions of blobs on every overwrite or delete operation. Soft delete retention is configured for 7 days (delete_retention_policy days = 7), allowing recovery of accidentally deleted blobs within the retention window. The storage account replication type is configurable (e.g., LRS, GRS) for geographic redundancy. Reference: DISA SRG-APP-000065.",
+                "remarks": "Terraform resource: azurerm_storage_account.main blob_properties with versioning_enabled = true, delete_retention_policy days = 7. Replication type configured via var.replication_type."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

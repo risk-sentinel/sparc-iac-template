@@ -1,0 +1,153 @@
+name: Update CI Runner Digest Pin
+
+# Opens a PR that bumps the sparc-ci-runner digest pin across all consuming
+# workflows. Triggered:
+#   - weekly on Monday 12:00 UTC (catches any manual :latest pushes)
+#   - after build-runner.yml publishes a new image (via workflow_call)
+#   - manually via workflow_dispatch
+#
+# If the current pin already matches the remote :latest digest, no PR is
+# opened and the run exits cleanly.
+
+on:
+  schedule:
+    - cron: '0 12 * * 1'
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      triggered_by:
+        description: 'Origin workflow (e.g. build-runner)'
+        required: false
+        type: string
+        default: 'manual'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  IMAGE: risksentinel/sparc-ci-runner
+  PIN_FILE: .github/runner/pinned-digest.txt
+
+jobs:
+  bump-pin:
+    name: Bump runner digest pin
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Resolve latest digest
+        id: resolve
+        run: |
+          # Use Docker Hub's v2 registry API to resolve :latest → digest.
+          # No auth needed for a public image; a token is fetched anonymously.
+          TOKEN=$(curl -sSfL \
+            "https://auth.docker.io/token?service=registry.docker.io&scope=repository:${IMAGE}:pull" \
+            | jq -r .token)
+          DIGEST=$(curl -sSfLI \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
+            -H "Accept: application/vnd.oci.image.manifest.v1+json" \
+            -H "Accept: application/vnd.docker.distribution.manifest.list.v2+json" \
+            -H "Accept: application/vnd.oci.image.index.v1+json" \
+            "https://registry-1.docker.io/v2/${IMAGE}/manifests/latest" \
+            | awk '/^[Dd]ocker-[Cc]ontent-[Dd]igest:/ {print $2}' \
+            | tr -d '\r\n')
+          if [ -z "$DIGEST" ] || ! echo "$DIGEST" | grep -q '^sha256:'; then
+            echo "::error::Failed to resolve digest for ${IMAGE}:latest"
+            exit 1
+          fi
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
+          echo "Resolved remote digest: ${DIGEST}"
+
+      - name: Read current pin
+        id: current
+        run: |
+          CURRENT=$(grep -E '^sha256:' "${PIN_FILE}" | tail -n1)
+          echo "digest=${CURRENT}" >> "$GITHUB_OUTPUT"
+          echo "Current pin: ${CURRENT}"
+
+      - name: Skip if already pinned to latest
+        id: skip_check
+        run: |
+          if [ "${{ steps.resolve.outputs.digest }}" = "${{ steps.current.outputs.digest }}" ]; then
+            echo "Pin already matches remote :latest — nothing to do."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Rewrite pin file + workflow refs
+        if: steps.skip_check.outputs.changed == 'true'
+        env:
+          OLD_DIGEST: ${{ steps.current.outputs.digest }}
+          NEW_DIGEST: ${{ steps.resolve.outputs.digest }}
+        run: |
+          # Pin file — replace the last sha256: line
+          sed -i "s|^sha256:.*|${NEW_DIGEST}|" "${PIN_FILE}"
+
+          # Workflow image refs — replace everywhere the old digest appears
+          git grep -lF "${IMAGE}@${OLD_DIGEST}" -- '.github/workflows/**' \
+            | xargs sed -i "s|${IMAGE}@${OLD_DIGEST}|${IMAGE}@${NEW_DIGEST}|g"
+
+          # Sanity check — no :latest refs resurrected and no stale digests
+          if git grep -qF "${IMAGE}:latest" -- '.github/workflows/**'; then
+            echo "::error::Found residual :latest refs after rewrite"
+            git grep -F "${IMAGE}:latest" -- '.github/workflows/**'
+            exit 1
+          fi
+          if git grep -qF "${IMAGE}@${OLD_DIGEST}" -- '.github/workflows/**'; then
+            echo "::error::Old digest still referenced somewhere"
+            exit 1
+          fi
+
+      - name: Open pin-bump PR
+        if: steps.skip_check.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OLD_DIGEST: ${{ steps.current.outputs.digest }}
+          NEW_DIGEST: ${{ steps.resolve.outputs.digest }}
+          TRIGGER: ${{ inputs.triggered_by || github.event_name }}
+        run: |
+          BRANCH="automation/runner-pin-$(echo ${NEW_DIGEST} | cut -c8-19)"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "${BRANCH}"
+          git add "${PIN_FILE}" .github/workflows/
+          git commit -m "chore(ci): bump sparc-ci-runner pin to ${NEW_DIGEST:0:19}
+
+          Previous: ${OLD_DIGEST}
+          New:      ${NEW_DIGEST}
+          Trigger:  ${TRIGGER}
+
+          Rebuilt image published via build-runner.yml. Review the runner
+          Trivy scan on the linked build run before merging."
+          git push -u origin "${BRANCH}"
+
+          gh pr create \
+            --title "chore(ci): bump sparc-ci-runner pin (${TRIGGER})" \
+            --body "Automated pin bump for \`risksentinel/sparc-ci-runner\`.
+
+          | Field | Value |
+          |-------|-------|
+          | Previous digest | \`${OLD_DIGEST}\` |
+          | New digest      | \`${NEW_DIGEST}\` |
+          | Trigger         | \`${TRIGGER}\` |
+
+          Review the Trivy scan from the most recent \`build-runner.yml\` run before merging. See \`docs/dev/ci_runner_pinning.md\` for the manual override process." \
+            --label dependencies \
+            --label automation \
+            --base main \
+            --head "${BRANCH}"
+
+      - name: Summary
+        run: |
+          echo "## CI Runner Pin Bump" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Field | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Current pin | \`${{ steps.current.outputs.digest }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Remote :latest | \`${{ steps.resolve.outputs.digest }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| PR opened | ${{ steps.skip_check.outputs.changed }} |" >> "$GITHUB_STEP_SUMMARY"

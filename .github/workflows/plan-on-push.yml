@@ -1,0 +1,273 @@
+name: Terraform Plan
+
+on:
+  push:
+    branches-ignore:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  # =========================================================================
+  # Terraform Plan — always run, plan is the source of truth
+  # =========================================================================
+  plan:
+    name: "Plan (${{ matrix.pattern }})"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: prod
+    container:
+      image: risksentinel/sparc-ci-runner@sha256:f0994371f4f36bbbb9d0e26dc6ff2c6511b15e4415f5b8d17d545808099b86f2
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - pattern: ecs
+            dir: AWS/ECS
+          - pattern: ec2
+            dir: AWS/EC2
+          - pattern: azure-vm
+            dir: Azure/VM
+          - pattern: bootstrap
+            dir: bootstrap
+          - pattern: config
+            dir: AWS/config
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure AWS Credentials
+        if: matrix.pattern != 'azure-vm'
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Terraform Init
+        working-directory: ${{ matrix.dir }}
+        run: |
+          if [ "${{ matrix.pattern }}" = "azure-vm" ]; then
+            terraform init -backend=false
+          else
+            terraform init -backend-config=backend.hcl
+          fi
+
+      - name: Run Checkov
+        run: |
+          mkdir -p /tmp/checkov
+          checkov -d ${{ matrix.dir }} \
+            --framework terraform \
+            --output json \
+            --output-file-path /tmp/checkov/ \
+            --soft-fail \
+            --quiet
+
+      - name: Checkov Disposition Diff
+        run: |
+          if [ -f /tmp/checkov/results_json.json ]; then
+            python3 oscal/scripts/checkov_diff.py \
+              --checkov-results /tmp/checkov/results_json.json \
+              --baseline checkov-baseline.yml \
+              --pattern ${{ matrix.pattern }} \
+              --output-summary /tmp/checkov-trend-${{ matrix.pattern }}.json \
+              --threshold threshold.yml \
+              --github-step-summary
+          fi
+        continue-on-error: true
+
+      - name: Checkov Summary
+        if: always()
+        run: |
+          if [ -f /tmp/checkov/results_json.json ]; then
+            PASSED=$(python3 -c "import json; d=json.load(open('/tmp/checkov/results_json.json')); print(d.get('summary',{}).get('passed',0))")
+            FAILED=$(python3 -c "import json; d=json.load(open('/tmp/checkov/results_json.json')); print(d.get('summary',{}).get('failed',0))")
+            TOTAL=$((PASSED + FAILED))
+            if [ "$TOTAL" -gt 0 ]; then PCT=$((PASSED * 100 / TOTAL)); else PCT=0; fi
+            echo "## Checkov: ${{ matrix.pattern }}" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Passed | Failed | Rate |" >> "$GITHUB_STEP_SUMMARY"
+            echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+            echo "| $PASSED | $FAILED | ${PCT}% |" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Semgrep SAST Scan
+        run: |
+          FINDINGS=$(semgrep scan --config auto --sarif oscal/scripts/ 2>/dev/null | python3 -c "
+          import json, sys
+          try:
+              data = json.load(sys.stdin)
+              print(len(data.get('runs', [{}])[0].get('results', [])))
+          except: print('0')
+          " || echo "0")
+          echo "## Semgrep: oscal/scripts/" >> "$GITHUB_STEP_SUMMARY"
+          echo "Findings: $FINDINGS" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: TruffleHog Secret Scan
+        run: |
+          SECRETS=$(trufflehog filesystem . --json \
+            --exclude-paths .trufflehog-ignore \
+            --exclude-detectors Privacy \
+            --no-git \
+            2>/dev/null | wc -l || echo "0")
+          echo "## TruffleHog: Secret Scan" >> "$GITHUB_STEP_SUMMARY"
+          echo "Findings: $SECRETS" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$SECRETS" -gt 0 ] 2>/dev/null; then
+            echo "::warning::TruffleHog found $SECRETS potential secret(s)"
+          fi
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: ${{ matrix.dir }}
+        run: |
+          if [ "${{ matrix.pattern }}" = "ecs" ]; then
+            terraform plan -out=tfplan -lock-timeout=60s \
+              -var="environment=prod" \
+              -var="sparc_smtp_password=${{ secrets.SPARC_SMTP_PASSWORD }}" \
+              -var="sparc_oidc_client_secret=${{ secrets.SPARC_OIDC_CLIENT_SECRET }}" \
+              -var="sparc_github_client_secret=${{ secrets.SPARC_GITHUB_CLIENT_SECRET }}" \
+              -var="sparc_gitlab_client_secret=${{ secrets.SPARC_GITLAB_CLIENT_SECRET }}" \
+              -var-file="envs/prod/terraform.tfvars" \
+              2>&1 | tee /tmp/plan.txt
+          elif [ "${{ matrix.pattern }}" = "bootstrap" ]; then
+            terraform plan -lock-timeout=60s \
+              -var="environment=prod" \
+              -var="aws_region=${{ vars.AWS_REGION || 'us-east-1' }}" \
+              2>&1 | tee /tmp/plan.txt
+          elif [ "${{ matrix.pattern }}" = "config" ]; then
+            terraform plan -lock-timeout=60s \
+              -var-file="envs/prod/terraform.tfvars" \
+              2>&1 | tee /tmp/plan.txt
+          elif [ "${{ matrix.pattern }}" = "azure-vm" ]; then
+            echo "Azure VM: validate-only (no Azure credentials)"
+            terraform validate 2>&1 | tee /tmp/plan.txt
+          elif [ "${{ matrix.pattern }}" = "ec2" ]; then
+            terraform plan -out=tfplan -lock-timeout=60s \
+              -var="environment=prod" \
+              2>&1 | tee /tmp/plan.txt || true
+          else
+            terraform plan -lock-timeout=60s 2>&1 | tee /tmp/plan.txt || true
+          fi
+
+      - name: Generate Diagram Preview
+        if: matrix.pattern == 'ecs' || matrix.pattern == 'ec2'
+        working-directory: ${{ matrix.dir }}
+        run: |
+          terraform show -json tfplan > /tmp/plan-state.json 2>/dev/null || true
+          if [ -s /tmp/plan-state.json ] && python3 -c "import json; json.load(open('/tmp/plan-state.json'))" 2>/dev/null; then
+            python3 "$GITHUB_WORKSPACE/oscal/scripts/generate_diagrams.py" \
+              --state-json /tmp/plan-state.json \
+              --output /tmp/diagram-preview-${{ matrix.pattern }}.md \
+              --pattern ${{ matrix.pattern }} \
+              --github-step-summary
+          fi
+        continue-on-error: true
+
+      - name: Prepare Checkov Artifacts
+        run: |
+          mkdir -p /tmp/checkov-upload
+          cp /tmp/checkov/results_json.json \
+            "/tmp/checkov-upload/results-${{ matrix.pattern }}.json" 2>/dev/null || true
+          cp "/tmp/checkov-trend-${{ matrix.pattern }}.json" \
+            /tmp/checkov-upload/ 2>/dev/null || true
+
+      - name: Upload Checkov Results
+        uses: actions/upload-artifact@v7
+        with:
+          name: checkov-${{ matrix.pattern }}
+          path: /tmp/checkov-upload/
+          retention-days: 1
+          if-no-files-found: warn
+
+      - name: Plan Summary
+        if: always()
+        run: |
+          if [ -f /tmp/plan.txt ]; then
+            PLAN=$(cat /tmp/plan.txt | tail -20)
+            echo "## Terraform Plan: ${{ matrix.pattern }}" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            echo "$PLAN" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  # =========================================================================
+  # Auto-update baseline with newly discovered findings
+  # =========================================================================
+  update-baseline:
+    name: Update Baseline
+    needs: plan
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    container:
+      image: risksentinel/sparc-ci-runner@sha256:f0994371f4f36bbbb9d0e26dc6ff2c6511b15e4415f5b8d17d545808099b86f2
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      - name: Download Checkov Results
+        uses: actions/download-artifact@v8
+        with:
+          pattern: checkov-*
+          path: checkov-artifacts/
+          merge-multiple: true
+        continue-on-error: true
+
+      - name: List Downloaded Artifacts
+        run: |
+          echo "Downloaded artifacts:"
+          find checkov-artifacts/ -type f 2>/dev/null || echo "No artifacts found"
+
+      - name: Update Baseline for Each Pattern
+        run: |
+          UPDATED=false
+          for PATTERN in ecs ec2 azure-vm; do
+            RESULTS="checkov-artifacts/results-${PATTERN}.json"
+            if [ -f "$RESULTS" ]; then
+              echo "Processing pattern: $PATTERN"
+              python3 oscal/scripts/checkov_diff.py \
+                --checkov-results "$RESULTS" \
+                --baseline checkov-baseline.yml \
+                --pattern "$PATTERN" \
+                --output-summary "/tmp/trend-${PATTERN}.json" \
+                --update-baseline || true
+              if ! git diff --quiet checkov-baseline.yml 2>/dev/null; then
+                UPDATED=true
+              fi
+            else
+              echo "No results for pattern: $PATTERN (skipping)"
+            fi
+          done
+          echo "updated=$UPDATED" >> "$GITHUB_OUTPUT"
+        id: baseline
+
+      - name: Commit Baseline Updates
+        if: steps.baseline.outputs.updated == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add checkov-baseline.yml
+          git diff --cached --quiet && echo "No changes" || {
+            git commit -m "ci: auto-discover new checkov findings [skip ci] (#72)"
+            git push
+            echo "## Baseline Updated" >> "$GITHUB_STEP_SUMMARY"
+            echo "New findings auto-added with disposition: discovered" >> "$GITHUB_STEP_SUMMARY"
+          }

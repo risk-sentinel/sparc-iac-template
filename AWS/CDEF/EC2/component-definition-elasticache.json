@@ -1,0 +1,83 @@
+{
+  "component-definition": {
+    "uuid": "b1c2d3e4-1111-4000-a000-000000000009",
+    "metadata": {
+      "title": "SPARC EC2 ElastiCache Redis Component Definition",
+      "last-modified": "2026-03-20T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "b1c2d3e4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "b1c2d3e4-2222-4000-a000-000000000009",
+        "type": "service",
+        "title": "AWS ElastiCache Redis",
+        "description": "ElastiCache Redis replication group with in-transit and at-rest encryption for SPARC sessions and caching. Deployed in private subnets with security group restricting access to EC2 instances only. Deployed via Terraform (AWS/EC2/modules/elasticache/). <!-- UPDATE: Insert Redis endpoint, replication group ID, and security group for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["b1c2d3e4-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "b1c2d3e4-3333-4000-a000-000000000009",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for ElastiCache Redis",
+            "implemented-requirements": [
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000080",
+                "control-id": "sc-8",
+                "description": "Transmission Confidentiality and Integrity: In-transit encryption is enabled (transit_encryption_enabled = true), requiring TLS for all connections between EC2 instances and Redis. The REDIS_URL uses the rediss:// scheme (TLS) rather than redis:// (plaintext). This protects session data and cached content from network interception. Reference: DISA SRG-NET-000062, CIS AWS 3.4.",
+                "remarks": "Terraform resource: aws_elasticache_replication_group.main with transit_encryption_enabled = true. Application connects via rediss:// URL."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000081",
+                "control-id": "sc-28",
+                "description": "Protection of Information at Rest: At-rest encryption is enabled (at_rest_encryption_enabled = true), encrypting all data persisted to disk including RDB snapshots and AOF logs. Encryption uses AWS-managed keys. This protects session tokens, cached data, and any SPARC application state stored in Redis. Reference: DISA SRG-APP-000231.",
+                "remarks": "Terraform resource: aws_elasticache_replication_group.main with at_rest_encryption_enabled = true."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000082",
+                "control-id": "sc-7",
+                "description": "Boundary Protection: Redis is deployed in private subnets via a dedicated subnet group. The Redis security group permits inbound connections exclusively on port 6379 from the EC2 security group. No public endpoint is configured. Redis is not accessible from the internet or any other VPC resource. Reference: DISA SRG-NET-000364.",
+                "remarks": "Terraform resources: aws_elasticache_subnet_group.main (private subnets), aws_security_group.redis (EC2-only ingress) in networking module."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000083",
+                "control-id": "cp-9",
+                "description": "System Backup: ElastiCache Redis supports automatic daily snapshots with configurable retention. For production deployments with num_cache_nodes > 1, automatic failover provides high availability. Redis data is ephemeral by nature (sessions, cache) but backups protect against cluster failure. Reference: DISA SRG-APP-000065.",
+                "remarks": "Configure snapshot_retention_limit and snapshot_window for backup requirements. Automatic failover is enabled when num_cache_nodes > 1."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000084",
+                "control-id": "ac-12",
+                "description": "Session Termination: SPARC uses Redis for session storage with configurable session timeout (SPARC_SESSION_TIMEOUT_MINUTES). Expired sessions are automatically purged by Redis TTL expiration. The application enforces session timeout via the SPARC_INACTIVITY_DAYS setting. Combined, these ensure inactive user sessions are terminated per organizational policy. Reference: DISA SRG-APP-000295.",
+                "remarks": "Session timeout is configured via SPARC application environment variables, enforced by both the application layer and Redis TTL."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000085",
+                "control-id": "ia-5",
+                "description": "Authenticator Management: Redis AUTH is enabled with a 32-character randomly generated token (auth_token), requiring all clients to authenticate before executing commands. The auth token is generated via Terraform random_password and is never stored in configuration files. Combined with TLS in-transit encryption, this ensures both authentication and confidentiality for all Redis connections. Reference: DISA SRG-APP-000175.",
+                "remarks": "Terraform resources: random_password.redis_auth, aws_elasticache_replication_group.main with auth_token. REDIS_URL includes rediss:// scheme for TLS."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

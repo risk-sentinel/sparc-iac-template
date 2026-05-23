@@ -1,0 +1,71 @@
+{
+  "component-definition": {
+    "uuid": "c1d2e3f4-1111-4000-a000-000000000008",
+    "metadata": {
+      "title": "SPARC Azure Key Vault Component Definition",
+      "last-modified": "2026-03-20T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "c1d2e3f4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "c1d2e3f4-2222-4000-a000-000000000008",
+        "type": "service",
+        "title": "Azure Key Vault",
+        "description": "Azure Key Vault with RBAC-based authorization, purge protection, 90-day soft delete retention, and network ACLs allowing Azure service bypass. Deployed via Terraform (Azure/VM/modules/key_vault/). <!-- UPDATE: Insert Key Vault name, URI, tenant ID, and resource group for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["c1d2e3f4-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "c1d2e3f4-3333-4000-a000-000000000008",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for Azure Key Vault",
+            "implemented-requirements": [
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000070",
+                "control-id": "sc-28",
+                "description": "Protection of Information at Rest: Azure Key Vault encrypts all secrets, keys, and certificates at rest using HSM-backed encryption (FIPS 140-2 validated). The standard SKU uses software-protected keys backed by Azure-managed HSMs. Purge protection is enabled (purge_protection_enabled = true) with a 90-day soft delete retention (soft_delete_retention_days = 90), preventing permanent deletion of vault contents even by administrators during the retention period. Reference: DISA SRG-APP-000231, CIS Azure 8.1.",
+                "remarks": "Terraform resource: azurerm_key_vault.main with sku_name = standard, purge_protection_enabled = true, soft_delete_retention_days = 90."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000071",
+                "control-id": "ac-3",
+                "description": "Access Enforcement: Key Vault uses RBAC authorization (enable_rbac_authorization = true) instead of vault access policies, integrating with Azure AD for fine-grained access control. The VM's managed identity is granted the Key Vault Secrets User role (defined in the rbac module), providing read-only access to secrets. Purge protection prevents unauthorized permanent deletion. Network ACLs default to Allow with Azure service bypass enabled, allowing trusted Azure services to access the vault. Reference: DISA SRG-APP-000033, CIS Azure 8.5.",
+                "remarks": "Terraform resources: azurerm_key_vault.main with enable_rbac_authorization = true, network_acls (default_action = Allow, bypass = AzureServices). RBAC: azurerm_role_assignment.key_vault_secrets in rbac module with role Key Vault Secrets User."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000072",
+                "control-id": "ia-5",
+                "description": "Authenticator Management: Key Vault serves as the central secret store for the deployment, holding database credentials (username, password, host, port, dbname as JSON) and application configuration secrets. The database module stores auto-generated PostgreSQL credentials directly in Key Vault (azurerm_key_vault_secret.db_credentials). Secrets are encrypted at rest, access-controlled via RBAC, and auditable. No credentials are stored in Terraform state, tfvars, or application code. Reference: DISA SRG-APP-000175.",
+                "remarks": "Terraform resource: azurerm_key_vault_secret.db_credentials (in database module) stores jsonencoded DB credentials. Additional application secrets can be added as azurerm_key_vault_secret resources."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000073",
+                "control-id": "au-2",
+                "description": "Event Logging: Azure Key Vault provides built-in diagnostic logging for all data plane and management plane operations. All secret read, write, delete, and list operations are logged with caller identity, timestamp, operation type, and result. Key Vault diagnostic settings can be configured to stream logs to Log Analytics for centralized audit analysis and alerting. Reference: DISA SRG-APP-000089, CIS Azure 8.4.",
+                "remarks": "Azure Key Vault audit logging is enabled by default. Configure azurerm_monitor_diagnostic_setting for Key Vault to stream AuditEvent logs to the Log Analytics workspace for centralized monitoring."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

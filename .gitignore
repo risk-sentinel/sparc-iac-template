@@ -1,0 +1,64 @@
+# Local .terraform directories
+.terraform/
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Exclude all .tfvars files, which are likely to contain sensitive data, such as
+# password, private keys, and other secrets. These should not be part of version 
+# control as they are data points which are potentially sensitive and subject 
+# to change depending on the environment.
+*.tfvars
+*.tfvars.json
+
+# Allow environment-specific tfvars for CI deployment
+!AWS/ECS/envs/prod/terraform.tfvars
+!AWS/EC2/envs/prod/terraform.tfvars
+!AWS/config/envs/prod/terraform.tfvars
+
+# Ignore override files as they are usually used to override resources locally and so
+# are not checked in
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore transient lock info files created by terraform apply
+.terraform.tfstate.lock.info
+
+# Include override files you do wish to add to version control using negated pattern
+# !example_override.tf
+
+# Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
+# example: *tfplan*
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
+
+# Local development docs
+CLAUDE.md
+
+# OS / tool artifacts
+.DS_Store
+saf-cli.log
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Lambda archive_file build artifacts (regenerated on every plan/apply)
+AWS/ECS/modules/lambda/scripts/*.zip
+
+# Checkov scan outputs
+checkov-results/
+*.checkov.json
+*.checkov.sarif
+
+# AWS Artifact documents (NDA-protected)
+docs/FedRAMP_20x/aws-artifact/

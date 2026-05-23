@@ -1,0 +1,52 @@
+# threshold.yml — Security gate configuration
+# Modeled on MITRE SAF CLI threshold format for future compatibility (#17)
+
+compliance:
+  min_pass_rate: 80
+
+findings:
+  new:
+    max: 0                   # Zero tolerance for unreviewed findings
+  regressions:
+    max: 0                   # Zero tolerance for remediated→failing
+  untriaged:
+    max: 0                   # Zero tolerance for null reviewed_by
+  stale_reviews:
+    max: -1                  # Warn only (-1 = no limit)
+  total_failed:
+    max: -1                  # No limit (controlled by baseline)
+
+# Per-pattern overrides (merged on top of defaults)
+patterns:
+  ecs:
+    compliance:
+      min_pass_rate: 85
+  ec2:
+    compliance:
+      min_pass_rate: 80
+  azure-vm:
+    compliance:
+      min_pass_rate: 74
+    findings:
+      untriaged:
+        max: 10              # Azure VM less mature, allow during buildout
+
+# Security scan thresholds (informational — enforcement planned for future)
+# These document intent; scan results are currently reported but not gated.
+scans:
+  secrets:
+    max: 0                   # Zero tolerance for leaked secrets
+  sast:
+    max_high: 0              # No high-severity SAST findings
+    max_medium: 10           # Allow medium findings during buildout
+  sca:
+    max_critical: 0          # No critical dependency vulnerabilities
+    max_high: 5              # Allow some high during triage
+  container:
+    max_critical: 0          # No critical image vulnerabilities
+
+# Strict mode (merged on top when --strict flag used, e.g., deploy.yml)
+strict:
+  findings:
+    stale_reviews:
+      max: 0                 # Block deploys if reviews are overdue

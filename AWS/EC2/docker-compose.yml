@@ -1,0 +1,30 @@
+services:
+  nginx:
+    image: ${nginx_image}
+    ports:
+      - "${app_port}:8080"
+    depends_on:
+      - rails
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  rails:
+    image: ${app_image}
+    env_file:
+      - .env
+    environment:
+      - PORT=3000
+      - RAILS_SERVE_STATIC_FILES=false
+    volumes:
+      - ${ebs_mount_path}/uploads:/app/storage
+      - ${ebs_mount_path}/logs:/app/log
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
