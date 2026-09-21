@@ -1,0 +1,289 @@
+# ============================================================================
+# SPARC ECS Fargate — Production
+# ============================================================================
+
+environment  = "prod"
+aws_region   = "us-east-1"
+project_name = "sparc"
+
+# Governance tags (#445) — DevTeam/Boundary default in variables.tf
+cloud_account = "123456789012" # CloudAccount governance tag
+
+# ── Container Images ───────────────────────────────────────────────────────
+# ECR repos are auto-created. Push images after first deploy.
+# Image URLs auto-derive from ECR: {ecr_repo_url}:{tag}
+sparc_image_tag    = "v1.16.3" # SPARC Rails app (UBI9). Release notes: https://github.com/risk-sentinel/sparc/releases
+nginx_image_tag    = "v1.1.3"  # NGINX reverse proxy
+heimdall_image_tag = "v2.13.1" # Heimdall Server (mitre/heimdall2)
+
+# Heimdall image source + OAuth — moved out of variable defaults (#270) so the public template ships clean defaults.
+heimdall_image_repo = "123456789012.dkr.ecr.us-east-1.amazonaws.com/heimdall2" # Prod Heimdall ECR (external — not managed by AWS/ECS/modules/ecr)
+
+# ── ECR ────────────────────────────────────────────────────────────────────
+create_ecr = true
+
+# ── TLS Certificate (auto-provisioned via Route 53 DNS validation) ─────────
+create_certificate = true
+
+# ── Route 53 DNS ──────────────────────────────────────────────────────────
+# Primary domain (.org) — corporate proxies were blocking .info
+hosted_zone_id = "Z00000000000000000000"
+domain_name    = "sparc.example.com"
+
+# Legacy .info domain — kept as 301 redirect to .org for bookmarks
+redirect_hosted_zone_id = "Z11111111111111111111"
+redirect_domain_name    = "sparc.example.net"
+
+# ── ECS Sizing (demo — single task) ───────────────────────────────────────
+task_cpu      = 1024 # #502 0.5->1 vCPU (memory util was 90-99% of 1GB)
+task_memory   = 4096 # #502 1->4 GB — root-cause fix for Rails OOM kills
+desired_count = 1
+
+# Grace period for new tasks before ALB starts marking unhealthy. Covers
+# Rails boot + data migrations + seeding + puma start. 300s set 2026-05-27
+# after the v1.8.1 deploy stalled — v1.8.0's PromoteCdefBackMatterImports
+# migration takes >90s on prod data (~100+ CDEFs to promote), exceeding
+# the default 0s. Bump if a future release introduces a slower migration. (#322)
+health_check_grace_period_seconds = 300
+
+# ── RDS ────────────────────────────────────────────────────────────────────
+db_instance_class      = "db.t3.micro"
+db_allocated_storage   = 20
+db_skip_final_snapshot = true
+
+# ── Redis (disabled — SPARC uses Solid Queue/Cable, not Redis) ────────────
+enable_redis = false
+# redis_node_type = "cache.t3.micro"
+
+# ── Admin / Break-Glass ───────────────────────────────────────────────────
+admin_email = "admin@example.com"
+
+# ── SPARC Application ────────────────────────────────────────────────────
+
+# ── Organization ────────────────────────────────────────────────────────
+# sparc_org_address        = ""
+# sparc_org_contact_person = ""
+
+# ── Authentication ────────────────────────────────────────────────────────
+
+# ── API Auth ─────────────────────────────────────────────────────────────
+
+# ── OIDC (Okta) ──────────────────────────────────────────────────────────
+# sparc_oidc_client_secret passed via CI secret: SPARC_OIDC_CLIENT_SECRET
+sparc_oidc_redirect_uri = "https://sparc.example.com/auth/oidc/callback"
+
+# ── GitHub OAuth ────────────────────────────────────────────────────────
+# sparc_github_client_secret passed via CI secret: SPARC_GITHUB_CLIENT_SECRET
+
+# ── GitLab OAuth (disabled) ─────────────────────────────────────────────
+# sparc_gitlab_client_id = ""
+# sparc_gitlab_client_secret passed via CI secret: SPARC_GITLAB_CLIENT_SECRET
+
+# ── SMTP (WorkMail) ──────────────────────────────────────────────────────
+sparc_smtp_username = "admin@example.com"
+# sparc_smtp_password passed via CI secret: SPARC_SMTP_PASSWORD
+
+# ── Consent Banner ───────────────────────────────────────────────────────
+
+# ── Environment header bar (SPARC v1.10.0, #682) ─────────────────────────
+# Site-wide banner labeling this deployment. Colors left unset → SPARC's
+# WCAG-passing defaults apply (set sparc_header_text_color /
+# sparc_header_highlight_color to override; hex or rgb).
+
+# ── Docker Seeds (first deploy only) ────────────────────────────────────
+
+# ── Service Accounts ────────────────────────────────────────────────────
+
+# ── AWS Labs CDEF runtime ingestion (sparc PR #469 / sparc-iac #248) ─────
+# SPARC v1.6.2 pulls OSCAL Component Definitions from
+# awslabs/oscal-content-for-aws-services on a recurring schedule and stages
+# them as read-only catalog entries. Master switch on for this environment;
+# air-gapped tenants set sparc_aws_labs_cdef_enabled=false in their env.
+# SPARC_AWS_LABS_GITHUB_TOKEN not wired — 60 req/hr unauth limit is plenty
+# for the weekly refresh of a small upstream repo.
+sparc_aws_labs_cdef_refresh_interval_days = 7
+
+# ── Upload size limits + rate limiting (#280, sparc v1.7.1) ──────────────
+# Doc-recommended prod values from sparc/docs/ENVIRONMENT_VARIABLES.md.
+# Reverse-proxy body cap (AWS/ECS/nginx/nginx.conf client_max_body_size)
+# bumped to 110m in lockstep to keep ~10 MB headroom over sparc_max_upload_mb.
+# sparc_rate_limiting_enabled is the master kill switch — flip to "false"
+# only for emergency triage (e.g., a real attack false-positive that
+# legitimately needs throttles off while we tune).
+
+# ── Processing-stuck bailout (#289, sparc v1.7.2) ────────────────────────
+# Minutes after which a document stuck in pending/processing stops
+# meta-refreshing on its show page (renders a "Processing Stuck" message
+# instead of looping every 3s). Sparc code defaults to 5; explicit here
+# so ops can bump (e.g., "15" for environments with slower workers)
+# without an app rebuild.
+
+# Document review/approval workflow (sparc v1.9.0, #640). "true" requires
+# review/approval before a document is published. Deliberate behavior change —
+# enabled with the v1.9.0 deploy.
+
+# ── Deferred data migrations (sparc v1.8.3 / sparc-iac #327) ──────────────
+# Solid Queue post-boot data-migration runner. Default "false" enqueues
+# pending DataMigrationRun rows as v1.8.3 intends. Flip to "true" only to
+# quarantine a known-bad deferred migration without a code change.
+
+# ── Monitoring ────────────────────────────────────────────────────────────
+alarm_emails = ["admin@example.com"]
+
+# ── ECS Exec (disabled for 3PAO — AC-17, CM-7) ──────────────────────────
+enable_ecs_exec = false
+
+# ── Scaling (off for demo) ───────────────────────────────────────────────
+enable_autoscaling = false
+enable_rds_proxy   = false
+
+# ── WAF edge protection (#578, SC-7/SI-4) ────────────────────────────────
+# BLOCK mode from the start (operator decision): CommonRuleSet + SQLi enforce
+# immediately alongside the always-block KnownBadInputs / IP-reputation / rate
+# rules. Trades the COUNT-mode false-positive review window for immediate
+# protection. Reversible fast if legit traffic is blocked: set
+# waf_block_mode=false and redeploy. Watch WAF sampled-request logs + the
+# blocked-request metric closely after deploy.
+enable_waf     = true
+waf_block_mode = true
+
+# ── ECR ENHANCED registry scanning (RA-5) ────────────────────────────────
+# BASIC scan-on-push had never produced a scan on any of the six repos: our
+# images are OCI image indexes and BASIC does not scan manifest lists (#635).
+# ENHANCED is Inspector-backed — scans the child manifests and rescans as new
+# CVEs are published. Account-level singleton; bills per scan and per rescan.
+enable_enhanced_scanning = true
+
+# ── KMS CMK encryption (SC-8, SC-12, SC-28) ──────────────────────────────
+# $3/month for 3 keys (data, secrets, logs). Required for SNS alarm
+# delivery — alias/aws/sns breaks CloudWatch → SNS publishing.
+enable_cmk = true
+
+# ── sparc-validate scanner role grants (#226 / #234 / #236) ─────────────
+# Opt-in inline policies on the sparc-validate-scanner role for cross-repo
+# evidence flows. Each is independent; flip on per environment as the
+# consumer side (sparc-validate) ships its companion work.
+
+# #236 — ECR pull permissions for cinc-auditor `docker://` target audits.
+# Pull statement scoped to example-* ECR repos. Enables sparc-validate
+# cis-docker / cis-nginx image-level audit profiles to inspect the
+# nginx.conf, USER directive, file perms, etc. baked into the image.
+enable_ecr_pull_for_sparc_validate = true
+
+# #278 — read-only attestation-evidence access on the security-artifacts
+# bucket (attestations/* + leveraged-systems/* prefixes). Lets sparc-validate's
+# document_attestation resource (sparc-validate#115) pull CMSgov-pattern
+# attestation JSON + AWS Artifact manifests. Read-only, prefix-scoped; KMS
+# decrypt is via-service on the bucket's aws/s3 key (no IAM kms grant).
+enable_artifacts_read_for_sparc_validate = true
+
+# #226 — AWS Config read for the AWS Config evidence capture. Lets the
+# sparc-validate-scanner role pull the NIST 800-53 r5 conformance-pack
+# evaluations (AWS/config/) into HDF via `hdf fetch aws-config` /
+# `saf convert aws_config2hdf`. Consumer side: sparc-validate#194 calls the
+# risk-sentinel/aws-config reusable workflow WITH this scanner role — because
+# it's a reusable workflow the OIDC token is minted as sparc-validate, so the
+# existing scanner-role trust matches (no new role). Read-only Config
+# (Describe*/Get* + conformance-pack reads) + sts:GetCallerIdentity.
+enable_aws_config_evidence_for_sparc_validate = true
+
+# #351 — cis-rhel-9 exec-validation test instance (RHEL-9, SSM-only, scale-to-0).
+# Provisions the ASG at desired=0 so it can be spun up on demand
+# (.github/workflows/cis-rhel9-runner.yml) and auto-offs at 9pm Central. Test-only.
+enable_cis_rhel9_runner = true
+# RHEL-9.6 arm64 base pin (Red Hat official Hourly2 GP3). most_recent oddly resolved
+# 9.4; pin for determinism. NOTE (#368): this is now the PRE-GOLDEN fallback — once
+# the golden AMI is built, the launch template auto-adopts the newest
+# "<asg>-golden-*" image (golden > this pin > base lookup). Verified 2026-06-05.
+cis_rhel9_runner_ami_id = "ami-0a17a0766e63103d0"
+# #368 Phase 1b — self-service packer build identities (OIDC build role + SSM
+# build-instance profile). No bootstrap grant. Build via the
+# cis-rhel9-golden-ami workflow; the honeypot then auto-adopts the result.
+enable_cis_rhel9_golden_ami = true
+
+# #381 — container-build-sign nginx publisher. Dedicated OIDC role assumable
+# only by risk-sentinel/container-build-sign on nginx-v* tags; push-only on the
+# existing example-nginx ECR repo. After apply, set the role ARN as the
+# CONTAINER_BUILD_SIGN_ARN secret on container-build-sign (with ECR_REGISTRY +
+# AWS_REGION secrets) to unblock the nginx-v1.1.0 release.
+enable_container_build_sign_publisher = true
+
+# #399 — container-build-sign SCA-emit role. Reads published images' cosign SBOM
+# attestations + writes the org SCA rollup to s3://…/sca/container-build-sign/*.
+# After apply, set the role ARN as the SCA_EMIT_ROLE_ARN secret on
+# container-build-sign to flip its sca-emit-images.yml from emit=false to live.
+enable_container_build_sign_sca_emit = true
+enable_sparc_validate_sca_emit       = true
+enable_sparc_app_ci                  = true # #482 sparc app-CI least-priv role
+enable_sparc_app_sca_emit            = true # #521 sparc app SCA/evidence emit split out of app-ci
+enable_sparc_validate_discovery      = true # #520 sparc-validate Mode-B discovery (inventory-only)
+enable_sparc_iac_sca_emit            = true # #432 sparc-iac sonarqube-HDF emit role
+enable_sparc_horizon_emit            = true # #715 sparc-horizon evidence emit (risk-sentinel boundary ONLY)
+enable_profile_emit                  = true # #651 one emit role per profile-baseline repo (26), write-own-prefix only
+enable_evidence_reader               = true # #651 evidence_store readers for sparc-validate + dev-sec-ops-baseline
+
+# --- SES email handling for example.com (#528) ---
+enable_ses_email                          = true
+ses_dmarc_rua                             = "maintainer@example.com" # DMARC aggregate reports (monitor mode; p=none)
+enable_container_build_sign_sca_aggregate = true
+
+# #316 Phase 1 (step 2) — stand up the ci-trust → ci-execute role-assumption
+# chain in AWS/IAM/. ci-trust is OIDC-assumed and can only assume ci-execute;
+# ci-execute holds the existing deploy policies under a (broad-union seed)
+# permissions boundary. Additive: the old sparc-iac-github-actions role and the
+# live workflows are untouched until Phase 2 cuts them over. APPLY ORDER: the
+# deploy role's iam:*PermissionsBoundary grant in bootstrap/oidc/policy.tf must
+# be applied before the first CI-driven ECS apply that creates ci-execute.
+enable_ci_chain      = true
+enable_ses_forwarder = true # #528 Phase 2 — inbound receive + forward
+ses_recipients       = ["sparc.admin@example.com", "sparc.support@example.com"]
+ses_from_address     = "no-reply@example.com"
+ses_destinations     = ["maintainer@example.com", "clem_field@att.net"]
+enable_ses_smtp      = true # #528 Phase 3 — SMTP send-as creds (read via terraform output)
+
+# Hibernate/wake desired-state watchdog (#573 Phase 1) — runs alongside the
+# existing GitHub crons. Deploy creates the Lambda + EventBridge Scheduler +
+# secret shell; POPULATE the example/hibernate-watchdog-gh-app secret (see
+# docs/dev/hibernate_watchdog.md) before the next ET transition (06:00/21:00),
+# else a drift tick can't dispatch. The Lambda only reads the secret on drift.
+enable_hibernate_watchdog = true
+
+# SPARC PIV/CAC over ALB passthrough mTLS (#559) — single listener; OIDC users
+# unaffected. Issuer filter (explicit trust) matches the org PIV CA that signed
+# the YubiKey slot-9A cert; without it any forwarded cert would be accepted.
+enable_piv_mtls            = true
+sparc_piv_identity_source  = "email"
+sparc_piv_accepted_issuers = "Risk-Sentinel SPARC Test PIV CA"
+
+# Phishing-resistant enforcement (#805): regular users must use OIDC, PIV, or
+# FIDO2/WebAuthn. Break-glass ADMIN local login is app-exempt, so this locks out
+# no legitimate user (no non-admin uses local). Allowlist = accept ANY listed
+# method (not require all).
+sparc_require_auth_methods = "oidc,piv,webauthn,github"
+
+# ── AWS Config (#597) ─────────────────────────────────────────────────────
+# Consolidated from the standalone AWS/config root and its separate remote
+# state. The recorder, recorder status, delivery channel and conformance pack
+# are ACCOUNT-LEVEL SINGLETONS, so they must be IMPORTED, never applied into
+# existence — flipping enable_aws_config to true before
+# scripts/migrate_aws_config_state.sh has run will try to CREATE resources that
+# already exist and fail the apply.
+#
+# These carry the values the standalone root was applied with. They had to be
+# present and correct BEFORE the import ran, because the import plans against
+# this file and a value that differs from what is deployed shows up as a diff on
+# already-imported resources.
+#
+# enable_aws_config is true because the migration is COMPLETE: the 16 resource
+# instances now exist only in this state. Setting it back to false would make
+# every count evaluate to 0, which Terraform reads as "in state, not in code" —
+# it would DESTROY the account's configuration recorder and its history, not
+# merely stop managing it.
+enable_aws_config       = true
+enable_conformance_pack = true
+audit_logs_bucket_name  = "example-audit-logs"
+
+# NOTE: config_snapshot_frequency is intentionally NOT set. The standalone root
+# accepted daily|weekly|biweekly as documentation of intent but always delivered
+# at the AWS 24-hour floor; the module keeps that behaviour in locals.tf. Setting
+# it here would imply a knob that does not exist.

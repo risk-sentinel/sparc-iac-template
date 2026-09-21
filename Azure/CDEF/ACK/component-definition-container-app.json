@@ -1,0 +1,83 @@
+{
+  "component-definition": {
+    "uuid": "ac510000-0000-4000-a000-000000000011",
+    "metadata": {
+      "title": "SPARC Azure Container App Component Definition",
+      "last-modified": "2026-07-26T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "ac510000-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "ac510000-2222-4000-a000-000000000011",
+        "type": "service",
+        "title": "Azure Container App running SPARC (NGINX sidecar)",
+        "description": "Serverless container hosting for SPARC on Azure Container Apps. Two containers in one app (sidecar pattern like the ECS task definition): NGINX fronts external HTTPS ingress and proxies to the SPARC container over localhost. KEDA scales on HTTP concurrency. Images are pulled from ACR and secrets read from Key Vault, both via the app's system-assigned managed identity. Deployed via Terraform (Azure/ACK/modules/container_app/). <!-- UPDATE: insert the Container App resource ID, ingress FQDN, and managed identity principal ID for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["ac510000-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "ac510000-3333-4000-a000-000000000011",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for Azure Container Apps",
+            "implemented-requirements": [
+              {
+                "uuid": "ac510000-4444-4000-a000-000000000008",
+                "control-id": "sc-8",
+                "description": "Transmission Confidentiality and Integrity: External ingress is HTTPS via the environment's managed Envoy; insecure connections are disabled (allow_insecure_connections=false). Reference: DISA SRG-APP-000439.",
+                "remarks": "Terraform: azurerm_container_app.main ingress { external_enabled=true, allow_insecure_connections=false, transport=\"auto\" }."
+              },
+              {
+                "uuid": "ac510000-4444-4000-a000-000000000028",
+                "control-id": "sc-28",
+                "description": "Protection of Information at Rest: Secrets (DB password, Redis URL, Blob key) are stored in Key Vault and referenced as Container App secrets resolved via the managed identity; no secret literals live in app config or Terraform state. Reference: DISA SRG-APP-000429.",
+                "remarks": "Terraform: azurerm_container_app secret { key_vault_secret_id, identity=\"System\" } + env { secret_name }; KV secrets from the database module and root key_vault_secret resources."
+              },
+              {
+                "uuid": "ac510000-4444-4000-a000-000000000002",
+                "control-id": "ia-2",
+                "description": "Identification and Authentication: The app uses a system-assigned managed identity to pull images from ACR (AcrPull) and read Key Vault secrets (Key Vault Secrets User), with no stored registry or vault credentials. End-user authentication is performed by SPARC (OIDC). Reference: DISA SRG-APP-000148.",
+                "remarks": "Terraform: identity { type=\"SystemAssigned\" }; azurerm_role_assignment for AcrPull and Key Vault Secrets User on the principal."
+              },
+              {
+                "uuid": "ac510000-4444-4000-a000-000000000007",
+                "control-id": "sc-7",
+                "description": "Boundary Protection: The app runs in a VNet-integrated Container App Environment (infrastructure subnet delegated to Microsoft.App/environments); the data tier (PostgreSQL, Redis, Blob, Key Vault) is private via VNet integration + private endpoints. The container app ingress is the public inbound tier by design. Reference: DISA SRG-NET-000364.",
+                "remarks": "Terraform: azurerm_container_app_environment.infrastructure_subnet_id; Azure/ACK/modules/private_endpoints; PostgreSQL delegated subnet."
+              },
+              {
+                "uuid": "ac510000-4444-4000-a000-000000000006",
+                "control-id": "sc-5",
+                "description": "Denial-of-Service Protection / elasticity: KEDA HTTP scaling adjusts replica count between configured min and max based on concurrent requests, absorbing load spikes. Reference: DISA SRG-APP.",
+                "remarks": "Terraform: template { min_replicas, max_replicas, http_scale_rule { concurrent_requests } }."
+              },
+              {
+                "uuid": "ac510000-4444-4000-a000-000000000003",
+                "control-id": "au-2",
+                "description": "Event Logging: Container App console and system logs plus metrics stream to the environment's Log Analytics workspace; restart-count and data-tier metric alerts notify the action group. Reference: DISA SRG-APP-000089.",
+                "remarks": "Terraform: azurerm_container_app_environment.log_analytics_workspace_id; azurerm_monitor_metric_alert (RestartCount, DB, Redis) in the monitoring module."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

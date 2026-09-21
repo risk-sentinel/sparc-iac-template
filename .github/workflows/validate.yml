@@ -1,0 +1,179 @@
+name: Validate
+
+on:
+  push:
+
+jobs:
+  # Detect whether this push changed anything Terraform-relevant. Docs / OSCAL /
+  # planning-only pushes skip the heavy Terraform matrix (#446). Diffed against
+  # the merge-base with main; FAIL-SAFE (run everything) if a base can't be
+  # determined (e.g. push to main, first push, force-push).
+  detect-changes:
+    name: Detect changed surfaces
+    runs-on: ubuntu-latest
+    outputs:
+      terraform: ${{ steps.detect.outputs.terraform }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --quiet origin main || true
+          BASE="$(git merge-base FETCH_HEAD HEAD 2>/dev/null || true)"
+          if [ -z "$BASE" ] || [ "$BASE" = "$(git rev-parse HEAD)" ]; then
+            echo "No merge-base with main → fail-safe: run all Terraform legs."
+            echo "terraform=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          CHANGED="$(git diff --name-only "$BASE" HEAD)"
+          echo "Changed vs main ($BASE):"; printf '%s\n' "$CHANGED"
+          # Terraform-relevant = any .tf/.tfvars/.hcl, OR a workflow change (which
+          # could alter how the Terraform legs run, so re-validate them).
+          if printf '%s\n' "$CHANGED" | grep -qE '(\.tf|\.tfvars|\.hcl)$|^AWS/ECS/envs/.*\.json$|^\.github/workflows/'; then
+            echo "Terraform-relevant change → running the Terraform legs."
+            echo "terraform=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Docs/OSCAL/planning-only → skipping the Terraform legs (companion reports the required checks)."
+            echo "terraform=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  terraform:
+    name: "Terraform (${{ matrix.pattern }})"
+    needs: detect-changes
+    # Skip on dependabot (no secrets) AND on docs/OSCAL-only pushes (#446). The
+    # "Terraform (*)" checks are REQUIRED on main, so we skip via a JOB-level `if`
+    # (not a branch/path filter) and the companion jobs below report the same
+    # check names as satisfied — a workflow/path filter would leave them pending
+    # forever and block the PR.
+    if: github.actor != 'dependabot[bot]' && needs.detect-changes.outputs.terraform == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      # Cache the providers across runs (#446) — keyed on the lockfiles below.
+      TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
+    container:
+      image: risksentinel/sparc-ci-runner@sha256:d6bba7173b8c66207f55379b2e409af43ad68e83d5e5742a88c79f4281757fa9
+      credentials:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      # Independent per-pattern dirs — one leg's failure/flake must not cancel
+      # the others' results (#570). Mirrors this file's other matrix (Checkov
+      # Config) which already sets this. Not continue-on-error: a real failure
+      # still fails the run.
+      fail-fast: false
+      matrix:
+        include:
+          - pattern: ecs
+            dir: AWS/ECS
+          - pattern: ec2
+            dir: AWS/EC2
+          - pattern: azure-vm
+            dir: Azure/VM
+          - pattern: bootstrap
+            dir: bootstrap
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Cache Terraform providers
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/.terraform.d/plugin-cache
+          key: tf-plugins-${{ runner.os }}-${{ hashFiles('**/.terraform.lock.hcl') }}
+          restore-keys: |
+            tf-plugins-${{ runner.os }}-
+
+      - name: Prepare plugin cache dir
+        run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
+
+      - name: Terraform Init
+        working-directory: ${{ matrix.dir }}
+        run: terraform init -backend=false
+
+      - name: Terraform Format Check
+        working-directory: ${{ matrix.dir }}
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        working-directory: ${{ matrix.dir }}
+        run: terraform validate
+
+  # Companion (merged, #468) — emits the required "Terraform (*)" check names as
+  # trivial successes whenever the REAL `terraform` job is skipped: either a
+  # dependabot bump (no DOCKERHUB secret → the sparc-ci-runner container can't
+  # run) OR a docs/OSCAL-only change (nothing Terraform-relevant). The condition
+  # is the exact complement of the real job's, so exactly one of {real, companion}
+  # runs per pattern → the required checks are always satisfied. Merged from the
+  # two prior companions → one skipped literal entry on skip-path PRs instead of
+  # two. Real validation runs on the branch after a human-reviewed merge. (#424, #446)
+  terraform-skip-companion:
+    name: "Terraform (${{ matrix.pattern }})"
+    needs: detect-changes
+    if: github.actor == 'dependabot[bot]' || needs.detect-changes.outputs.terraform != 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pattern: [ecs, ec2, azure-vm, config, bootstrap]
+    steps:
+      - name: Skip terraform validate (dependabot bump or docs/OSCAL-only change)
+        run: echo "terraform validate (${{ matrix.pattern }}) skipped — dependabot bump or no Terraform-relevant files changed (#446); real validation runs on the branch after merge."
+
+  # sample/ is the one bundle that leaves the boundary, and #649 item 4 is about
+  # the fact that keeping it clean depended on somebody remembering to run the
+  # sanitizer. This is the gate that removes the remembering.
+  #
+  # Deliberately NOT behind detect-changes. Two reasons:
+  #   1. A sample/-only push is exactly the case that must not be skipped, and
+  #      it is precisely what the #446 docs filter classifies as skippable.
+  #   2. A new rule in scrub-map.yml can invalidate an already-committed tree
+  #      without anyone touching sample/ at all. That should fail here and force
+  #      a rebuild (scripts/build_sample.sh), not sit undetected until the next
+  #      snapshot.
+  #
+  # verify.py is scoped to sample/ on purpose: the rest of the repo legitimately
+  # carries real identifiers, and scrubbing them is not the goal.
+  sample-sanitization:
+    name: Sample sanitization
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      # Pinned, not floating. This job is a gate on what leaves the boundary,
+      # so the toolchain that decides "clean" has to be the same one next week
+      # — an unpinned resolve makes the verdict depend on release timing.
+      # Matches the floor in oscal/scripts/requirements.txt (pyyaml>=6.0.3).
+      - name: Install PyYAML
+        run: python3 -m pip install --quiet --no-cache-dir 'pyyaml==6.0.3'
+
+      - name: Verify sample/ carries no account-identifying data
+        run: |
+          set -euo pipefail
+          if [ ! -d sample ]; then
+            echo "no sample/ directory — nothing to verify"
+            exit 0
+          fi
+          python3 scripts/public_export/verify.py \
+            --root sample \
+            --map scripts/public_export/scrub-map.yml
+
+      - name: Explain a failure
+        if: failure()
+        run: |
+          echo "::error::sample/ contains data that scrub-map.yml says must not ship,"
+          echo "::error::or an identifier shape with no rule covering it (#649)."
+          echo "::error::Rebuild with: scripts/build_sample.sh <date>/<short-sha>"
+          echo "::error::If the shape is new, add a pattern_replacements rule first."
+
+  # OSCAL validation lives in .github/workflows/compliance.yml (validate-and-scan
+  # job). It runs the pinned oscal-cli against every committed SSP/SAR/POAM/SAP/
+  # CDEF/catalog and is the authoritative gate. Keeping this workflow focused on
+  # Terraform avoids two divergent validation code paths.

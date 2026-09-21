@@ -1,0 +1,919 @@
+{
+  "plan-of-action-and-milestones": {
+    "uuid": "6a68b179-d868-4090-b1ca-54f7d22e03af",
+    "metadata": {
+      "title": "SPARC EC2 Plan of Action and Milestones",
+      "last-modified": "2026-04-16T19:31:17Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "revisions": [
+        {
+          "title": "SPARC EC2 Plan of Action and Milestones (superseded)",
+          "version": "1.0.0",
+          "oscal-version": "1.1.2",
+          "props": [
+            {
+              "name": "previous-uuid",
+              "ns": "https://risk-sentinel.io/ns/oscal",
+              "value": "f9c59c78-448a-51c9-b959-daf2b9658f33"
+            }
+          ],
+          "last-modified": "2026-03-21T20:36:04Z"
+        }
+      ]
+    },
+    "import-ssp": {
+      "href": "#system-security-plan"
+    },
+    "observations": [
+      {
+        "uuid": "1c5497bf-95a0-53ea-99aa-ab818272b902",
+        "description": "Access logs block added but disabled, requires user S3 bucket",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "e929ee74-c2cd-55ff-a2c1-02d063e41e6b",
+        "description": "Public subnet IPs required for ALB",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "1a56fbdd-2b01-5e11-a490-c4fa06c6449d",
+        "description": "ALB port 80 ingress for HTTP->HTTPS redirect (301)",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "6060fe71-0450-5192-a396-c3081bd8225b",
+        "description": "Broad egress required for NAT gateway, ECR pulls, API access",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "ce2ed541-37c9-541d-ac73-a533d84c3e83",
+        "description": "Broad egress required for NAT gateway, ECR pulls, API access",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "d92756c1-29be-5403-b952-34817eac40b8",
+        "description": "Broad egress required for NAT gateway, ECR pulls, API access",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "4e5e2f6b-1457-58f5-ae4a-3fa5e8d437dd",
+        "description": "Broad egress required for NAT gateway, ECR pulls, API access",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "27d4697b-79ae-556a-a101-31a1623a0f6c",
+        "description": "Public subnet IPs required for ALB",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "5a88fe40-b152-5628-9631-85e69f50e43b",
+        "description": "Controlled by db_multi_az variable, user-configurable",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "621e884b-002e-5022-b29b-ad7e48533e6e",
+        "description": "AWS-managed KMS sufficient; CMK available via enable_cmk=true",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "31ee1b19-5423-5c20-b486-db158e7c74f7",
+        "description": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "31c8ceec-3bd7-5b4c-86b2-3e467ef6f554",
+        "description": "Cross-module: SGs attached via module refs, checkov cannot follow",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "d4fda846-c305-5977-8724-9f5140caf7b7",
+        "description": "Cross-module: SGs attached via module refs, checkov cannot follow",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "168a18db-d4d9-5ae1-8e60-c45fb326a859",
+        "description": "Cross-module: SGs attached via module refs, checkov cannot follow",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "8ce67cfa-58f0-5f4b-b227-1e2adbc3cdd9",
+        "description": "Cross-module: SGs attached via module refs, checkov cannot follow",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "2b7eed25-1b29-5386-b76a-4c640d01a110",
+        "description": "Default SG unused, all resources use explicit SGs",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "16a6b66b-0207-5030-834c-5b00e4f1fe59",
+        "description": "S3 event notifications not needed for ActiveStorage",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "7769c761-7907-562d-9c73-b9d197dbc518",
+        "description": "S3 lifecycle policy is user-configurable",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "218b2060-e9b5-54d1-953e-0ed3cc7980e4",
+        "description": "S3 access logging available, user-configurable",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "d11bb35e-d398-5101-8fbd-b52d5dea292f",
+        "description": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "5074e808-ec26-59fb-b3f4-904544b8073e",
+        "description": "Cross-module: VPC flow logs in cloudwatch module, checkov cannot detect",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "32c21703-e98b-5e68-b997-184ad342c7cb",
+        "description": "WAF is separate concern, documented as prod consideration",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "bc26ba86-8418-5c10-a92d-150b2eaf9c0f",
+        "description": "Secret rotation requires app support, user-configurable",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "32f5dcc1-bced-5203-b392-074214d60875",
+        "description": "Secret rotation requires app support, user-configurable",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "e678c82c-1113-5904-838e-268169861c46",
+        "description": "S3 cross-region replication adds cost, enable for DR",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      },
+      {
+        "uuid": "36df2b5f-5934-58b0-bbde-c0305fd7861b",
+        "description": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "methods": [
+          "TEST"
+        ],
+        "types": [
+          "finding"
+        ],
+        "collected": "2026-04-16T09:03:30Z"
+      }
+    ],
+    "risks": [
+      {
+        "uuid": "d4ca20b8-4ee1-5b55-b127-3cdc93ca07fc",
+        "title": "CKV_AWS_91: module.alb.aws_lb.main",
+        "description": "Checkov finding CKV_AWS_91 on resource module.alb.aws_lb.main. Mapped to NIST 800-53 control sc-8.",
+        "statement": "Access logs block added but disabled, requires user S3 bucket",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "91ebefc9-101b-5e3c-9a6e-ea7baa48be03",
+        "title": "CKV_AWS_130: module.networking.aws_subnet.public[0]",
+        "description": "Checkov finding CKV_AWS_130 on resource module.networking.aws_subnet.public[0]. Mapped to NIST 800-53 control ac-4.",
+        "statement": "Public subnet IPs required for ALB",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "68f0e5e4-4b49-5db5-bc54-4837d8c6ad6f",
+        "title": "CKV_AWS_260: module.networking.aws_security_group.alb",
+        "description": "Checkov finding CKV_AWS_260 on resource module.networking.aws_security_group.alb. Mapped to NIST 800-53 control ac-3.",
+        "statement": "ALB port 80 ingress for HTTP->HTTPS redirect (301)",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "68d05349-63bc-5cbe-a0c1-959ba87f5bbf",
+        "title": "CKV_AWS_382: module.networking.aws_security_group.alb",
+        "description": "Checkov finding CKV_AWS_382 on resource module.networking.aws_security_group.alb. Mapped to NIST 800-53 control ac-4.",
+        "statement": "Broad egress required for NAT gateway, ECR pulls, API access",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "7eb60135-9ee3-515a-b647-297138cbcb3e",
+        "title": "CKV_AWS_382: module.networking.aws_security_group.ec2",
+        "description": "Checkov finding CKV_AWS_382 on resource module.networking.aws_security_group.ec2. Mapped to NIST 800-53 control ac-4.",
+        "statement": "Broad egress required for NAT gateway, ECR pulls, API access",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "4ef9699d-fc25-5545-81ce-a8ac1b8b50b9",
+        "title": "CKV_AWS_382: module.networking.aws_security_group.rds",
+        "description": "Checkov finding CKV_AWS_382 on resource module.networking.aws_security_group.rds. Mapped to NIST 800-53 control ac-4.",
+        "statement": "Broad egress required for NAT gateway, ECR pulls, API access",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "f60aee5e-4fb4-5b73-bbf9-fc79b3315770",
+        "title": "CKV_AWS_382: module.networking.aws_security_group.redis",
+        "description": "Checkov finding CKV_AWS_382 on resource module.networking.aws_security_group.redis. Mapped to NIST 800-53 control ac-4.",
+        "statement": "Broad egress required for NAT gateway, ECR pulls, API access",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "a381bc51-1db4-5698-ab72-e5c4f276b7af",
+        "title": "CKV_AWS_130: module.networking.aws_subnet.public[1]",
+        "description": "Checkov finding CKV_AWS_130 on resource module.networking.aws_subnet.public[1]. Mapped to NIST 800-53 control ac-4.",
+        "statement": "Public subnet IPs required for ALB",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "7a987f38-13cb-5256-9306-3a1878ec4621",
+        "title": "CKV_AWS_157: module.rds.aws_db_instance.main",
+        "description": "Checkov finding CKV_AWS_157 on resource module.rds.aws_db_instance.main. Mapped to NIST 800-53 control cp-9.",
+        "statement": "Controlled by db_multi_az variable, user-configurable",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "7a115cb6-8bcf-58ba-a3df-931d5a3e04a7",
+        "title": "CKV_AWS_149: module.rds.aws_secretsmanager_secret.db",
+        "description": "Checkov finding CKV_AWS_149 on resource module.rds.aws_secretsmanager_secret.db. Mapped to NIST 800-53 control sc-28.",
+        "statement": "AWS-managed KMS sufficient; CMK available via enable_cmk=true",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "24727b81-f970-5eea-95eb-9cdb729a01ba",
+        "title": "CKV2_AWS_60: module.rds.aws_db_instance.main",
+        "description": "Checkov finding CKV2_AWS_60 on resource module.rds.aws_db_instance.main. Mapped to NIST 800-53 control cp-9.",
+        "statement": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "2d18d775-57d1-5bf6-bb11-b950fda045f7",
+        "title": "CKV2_AWS_5: module.networking.aws_security_group.alb",
+        "description": "Checkov finding CKV2_AWS_5 on resource module.networking.aws_security_group.alb. Mapped to NIST 800-53 control sc-7.",
+        "statement": "Cross-module: SGs attached via module refs, checkov cannot follow",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "359c166a-9195-50dd-a69b-65741c41ac13",
+        "title": "CKV2_AWS_5: module.networking.aws_security_group.ec2",
+        "description": "Checkov finding CKV2_AWS_5 on resource module.networking.aws_security_group.ec2. Mapped to NIST 800-53 control sc-7.",
+        "statement": "Cross-module: SGs attached via module refs, checkov cannot follow",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "74902f7e-6262-5fa8-932f-351bebbf64e4",
+        "title": "CKV2_AWS_5: module.networking.aws_security_group.rds",
+        "description": "Checkov finding CKV2_AWS_5 on resource module.networking.aws_security_group.rds. Mapped to NIST 800-53 control sc-7.",
+        "statement": "Cross-module: SGs attached via module refs, checkov cannot follow",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "4d30ee75-d43d-5248-ad0f-18bcfba2f35b",
+        "title": "CKV2_AWS_5: module.networking.aws_security_group.redis",
+        "description": "Checkov finding CKV2_AWS_5 on resource module.networking.aws_security_group.redis. Mapped to NIST 800-53 control sc-7.",
+        "statement": "Cross-module: SGs attached via module refs, checkov cannot follow",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "abdde808-9d3a-5537-8547-04297b3a659b",
+        "title": "CKV2_AWS_12: module.networking.aws_vpc.main",
+        "description": "Checkov finding CKV2_AWS_12 on resource module.networking.aws_vpc.main. Mapped to NIST 800-53 control sc-7.",
+        "statement": "Default SG unused, all resources use explicit SGs",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "78521628-891b-5d2f-b820-4847f0212d17",
+        "title": "CKV2_AWS_62: module.s3.aws_s3_bucket.uploads",
+        "description": "Checkov finding CKV2_AWS_62 on resource module.s3.aws_s3_bucket.uploads. Mapped to NIST 800-53 control si-4.",
+        "statement": "S3 event notifications not needed for ActiveStorage",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "3c8d7a6e-cd07-55b8-923c-b423fddded2c",
+        "title": "CKV2_AWS_61: module.s3.aws_s3_bucket.uploads",
+        "description": "Checkov finding CKV2_AWS_61 on resource module.s3.aws_s3_bucket.uploads. Mapped to NIST 800-53 control cm-2.",
+        "statement": "S3 lifecycle policy is user-configurable",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "8904d11e-8b92-5693-a382-f3debdf9c0e4",
+        "title": "CKV_AWS_18: module.s3.aws_s3_bucket.uploads",
+        "description": "Checkov finding CKV_AWS_18 on resource module.s3.aws_s3_bucket.uploads. Mapped to NIST 800-53 control au-2.",
+        "statement": "S3 access logging available, user-configurable",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "aadafb96-478e-507a-a82e-f1ab62dd8ee5",
+        "title": "CKV2_AWS_30: module.rds.aws_db_instance.main",
+        "description": "Checkov finding CKV2_AWS_30 on resource module.rds.aws_db_instance.main. Mapped to NIST 800-53 control au-2.",
+        "statement": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "a831166d-c166-5f3c-8246-a60df3871101",
+        "title": "CKV2_AWS_11: module.networking.aws_vpc.main",
+        "description": "Checkov finding CKV2_AWS_11 on resource module.networking.aws_vpc.main. Mapped to NIST 800-53 control sc-7.",
+        "statement": "Cross-module: VPC flow logs in cloudwatch module, checkov cannot detect",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "7f4f95ca-2b0e-504a-ba27-9237032ea7ea",
+        "title": "CKV2_AWS_28: module.alb.aws_lb.main",
+        "description": "Checkov finding CKV2_AWS_28 on resource module.alb.aws_lb.main. Mapped to NIST 800-53 control sc-7.",
+        "statement": "WAF is separate concern, documented as prod consideration",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "ec3b06e3-af81-5576-a4b7-f3f52a663625",
+        "title": "CKV2_AWS_57: module.rds.aws_secretsmanager_secret.db",
+        "description": "Checkov finding CKV2_AWS_57 on resource module.rds.aws_secretsmanager_secret.db. Mapped to NIST 800-53 control ia-5.",
+        "statement": "Secret rotation requires app support, user-configurable",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "bfae61d9-45c0-5d67-a5cb-74892069023d",
+        "title": "CKV2_AWS_57: module.secrets.aws_secretsmanager_secret.app",
+        "description": "Checkov finding CKV2_AWS_57 on resource module.secrets.aws_secretsmanager_secret.app. Mapped to NIST 800-53 control ia-5.",
+        "statement": "Secret rotation requires app support, user-configurable",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "7dcb9075-d87f-58ab-8ca6-9950f70cb45f",
+        "title": "CKV_AWS_144: module.s3.aws_s3_bucket.uploads",
+        "description": "Checkov finding CKV_AWS_144 on resource module.s3.aws_s3_bucket.uploads. Mapped to NIST 800-53 control cp-9.",
+        "statement": "S3 cross-region replication adds cost, enable for DR",
+        "status": "deviation-approved"
+      },
+      {
+        "uuid": "b4a3cb6a-c9be-5902-bfdc-96327e835149",
+        "title": "CKV2_AWS_50: module.elasticache.aws_elasticache_replication_group.main",
+        "description": "Checkov finding CKV2_AWS_50 on resource module.elasticache.aws_elasticache_replication_group.main. Mapped to NIST 800-53 control cp-9.",
+        "statement": "Under review \u2014 see docs/checkov/configuration_checks.md",
+        "status": "deviation-approved"
+      }
+    ],
+    "poam-items": [
+      {
+        "uuid": "be7acae4-c9e1-55ce-8dd0-a448d4803184",
+        "title": "CKV_AWS_91: module.alb.aws_lb.main",
+        "description": "Checkov finding CKV_AWS_91 on resource module.alb.aws_lb.main. Mapped to NIST 800-53 control sc-8.",
+        "related-observations": [
+          {
+            "observation-uuid": "1c5497bf-95a0-53ea-99aa-ab818272b902"
+          }
+        ],
+        "remarks": "Control: sc-8. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "d4ca20b8-4ee1-5b55-b127-3cdc93ca07fc"
+          }
+        ]
+      },
+      {
+        "uuid": "b96cf6e1-c005-5c9f-ad7f-2d8330b4cd00",
+        "title": "CKV_AWS_130: module.networking.aws_subnet.public[0]",
+        "description": "Checkov finding CKV_AWS_130 on resource module.networking.aws_subnet.public[0]. Mapped to NIST 800-53 control ac-4.",
+        "related-observations": [
+          {
+            "observation-uuid": "e929ee74-c2cd-55ff-a2c1-02d063e41e6b"
+          }
+        ],
+        "remarks": "Control: ac-4. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "91ebefc9-101b-5e3c-9a6e-ea7baa48be03"
+          }
+        ]
+      },
+      {
+        "uuid": "652b9a6c-caba-5faf-9a22-ae0f0191e15b",
+        "title": "CKV_AWS_260: module.networking.aws_security_group.alb",
+        "description": "Checkov finding CKV_AWS_260 on resource module.networking.aws_security_group.alb. Mapped to NIST 800-53 control ac-3.",
+        "related-observations": [
+          {
+            "observation-uuid": "1a56fbdd-2b01-5e11-a490-c4fa06c6449d"
+          }
+        ],
+        "remarks": "Control: ac-3. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "68f0e5e4-4b49-5db5-bc54-4837d8c6ad6f"
+          }
+        ]
+      },
+      {
+        "uuid": "09e436d6-c542-5398-a220-d4b2fad2a3c0",
+        "title": "CKV_AWS_382: module.networking.aws_security_group.alb",
+        "description": "Checkov finding CKV_AWS_382 on resource module.networking.aws_security_group.alb. Mapped to NIST 800-53 control ac-4.",
+        "related-observations": [
+          {
+            "observation-uuid": "6060fe71-0450-5192-a396-c3081bd8225b"
+          }
+        ],
+        "remarks": "Control: ac-4. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "68d05349-63bc-5cbe-a0c1-959ba87f5bbf"
+          }
+        ]
+      },
+      {
+        "uuid": "f9ed49c6-474f-5a9b-bb8f-78b17e17a99c",
+        "title": "CKV_AWS_382: module.networking.aws_security_group.ec2",
+        "description": "Checkov finding CKV_AWS_382 on resource module.networking.aws_security_group.ec2. Mapped to NIST 800-53 control ac-4.",
+        "related-observations": [
+          {
+            "observation-uuid": "ce2ed541-37c9-541d-ac73-a533d84c3e83"
+          }
+        ],
+        "remarks": "Control: ac-4. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "7eb60135-9ee3-515a-b647-297138cbcb3e"
+          }
+        ]
+      },
+      {
+        "uuid": "94a4e482-655a-5133-9105-0c67d2765967",
+        "title": "CKV_AWS_382: module.networking.aws_security_group.rds",
+        "description": "Checkov finding CKV_AWS_382 on resource module.networking.aws_security_group.rds. Mapped to NIST 800-53 control ac-4.",
+        "related-observations": [
+          {
+            "observation-uuid": "d92756c1-29be-5403-b952-34817eac40b8"
+          }
+        ],
+        "remarks": "Control: ac-4. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "4ef9699d-fc25-5545-81ce-a8ac1b8b50b9"
+          }
+        ]
+      },
+      {
+        "uuid": "8bd6bc26-6cb7-555d-9b13-6209009f969c",
+        "title": "CKV_AWS_382: module.networking.aws_security_group.redis",
+        "description": "Checkov finding CKV_AWS_382 on resource module.networking.aws_security_group.redis. Mapped to NIST 800-53 control ac-4.",
+        "related-observations": [
+          {
+            "observation-uuid": "4e5e2f6b-1457-58f5-ae4a-3fa5e8d437dd"
+          }
+        ],
+        "remarks": "Control: ac-4. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "f60aee5e-4fb4-5b73-bbf9-fc79b3315770"
+          }
+        ]
+      },
+      {
+        "uuid": "db0c1427-e23f-5e04-baca-d565951ae7e0",
+        "title": "CKV_AWS_130: module.networking.aws_subnet.public[1]",
+        "description": "Checkov finding CKV_AWS_130 on resource module.networking.aws_subnet.public[1]. Mapped to NIST 800-53 control ac-4.",
+        "related-observations": [
+          {
+            "observation-uuid": "27d4697b-79ae-556a-a101-31a1623a0f6c"
+          }
+        ],
+        "remarks": "Control: ac-4. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "a381bc51-1db4-5698-ab72-e5c4f276b7af"
+          }
+        ]
+      },
+      {
+        "uuid": "3f1afadc-6847-5b75-9f97-bec212d895b0",
+        "title": "CKV_AWS_157: module.rds.aws_db_instance.main",
+        "description": "Checkov finding CKV_AWS_157 on resource module.rds.aws_db_instance.main. Mapped to NIST 800-53 control cp-9.",
+        "related-observations": [
+          {
+            "observation-uuid": "5a88fe40-b152-5628-9631-85e69f50e43b"
+          }
+        ],
+        "remarks": "Control: cp-9. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "7a987f38-13cb-5256-9306-3a1878ec4621"
+          }
+        ]
+      },
+      {
+        "uuid": "2f01d89f-8d6d-5540-b1d8-9222e5e2859b",
+        "title": "CKV_AWS_149: module.rds.aws_secretsmanager_secret.db",
+        "description": "Checkov finding CKV_AWS_149 on resource module.rds.aws_secretsmanager_secret.db. Mapped to NIST 800-53 control sc-28.",
+        "related-observations": [
+          {
+            "observation-uuid": "621e884b-002e-5022-b29b-ad7e48533e6e"
+          }
+        ],
+        "remarks": "Control: sc-28. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "7a115cb6-8bcf-58ba-a3df-931d5a3e04a7"
+          }
+        ]
+      },
+      {
+        "uuid": "f829bc1b-d8e1-503a-9da2-4148411fcb1b",
+        "title": "CKV2_AWS_60: module.rds.aws_db_instance.main",
+        "description": "Checkov finding CKV2_AWS_60 on resource module.rds.aws_db_instance.main. Mapped to NIST 800-53 control cp-9.",
+        "related-observations": [
+          {
+            "observation-uuid": "31ee1b19-5423-5c20-b486-db158e7c74f7"
+          }
+        ],
+        "remarks": "Control: cp-9. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "24727b81-f970-5eea-95eb-9cdb729a01ba"
+          }
+        ]
+      },
+      {
+        "uuid": "e7b9d969-edd1-5d11-b6f9-54d29d2f3007",
+        "title": "CKV2_AWS_5: module.networking.aws_security_group.alb",
+        "description": "Checkov finding CKV2_AWS_5 on resource module.networking.aws_security_group.alb. Mapped to NIST 800-53 control sc-7.",
+        "related-observations": [
+          {
+            "observation-uuid": "31c8ceec-3bd7-5b4c-86b2-3e467ef6f554"
+          }
+        ],
+        "remarks": "Control: sc-7. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "2d18d775-57d1-5bf6-bb11-b950fda045f7"
+          }
+        ]
+      },
+      {
+        "uuid": "d80c1e0a-b41c-5a21-889e-8005d3532755",
+        "title": "CKV2_AWS_5: module.networking.aws_security_group.ec2",
+        "description": "Checkov finding CKV2_AWS_5 on resource module.networking.aws_security_group.ec2. Mapped to NIST 800-53 control sc-7.",
+        "related-observations": [
+          {
+            "observation-uuid": "d4fda846-c305-5977-8724-9f5140caf7b7"
+          }
+        ],
+        "remarks": "Control: sc-7. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "359c166a-9195-50dd-a69b-65741c41ac13"
+          }
+        ]
+      },
+      {
+        "uuid": "c9ea05e2-3152-513b-846e-a3287656c5ba",
+        "title": "CKV2_AWS_5: module.networking.aws_security_group.rds",
+        "description": "Checkov finding CKV2_AWS_5 on resource module.networking.aws_security_group.rds. Mapped to NIST 800-53 control sc-7.",
+        "related-observations": [
+          {
+            "observation-uuid": "168a18db-d4d9-5ae1-8e60-c45fb326a859"
+          }
+        ],
+        "remarks": "Control: sc-7. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "74902f7e-6262-5fa8-932f-351bebbf64e4"
+          }
+        ]
+      },
+      {
+        "uuid": "c7ec5a61-dc1a-5eb4-9c18-d5623f6cbb11",
+        "title": "CKV2_AWS_5: module.networking.aws_security_group.redis",
+        "description": "Checkov finding CKV2_AWS_5 on resource module.networking.aws_security_group.redis. Mapped to NIST 800-53 control sc-7.",
+        "related-observations": [
+          {
+            "observation-uuid": "8ce67cfa-58f0-5f4b-b227-1e2adbc3cdd9"
+          }
+        ],
+        "remarks": "Control: sc-7. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "4d30ee75-d43d-5248-ad0f-18bcfba2f35b"
+          }
+        ]
+      },
+      {
+        "uuid": "384e9214-f832-5fdd-8557-f36c71b3d1f5",
+        "title": "CKV2_AWS_12: module.networking.aws_vpc.main",
+        "description": "Checkov finding CKV2_AWS_12 on resource module.networking.aws_vpc.main. Mapped to NIST 800-53 control sc-7.",
+        "related-observations": [
+          {
+            "observation-uuid": "2b7eed25-1b29-5386-b76a-4c640d01a110"
+          }
+        ],
+        "remarks": "Control: sc-7. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "abdde808-9d3a-5537-8547-04297b3a659b"
+          }
+        ]
+      },
+      {
+        "uuid": "f0ed706b-2f0d-5781-ab86-2d76f791fec0",
+        "title": "CKV2_AWS_62: module.s3.aws_s3_bucket.uploads",
+        "description": "Checkov finding CKV2_AWS_62 on resource module.s3.aws_s3_bucket.uploads. Mapped to NIST 800-53 control si-4.",
+        "related-observations": [
+          {
+            "observation-uuid": "16a6b66b-0207-5030-834c-5b00e4f1fe59"
+          }
+        ],
+        "remarks": "Control: si-4. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "78521628-891b-5d2f-b820-4847f0212d17"
+          }
+        ]
+      },
+      {
+        "uuid": "ad3d0f3e-f303-594d-b59f-196799cc2fc6",
+        "title": "CKV2_AWS_61: module.s3.aws_s3_bucket.uploads",
+        "description": "Checkov finding CKV2_AWS_61 on resource module.s3.aws_s3_bucket.uploads. Mapped to NIST 800-53 control cm-2.",
+        "related-observations": [
+          {
+            "observation-uuid": "7769c761-7907-562d-9c73-b9d197dbc518"
+          }
+        ],
+        "remarks": "Control: cm-2. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "3c8d7a6e-cd07-55b8-923c-b423fddded2c"
+          }
+        ]
+      },
+      {
+        "uuid": "e35b6f05-4ab0-502e-8c2b-6e2226dd0029",
+        "title": "CKV_AWS_18: module.s3.aws_s3_bucket.uploads",
+        "description": "Checkov finding CKV_AWS_18 on resource module.s3.aws_s3_bucket.uploads. Mapped to NIST 800-53 control au-2.",
+        "related-observations": [
+          {
+            "observation-uuid": "218b2060-e9b5-54d1-953e-0ed3cc7980e4"
+          }
+        ],
+        "remarks": "Control: au-2. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "8904d11e-8b92-5693-a382-f3debdf9c0e4"
+          }
+        ]
+      },
+      {
+        "uuid": "a8040120-67b3-5f61-b3e3-e77a144f2051",
+        "title": "CKV2_AWS_30: module.rds.aws_db_instance.main",
+        "description": "Checkov finding CKV2_AWS_30 on resource module.rds.aws_db_instance.main. Mapped to NIST 800-53 control au-2.",
+        "related-observations": [
+          {
+            "observation-uuid": "d11bb35e-d398-5101-8fbd-b52d5dea292f"
+          }
+        ],
+        "remarks": "Control: au-2. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "aadafb96-478e-507a-a82e-f1ab62dd8ee5"
+          }
+        ]
+      },
+      {
+        "uuid": "2db37622-140d-5a2f-a42b-f4c256ee9e61",
+        "title": "CKV2_AWS_11: module.networking.aws_vpc.main",
+        "description": "Checkov finding CKV2_AWS_11 on resource module.networking.aws_vpc.main. Mapped to NIST 800-53 control sc-7.",
+        "related-observations": [
+          {
+            "observation-uuid": "5074e808-ec26-59fb-b3f4-904544b8073e"
+          }
+        ],
+        "remarks": "Control: sc-7. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "a831166d-c166-5f3c-8246-a60df3871101"
+          }
+        ]
+      },
+      {
+        "uuid": "6e272c97-ec89-5eb0-812e-35c7188e9055",
+        "title": "CKV2_AWS_28: module.alb.aws_lb.main",
+        "description": "Checkov finding CKV2_AWS_28 on resource module.alb.aws_lb.main. Mapped to NIST 800-53 control sc-7.",
+        "related-observations": [
+          {
+            "observation-uuid": "32c21703-e98b-5e68-b997-184ad342c7cb"
+          }
+        ],
+        "remarks": "Control: sc-7. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "7f4f95ca-2b0e-504a-ba27-9237032ea7ea"
+          }
+        ]
+      },
+      {
+        "uuid": "2cd9a468-89cb-5312-9953-4dfc14a8d735",
+        "title": "CKV2_AWS_57: module.rds.aws_secretsmanager_secret.db",
+        "description": "Checkov finding CKV2_AWS_57 on resource module.rds.aws_secretsmanager_secret.db. Mapped to NIST 800-53 control ia-5.",
+        "related-observations": [
+          {
+            "observation-uuid": "bc26ba86-8418-5c10-a92d-150b2eaf9c0f"
+          }
+        ],
+        "remarks": "Control: ia-5. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "ec3b06e3-af81-5576-a4b7-f3f52a663625"
+          }
+        ]
+      },
+      {
+        "uuid": "978800ea-bf57-59ef-8e20-05401b4ef0e8",
+        "title": "CKV2_AWS_57: module.secrets.aws_secretsmanager_secret.app",
+        "description": "Checkov finding CKV2_AWS_57 on resource module.secrets.aws_secretsmanager_secret.app. Mapped to NIST 800-53 control ia-5.",
+        "related-observations": [
+          {
+            "observation-uuid": "32f5dcc1-bced-5203-b392-074214d60875"
+          }
+        ],
+        "remarks": "Control: ia-5. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "bfae61d9-45c0-5d67-a5cb-74892069023d"
+          }
+        ]
+      },
+      {
+        "uuid": "840ac5a5-50d3-54d1-b88b-87d265aaf568",
+        "title": "CKV_AWS_144: module.s3.aws_s3_bucket.uploads",
+        "description": "Checkov finding CKV_AWS_144 on resource module.s3.aws_s3_bucket.uploads. Mapped to NIST 800-53 control cp-9.",
+        "related-observations": [
+          {
+            "observation-uuid": "e678c82c-1113-5904-838e-268169861c46"
+          }
+        ],
+        "remarks": "Control: cp-9. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "7dcb9075-d87f-58ab-8ca6-9950f70cb45f"
+          }
+        ]
+      },
+      {
+        "uuid": "13a5164d-4648-563d-b068-894f033e8e49",
+        "title": "CKV2_AWS_50: module.elasticache.aws_elasticache_replication_group.main",
+        "description": "Checkov finding CKV2_AWS_50 on resource module.elasticache.aws_elasticache_replication_group.main. Mapped to NIST 800-53 control cp-9.",
+        "related-observations": [
+          {
+            "observation-uuid": "36df2b5f-5934-58b0-bbde-c0305fd7861b"
+          }
+        ],
+        "remarks": "Control: cp-9. Risk acceptance documented in docs/checkov/configuration_checks.md",
+        "related-risks": [
+          {
+            "risk-uuid": "b4a3cb6a-c9be-5902-bfdc-96327e835149"
+          }
+        ]
+      }
+    ]
+  }
+}

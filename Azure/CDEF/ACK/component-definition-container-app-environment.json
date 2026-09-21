@@ -1,0 +1,43 @@
+{
+  "component-definition": {
+    "uuid": "ac510001-0000-4000-a000-000000000011",
+    "metadata": {
+      "title": "SPARC Azure Container App Environment Component Definition",
+      "last-modified": "2026-07-26T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [{ "id": "provider", "title": "Infrastructure Provider" }],
+      "parties": [{ "uuid": "ac510001-0001-4000-a000-000000000001", "type": "organization", "name": "SPARC Platform Team" }]
+    },
+    "components": [
+      {
+        "uuid": "ac510001-2222-4000-a000-000000000011",
+        "type": "service",
+        "title": "Azure Container App Environment",
+        "description": "The managed, VNet-integrated environment hosting the SPARC container app, with a bound Log Analytics workspace. Deployed via Terraform (Azure/ACK/modules/container_app_environment/). <!-- UPDATE: insert the environment resource ID and default domain. -->",
+        "responsible-roles": [{ "role-id": "provider", "party-uuids": ["ac510001-0001-4000-a000-000000000001"] }],
+        "control-implementations": [
+          {
+            "uuid": "ac510001-3333-4000-a000-000000000011",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for the Container App Environment",
+            "implemented-requirements": [
+              {
+                "uuid": "ac510001-4444-4000-a000-000000000007",
+                "control-id": "sc-7",
+                "description": "Boundary Protection: The environment is injected into a dedicated infrastructure subnet delegated to Microsoft.App/environments, keeping app egress on the VNet with the private data tier. Reference: DISA SRG-NET-000364.",
+                "remarks": "Terraform: azurerm_container_app_environment.infrastructure_subnet_id; networking module delegated subnet."
+              },
+              {
+                "uuid": "ac510001-4444-4000-a000-000000000003",
+                "control-id": "au-2",
+                "description": "Event Logging: A Log Analytics workspace is bound to the environment so all container app logs and metrics are centrally retained. Reference: DISA SRG-APP-000089.",
+                "remarks": "Terraform: azurerm_log_analytics_workspace.main + azurerm_container_app_environment.log_analytics_workspace_id."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,69 @@
+# threshold.yml — Security gate configuration
+# Modeled on MITRE SAF CLI threshold format for future compatibility (#17)
+
+compliance:
+  min_pass_rate: 80
+
+findings:
+  new:
+    max: 0                   # Zero tolerance for unreviewed findings
+  regressions:
+    max: 0                   # Zero tolerance for remediated→failing
+  untriaged:
+    max: 0                   # Zero tolerance for null reviewed_by
+  stale_reviews:
+    max: -1                  # Warn only (-1 = no limit)
+  count_drift:
+    max: -1                  # Warn only. #611 — per-resource growth under an
+                             # already-accepted check_id is invisible to
+                             # New/Regressions (those diff check_id SETS), so
+                             # expected_count was never enforced: CKV_AWS_356
+                             # drifted 3->8 and CKV_AWS_111 1->5 over four
+                             # months with every commit reporting "no new
+                             # findings". Reported now, enforced under strict.
+  total_failed:
+    max: -1                  # No limit (controlled by baseline)
+
+# Per-pattern overrides (merged on top of defaults)
+patterns:
+  ecs:
+    compliance:
+      min_pass_rate: 85
+  ec2:
+    compliance:
+      min_pass_rate: 80
+  azure-vm:
+    compliance:
+      min_pass_rate: 74
+    findings:
+      untriaged:
+        max: 10              # Azure VM less mature, allow during buildout
+  aas:
+    compliance:
+      min_pass_rate: 72      # App Service PaaS, built-not-tested (#10); accepted-heavy (Premium features unused in dev). Raise as the pattern matures.
+  ack:
+    compliance:
+      min_pass_rate: 65      # Container Apps PaaS, built-not-tested (#11); accepted-heavy (Premium ACR/zone features unused in dev). Raise as the pattern matures.
+
+# Security scan thresholds (informational — enforcement planned for future)
+# These document intent; scan results are currently reported but not gated.
+scans:
+  secrets:
+    max: 0                   # Zero tolerance for leaked secrets
+  sast:
+    max_high: 0              # No high-severity SAST findings
+    max_medium: 10           # Allow medium findings during buildout
+  sca:
+    max_critical: 0          # No critical dependency vulnerabilities
+    max_high: 5              # Allow some high during triage
+  container:
+    max_critical: 0          # No critical image vulnerabilities
+
+# Strict mode (merged on top when --strict flag used, e.g., deploy.yml)
+strict:
+  findings:
+    stale_reviews:
+      max: 0                 # Block deploys if reviews are overdue
+    count_drift:
+      max: 0                 # Block deploys when expected_count no longer
+                             # matches reality — re-attest the baseline first.

@@ -1,0 +1,87 @@
+# Dependabot — source-dependency update PRs (#246), tamed so it doesn't swarm.
+#
+# - groups: batch all updates per ecosystem/dir into ONE PR (not one-per-dep).
+# - terraform majors are IGNORED: provider major bumps (e.g. hashicorp/aws
+#   5->6, azurerm 3->4) are breaking and handled deliberately, like the
+#   TF-version upgrade work (#288/#290) — never via an auto dependabot PR.
+# - Dependabot NEVER auto-merges/deploys: no auto-merge automation exists, and
+#   main is branch-protected, so a human must review + approve every bump.
+#   The deploy-class CI (plan/validate/compliance) is skipped on dependabot
+#   branches (it can't get secrets there anyway) — see the workflows' triggers.
+version: 2
+updates:
+  # GitHub Action pins (uses:) across all workflows.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/New_York
+    open-pull-requests-limit: 3
+    groups:
+      github-actions:
+        patterns: ["*"]
+    ignore:
+      # sigstore/cosign-installer v4+ runs `envsubst` (gettext) in its install
+      # script, which is NOT in the sparc-ci-runner container image. Actions that
+      # run INSIDE that container can require tools that must be baked into the
+      # image FIRST (container-build-sign owns the image) — so these major bumps
+      # are DELIBERATE, coordinated with the image, never auto (same stance as
+      # the terraform-provider-major ignore below). dependabot #439 auto-bumped
+      # this to v4.1.2 and broke every deploy with `envsubst: command not found`
+      # (exit 127). Restore v4 only after the image ships gettext-base — tracked
+      # on container-build-sign.
+      - dependency-name: "sigstore/cosign-installer"
+        update-types: ["version-update:semver-major"]
+
+  # Terraform providers (.terraform.lock.hcl) — one grouped PR per directory,
+  # minor/patch only (majors deferred to deliberate upgrades).
+  - package-ecosystem: terraform
+    directories:
+      - /bootstrap
+      - /bootstrap/oidc
+      - /AWS/ECS
+      - /AWS/EC2
+      - /AWS/config
+      - /Azure/VM
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/New_York
+    open-pull-requests-limit: 3
+    groups:
+      terraform-providers:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Python tooling.
+  - package-ecosystem: pip
+    directory: /oscal/scripts
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/New_York
+    open-pull-requests-limit: 3
+    groups:
+      pip:
+        patterns: ["*"]
+
+  # Container base images. cinc-auditor was migrated to container-build-sign
+  # (container-build-sign#157) — CBS owns its base bumps now, so it's dropped here.
+  - package-ecosystem: docker
+    directories:
+      - /AWS/ECS/nginx
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/New_York
+    open-pull-requests-limit: 3
+    groups:
+      docker:
+        patterns: ["*"]

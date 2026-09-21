@@ -1,0 +1,158 @@
+# =============================================================================
+# Template Scans (#672)
+# =============================================================================
+# Basic security scanning for sparc-iac-template.
+#
+# The private repo runs these inside compliance.yml, which also assembles the
+# OSCAL SSP/SAR/POA&M and the FedRAMP package. That chain is deliberately NOT
+# published: a template describes no authorization boundary and deploys no
+# infrastructure, so an SSP generated here would read as authoritative and be
+# fiction. compliance.yml is excluded from the export and this workflow carries
+# the scans that are genuinely portable.
+#
+# In scope:  Checkov (IaC SAST), Semgrep (code SAST), pip-audit (dependencies)
+# Elsewhere: TruffleHog via secret-scan-hdf-emit.yml, SBOM/SCA via
+#            sbom-and-sca.yml, quality via sonarqube-hdf-emit.yml, lint via
+#            validate.yml — all of which do publish.
+#
+# Scheduling is external on purpose. GitHub disables scheduled workflows after
+# a stretch of repository inactivity, and this repo is a snapshot nobody pushes
+# to — a cron here is the one thing guaranteed to stop working silently. The
+# private repo dispatches this weekly instead (template-evidence-refresh.yml),
+# because that is where the activity is.
+# =============================================================================
+
+name: Template Scans
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: Scan and emit
+    # Adopter forks read no org variables, so they skip here rather than
+    # failing at OIDC assume with a missing role.
+    if: vars.EVIDENCE_EMIT_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write # AWS OIDC for the evidence emit
+    container:
+      image: risksentinel/sparc-ci-runner@sha256:d6bba7173b8c66207f55379b2e409af43ad68e83d5e5742a88c79f4281757fa9
+      credentials:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Prepare directories
+        run: mkdir -p scan-results checkov-results
+
+      # Every Terraform pattern present in the tree. Discovered rather than
+      # listed, so a pattern added or removed upstream does not silently stop
+      # being scanned here — the failure mode a hardcoded matrix would have.
+      - name: Run Checkov
+        run: |
+          set -euo pipefail
+          found=0
+          while IFS= read -r d; do
+            [[ -n "$d" ]] || continue
+            found=$((found + 1))
+            name="$(printf '%s' "$d" | tr '/' '-' | tr '[:upper:]' '[:lower:]')"
+            echo "== checkov: $d"
+            checkov -d "$d" \
+              --framework terraform \
+              --output json --output sarif \
+              --output-file-path "checkov-results/$name/" \
+              --soft-fail
+            if [[ -f "checkov-results/$name/results_json.json" ]]; then
+              saf convert checkov2hdf \
+                -i "checkov-results/$name/results_json.json" \
+                -o "scan-results/checkov-$name.hdf.json" || true
+            fi
+          done < <(find AWS Azure -maxdepth 2 -name '*.tf' -printf '%h\n' 2>/dev/null | sort -u)
+          if [[ "$found" -eq 0 ]]; then
+            echo "::error::no Terraform directories found — Checkov scanned nothing."
+            echo "::error::That is a silent-pass, not a clean result. Failing instead."
+            exit 1
+          fi
+          echo "Checkov scanned $found directory/directories."
+
+      - name: Semgrep SAST scan
+        run: |
+          semgrep scan --config auto --sarif -o semgrep.sarif oscal/scripts/ || true
+          if [[ -s semgrep.sarif ]]; then
+            saf convert sarif2hdf -i semgrep.sarif -o scan-results/semgrep.hdf.json || true
+          fi
+
+      - name: pip-audit dependency scan
+        run: |
+          if [[ -f oscal/scripts/requirements.txt ]]; then
+            pip-audit -r oscal/scripts/requirements.txt --format json -o pip-audit.json || true
+            if [[ -s pip-audit.json ]]; then
+              saf convert pip_audit2hdf -i pip-audit.json -o scan-results/pip-audit.hdf.json || true
+            fi
+          fi
+
+      # Fail loudly on an empty emit. A green run that uploaded nothing is the
+      # state this repository was already in for three months, and it reported
+      # success the whole time.
+      - name: Check something was produced
+        run: |
+          set -euo pipefail
+          n=$(find scan-results -name '*.hdf.json' -type f | wc -l | tr -d ' ')
+          echo "HDF artifacts produced: $n"
+          if [[ "$n" -eq 0 ]]; then
+            echo "::error::no HDF artifacts produced — nothing to emit. Refusing to report success."
+            exit 1
+          fi
+
+      - name: Assume evidence-emit role
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        with:
+          role-to-assume: ${{ secrets.SPARC_IAC_TEMPLATE_EMIT_ARN }}
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
+      # Canonical evidence layout (#537): {boundary}/{date|latest}/{repo}/{source}/
+      # The repo segment is derived, never literal — the emit role is scoped to
+      # this repository's prefix, so a hardcoded slug is an AccessDenied here
+      # rather than a misfile (#672).
+      - name: Emit evidence to S3
+        env:
+          BOUNDARY: ${{ vars.EVIDENCE_BOUNDARY || 'sparc' }}
+          BUCKET: ${{ secrets.COMPLIANCE_S3_BUCKET }}
+          REPO_SLUG: ${{ github.event.repository.name }}
+        run: |
+          set -euo pipefail
+          [[ -n "$BUCKET" ]] || { echo "::error::COMPLIANCE_S3_BUCKET is empty"; exit 1; }
+          DATE="$(date -u +%Y-%m-%d)"
+          copied=0
+          for f in scan-results/*.hdf.json; do
+            [[ -f "$f" ]] || continue
+            base="$(basename "$f" .hdf.json)"
+            for when in "$DATE" latest; do
+              aws s3 cp "$f" \
+                "s3://${BUCKET}/${BOUNDARY}/${when}/${REPO_SLUG}/${base}/$(basename "$f")" \
+                --sse aws:kms
+              copied=$((copied + 1))
+            done
+          done
+          echo "Uploaded $copied object(s) under ${BOUNDARY}/{${DATE},latest}/${REPO_SLUG}/"
+          if [[ "$copied" -eq 0 ]]; then
+            echo "::error::emit step copied nothing despite artifacts existing"
+            exit 1
+          fi
+          {
+            echo "## Template scans"
+            echo "Emitted \`$copied\` object(s) to \`${BOUNDARY}/${DATE}/${REPO_SLUG}/\`"
+          } >> "$GITHUB_STEP_SUMMARY"

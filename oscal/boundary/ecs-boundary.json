@@ -1,0 +1,136 @@
+{
+  "boundary-protection": {
+    "components": [
+      {
+        "key": "alb",
+        "protocols": [
+          {
+            "end": 443,
+            "name": "https",
+            "start": 443,
+            "tls": "TLS1.2+",
+            "transport": "TCP"
+          }
+        ],
+        "title-match": "Application Load Balancer"
+      },
+      {
+        "access-grants": [
+          {
+            "action": "GetDownloadUrlForLayer +2",
+            "arn": "arn:aws:ecr:<region>:<account>:repository/example",
+            "to-title-match": "Elastic Container Registry"
+          },
+          {
+            "action": "UploadLayerPart +7",
+            "arn": "arn:aws:ecr:<region>:<account>:repository/heimdall2",
+            "to-title-match": "Elastic Container Registry"
+          },
+          {
+            "action": "UploadLayerPart +7",
+            "arn": "arn:aws:ecr:<region>:<account>:repository/sparc-auditor",
+            "to-title-match": "Elastic Container Registry"
+          },
+          {
+            "action": "UploadLayerPart +7",
+            "arn": "arn:aws:ecr:<region>:<account>:repository/sparc-ci-runner",
+            "to-title-match": "Elastic Container Registry"
+          },
+          {
+            "action": "UploadLayerPart +7",
+            "arn": "arn:aws:ecr:<region>:<account>:repository/example-nginx",
+            "to-title-match": "Elastic Container Registry"
+          },
+          {
+            "action": "UploadLayerPart +7",
+            "arn": "arn:aws:ecr:<region>:<account>:repository/vulcan",
+            "to-title-match": "Elastic Container Registry"
+          },
+          {
+            "action": "GetBucketAcl",
+            "arn": "arn:aws:s3:::example-audit-logs",
+            "to-title-match": "S3"
+          },
+          {
+            "action": "ListAllMyBuckets",
+            "arn": "arn:aws:s3:::example-ses-inbound",
+            "to-title-match": "S3"
+          },
+          {
+            "action": "ListBucket",
+            "arn": "arn:aws:s3:::example-uploads",
+            "to-title-match": "S3"
+          },
+          {
+            "action": "PutObject +2",
+            "arn": "arn:aws:s3:::your-security-artifacts-bucket",
+            "to-title-match": "S3"
+          },
+          {
+            "action": "GetSecretValue",
+            "arn": "arn:aws:secretsmanager:<region>:<account>:secret:example-sparc-validate-runner-app-key-*",
+            "to-title-match": "Secrets Manager"
+          },
+          {
+            "action": "GetSecretValue",
+            "arn": "arn:aws:secretsmanager:<region>:<account>:secret:example/SPARC_HASH-EXAMPLE0002",
+            "to-title-match": "Secrets Manager"
+          },
+          {
+            "action": "GetSecretValue",
+            "arn": "arn:aws:secretsmanager:<region>:<account>:secret:example/app-secrets-EXAMPLE0005",
+            "to-title-match": "Secrets Manager"
+          },
+          {
+            "action": "GetSecretValue",
+            "arn": "arn:aws:secretsmanager:<region>:<account>:secret:example/db-credentials-EXAMPLE0007",
+            "to-title-match": "Secrets Manager"
+          },
+          {
+            "action": "GetSecretValue",
+            "arn": "arn:aws:secretsmanager:<region>:<account>:secret:example/heimdall-credentials-EXAMPLE0008",
+            "to-title-match": "Secrets Manager"
+          },
+          {
+            "action": "GetSecretValue",
+            "arn": "arn:aws:secretsmanager:<region>:<account>:secret:example/hibernate-watchdog-gh-app-EXAMPLE0009",
+            "to-title-match": "Secrets Manager"
+          },
+          {
+            "action": "GetSecretValue",
+            "arn": "arn:aws:secretsmanager:<region>:<account>:secret:example/rotation-lambda-token-EXAMPLE0010",
+            "to-title-match": "Secrets Manager"
+          },
+          {
+            "action": "UpdateSecretVersionStage +3",
+            "arn": "arn:aws:secretsmanager:<region>:<account>:secret:example/admin-credentials-EXAMPLE0003",
+            "to-title-match": "Secrets Manager"
+          }
+        ],
+        "key": "ecs",
+        "protocols": [
+          {
+            "end": 8080,
+            "name": "http",
+            "start": 8080,
+            "transport": "TCP"
+          }
+        ],
+        "title-match": "ECS Fargate"
+      },
+      {
+        "key": "rds",
+        "protocols": [
+          {
+            "end": 5432,
+            "name": "postgresql",
+            "start": 5432,
+            "transport": "TCP"
+          }
+        ],
+        "title-match": "RDS"
+      }
+    ],
+    "generated-from": "terraform-state"
+  }
+}

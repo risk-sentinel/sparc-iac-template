@@ -1,0 +1,36 @@
+{
+  "_README": "Heimdall task-definition variables (#507). Terraform renders this via templatefile() into the Heimdall sidecar container (only when enable_heimdall=true). LITERAL values are safe to edit. Values shown as Terraform tokens (dollar-brace placeholders) are Terraform-injected (shared RDS) and must NOT be edited. 'secrets' hold ONLY Secrets Manager references, never secret values.",
+  "environment": {
+    "CLASSIFICATION_BANNER_COLOR": "green",
+    "CLASSIFICATION_BANNER_TEXT": "",
+    "CLASSIFICATION_BANNER_TEXT_COLOR": "white",
+    "DATABASE_HOST": "${db_host}",
+    "DATABASE_NAME": "heimdall",
+    "DATABASE_PASSWORD": "${db_password}",
+    "DATABASE_PORT": "${db_port}",
+    "DATABASE_SSL": "true",
+    "DATABASE_SSL_CA": "/tmp/rds-ca/rds-combined-ca-bundle.pem",
+    "DATABASE_USERNAME": "${db_username}",
+    "EXTERNAL_URL": "https://heimdall.example.com",
+    "GITHUB_CLIENTID": "Ov0000000000000000000",
+    "LOCAL_LOGIN_DISABLED": "false",
+    "NGINX_HOST": "heimdall.example.com",
+    "NODE_ENV": "production",
+    "OIDC_AUTHORIZATION_URL": "",
+    "OIDC_CLIENTID": "",
+    "OIDC_ISSUER": "",
+    "OIDC_NAME": "",
+    "OIDC_TOKEN_URL": "",
+    "OIDC_USER_INFO_URL": "",
+    "ONE_SESSION_PER_USER": "true",
+    "PORT": "3001",
+    "REGISTRATION_DISABLED": "true"
+  },
+  "secrets": {
+    "ADMIN_EMAIL": "${heimdall_secret_arn}:ADMIN_EMAIL::",
+    "ADMIN_PASSWORD": "${heimdall_secret_arn}:ADMIN_PASSWORD::",
+    "GITHUB_CLIENTSECRET": "${heimdall_secret_arn}:GITHUB_CLIENTSECRET::",
+    "JWT_SECRET": "${heimdall_secret_arn}:JWT_SECRET::",
+    "OIDC_CLIENT_SECRET": "${heimdall_secret_arn}:OIDC_CLIENT_SECRET::"
+  }
+}

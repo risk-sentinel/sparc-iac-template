@@ -1,0 +1,41 @@
+{
+  "platform": { "name": "heimdall-tools", "release": "1.0" },
+  "version": "1.0",
+  "statistics": {},
+  "profiles": [
+    {
+      "name": "attested-profile",
+      "version": "1.0",
+      "sha256": "attestfixture",
+      "supports": [],
+      "attributes": [],
+      "groups": [],
+      "controls": [
+        {
+          "id": "access-keys-rotated",
+          "title": "IAM access keys rotated",
+          "desc": "Attestation-bound control (reviewer-supplied evidence).",
+          "impact": 0.5,
+          "tags": { "nist": ["AC-2(1)"] },
+          "descriptions": [
+            {
+              "label": "attestation",
+              "data": "explanation: Verified via IAM console; frequency: annually; updated: 2026-07-01; updated_by: reviewer (ISSO)"
+            }
+          ],
+          "refs": [],
+          "source_location": {},
+          "code": "",
+          "results": [
+            {
+              "status": "passed",
+              "code_desc": "Attested: keys rotated within policy",
+              "message": "explanation: Verified via IAM console\nfrequency: annually\nupdated: 2026-07-01\nupdated_by: reviewer (ISSO)",
+              "start_time": "2026-07-01T00:00:00Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

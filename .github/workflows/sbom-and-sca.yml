@@ -1,0 +1,160 @@
+name: SBOM + SCA
+
+# Source-dependency SBOM + SCA (#246). Thin caller around the reusable
+# workflows risk-sentinel/container-build-sign shipped in v0.1.0:
+#   sbom-source.yml  — Syft → CycloneDX JSON (uploaded as an artifact)
+#   sca-scan.yml     — Grype + Trivy fs, reconciled against .security/sca-allowlist.yaml
+# Covers every ecosystem Syft detects (Terraform providers, pip, docker, etc.) —
+# none of which have source-dep CVE scanning today.
+#
+# Rollout: soft-mode (fail_on_gating: false) so findings are reported but do not
+# block while we establish sparc-iac's baseline. A follow-up flips it to blocking
+# once the baseline is triaged (#246 → gating-enable follow-up).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 8 * * *' # daily drift check; aligned with org cadence
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  sbom:
+    uses: risk-sentinel/container-build-sign/.github/workflows/sbom-source.yml@d7ec024eb4642c57bac57a00ade0c31c73ef23b7 # v0.1.0
+    with:
+      source_path: '.'
+      artifact_name: cyclonedx-sbom
+
+  sca:
+    needs: sbom
+    uses: risk-sentinel/container-build-sign/.github/workflows/sca-scan.yml@d7ec024eb4642c57bac57a00ade0c31c73ef23b7 # v0.1.0
+    with:
+      sbom_artifact: cyclonedx-sbom
+      source_path: '.'
+      severity_gate: CRITICAL
+      # Soft-mode for the initial rollout — report findings, do not block.
+      # Flip to true (or remove) once the baseline is triaged.
+      fail_on_gating: false
+
+  # Emit the enriched, keyless-signed CycloneDX BOM to the org SCA bucket (#398)
+  # for the Dependency-Track aggregator (umbrella container-build-sign#12).
+  # enrich_sbom.py folds in Terraform providers + pinned GitHub Actions so the
+  # IaC supply-chain is represented regardless of the reusable's Syft version.
+  #
+  # Gated on EVIDENCE_EMIT_ENABLED, not SPARC_DEPLOY_ENABLED (#672). Those are
+  # different questions: one asks "does this repo deploy infrastructure", the
+  # other "does this repo produce evidence". sparc-iac-template answers no and
+  # yes — it has nothing to deploy and its own emit role. Gating evidence on the
+  # deploy flag left it running the scans and dropping the results, which is
+  # what "unevidenced" meant.
+  #
+  # SPARC_DEPLOY_ENABLED stays scoped to sparc-iac alone. Adopter forks read
+  # neither variable, so they skip here rather than failing at OIDC assume.
+  emit:
+    name: Emit BOM to S3
+    needs: sbom
+    if: >-
+      github.event_name != 'pull_request' &&
+      vars.EVIDENCE_EMIT_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      id-token: write # Sigstore keyless signing + AWS OIDC
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Download SBOM artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: cyclonedx-sbom
+          path: sbom-output
+
+      - name: Enrich BOM (Terraform providers + Action pins)
+        run: |
+          python3 oscal/scripts/enrich_sbom.py \
+            --in sbom-output/cyclonedx.json \
+            --repo-root . \
+            --out sbom-output/sparc-iac.cdx.json
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5 # v3.10.1
+
+      - name: Sign BOM (keyless OIDC)
+        run: |
+          cosign sign-blob --yes \
+            sbom-output/sparc-iac.cdx.json \
+            --bundle sbom-output/sparc-iac.cdx.json.cosign.bundle
+
+      - name: Verify signature
+        run: |
+          cosign verify-blob \
+            --bundle sbom-output/sparc-iac.cdx.json.cosign.bundle \
+            --certificate-identity-regexp "https://github.com/risk-sentinel/sparc-iac/" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+            sbom-output/sparc-iac.cdx.json
+
+      - name: Assume ci-trust (OIDC)
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          # Org-level secrets — no GitHub Environment needed; on push-to-main the
+          # OIDC sub is refs/heads/main, which ci-trust's trust admits. Phase 2
+          # (#316): the deploy role is reached via the ci-trust → ci-execute
+          # chain, replacing the direct SPARC_IAC_AWS_ROLE_ARN assume.
+          role-to-assume: ${{ secrets.AWS_CI_TRUST_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
+      - name: Assume ci-execute (role chaining)
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ secrets.AWS_CI_EXECUTE_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+          role-chaining: true
+
+      - name: Confirm assumed role
+        run: aws sts get-caller-identity --query Arn --output text
+
+      - name: Emit BOM + signature to S3
+        # No region flag — the AWS credentials step exports AWS_DEFAULT_REGION;
+        # keeping GitHub ${{ }} expressions out of the run script avoids the
+        # expression-injection class entirely — hence the env block rather than
+        # inlining the variable into the script below.
+        env:
+          # No EVIDENCE_BOUNDARY org/repo variable exists yet, so this resolves to
+          # empty and the shell default applies. Creating the variable later changes
+          # the layout with no workflow edit; the value must stay in step with
+          # var.evidence_boundary in the Terraform, which the emit role is scoped to.
+          EVIDENCE_BOUNDARY: ${{ vars.EVIDENCE_BOUNDARY }}
+        run: |
+          BUCKET="your-security-artifacts-bucket"
+          # Canonical evidence layout (#537/#654): <boundary>/<date|latest>/<repo>/<source>/.
+          # Was the source-first sca/sparc-iac/, which evidence_store cannot see —
+          # it reads the canonical layout only.
+          BOUNDARY="${EVIDENCE_BOUNDARY:-sparc}"
+          REPO_SLUG="sparc-iac"
+          DATE="$(date -u +%F)"
+          echo "## SBOM emitted to S3" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          for f in sparc-iac.cdx.json sparc-iac.cdx.json.cosign.bundle; do
+            for key in "${BOUNDARY}/${DATE}/${REPO_SLUG}/sca/${f}" "${BOUNDARY}/latest/${REPO_SLUG}/sca/${f}"; do
+              aws s3 cp "sbom-output/${f}" "s3://${BUCKET}/${key}" --sse aws:kms
+              echo "- \`s3://${BUCKET}/${key}\`" >> "$GITHUB_STEP_SUMMARY"
+            done
+          done
+          {
+            echo ""
+            echo "Verify (aggregator side):"
+            echo '```'
+            echo "cosign verify-blob \\"
+            echo "  --bundle sparc-iac.cdx.json.cosign.bundle \\"
+            echo "  --certificate-identity-regexp \"https://github.com/risk-sentinel/sparc-iac/\" \\"
+            echo "  --certificate-oidc-issuer \"https://token.actions.githubusercontent.com\" \\"
+            echo "  sparc-iac.cdx.json"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

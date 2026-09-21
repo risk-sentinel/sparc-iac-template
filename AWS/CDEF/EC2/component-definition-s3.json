@@ -1,0 +1,77 @@
+{
+  "component-definition": {
+    "uuid": "b1c2d3e4-1111-4000-a000-000000000010",
+    "metadata": {
+      "title": "SPARC EC2 S3 Storage Component Definition",
+      "last-modified": "2026-03-20T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "b1c2d3e4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "b1c2d3e4-2222-4000-a000-000000000010",
+        "type": "service",
+        "title": "AWS S3 Bucket (ActiveStorage)",
+        "description": "Encrypted S3 bucket for SPARC ActiveStorage file uploads with versioning, public access block, and CORS configuration. Deployed via Terraform (AWS/EC2/modules/s3/). <!-- UPDATE: Insert bucket name, ARN, and region for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["b1c2d3e4-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "b1c2d3e4-3333-4000-a000-000000000010",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for S3",
+            "implemented-requirements": [
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000090",
+                "control-id": "sc-28",
+                "description": "Protection of Information at Rest: S3 bucket uses AWS KMS server-side encryption (SSE-KMS) with bucket key enabled for all stored objects. Every uploaded file is automatically encrypted before being written to disk. Encryption is enforced — unencrypted uploads are rejected. Reference: DISA SRG-APP-000231, CIS AWS 2.1.1.",
+                "remarks": "Terraform resource: aws_s3_bucket_server_side_encryption_configuration.uploads with sse_algorithm = aws:kms."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000091",
+                "control-id": "ac-3",
+                "description": "Access Enforcement: The S3 bucket blocks all public access via aws_s3_bucket_public_access_block (block_public_acls, block_public_policy, ignore_public_acls, restrict_public_buckets all set to true). Only the EC2 instance role has IAM permissions to read/write objects (s3:GetObject, s3:PutObject, s3:DeleteObject, s3:ListBucket). No bucket policy allows external access. Reference: DISA SRG-APP-000033, CIS AWS 2.1.5.",
+                "remarks": "Terraform resources: aws_s3_bucket_public_access_block.uploads, aws_iam_role_policy.ec2_s3 (in IAM module)."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000092",
+                "control-id": "cp-9",
+                "description": "System Backup: S3 versioning is enabled, retaining all previous versions of uploaded files. This provides point-in-time recovery for uploaded artifacts and protects against accidental deletion or overwrites. Combined with S3's 99.999999999% durability, this ensures data protection for SPARC uploads. Reference: DISA SRG-APP-000065, CIS AWS 2.1.3.",
+                "remarks": "Terraform resource: aws_s3_bucket_versioning.uploads with status = Enabled."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000093",
+                "control-id": "au-2",
+                "description": "Event Logging: S3 access logging can be enabled to record all requests made to the bucket. CloudTrail data events can be configured to log S3 object-level API calls (GetObject, PutObject, DeleteObject) for audit purposes. Reference: DISA SRG-APP-000089, CIS AWS 2.1.4.",
+                "remarks": "S3 access logging and CloudTrail data events are not provisioned by this module. Enable for production compliance requirements."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000094",
+                "control-id": "mp-6",
+                "description": "Media Sanitization: KMS-encrypted S3 objects are cryptographically erased when deleted — data cannot be recovered without the KMS key. S3 versioning provides soft-delete capability via delete markers, with permanent deletion available via lifecycle policies or explicit version deletion. Reference: DISA SRG-APP-000516.",
+                "remarks": "Consider adding S3 lifecycle rules to permanently expire old versions after a defined retention period."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,44 @@
+# ============================================================================
+# SPARC Azure VM — Production Environment
+# ============================================================================
+environment  = "prod"
+location     = "eastus"
+project_name = "sparc"
+tenant_id    = "00000000-0000-0000-0000-000000000000"
+
+app_image   = "your-registry.azurecr.io/sparc:v1.0.0"
+nginx_image = "your-registry.azurecr.io/sparc-nginx:v1.0.0"
+
+vm_size                 = "Standard_D4s_v5"
+data_disk_size          = 100
+db_sku_name             = "GP_Standard_D2ds_v4"
+db_storage_mb           = 65536
+db_high_availability    = true
+db_geo_redundant_backup = true
+redis_sku               = "Premium"
+redis_family            = "P"
+redis_capacity          = 1
+storage_replication_type = "GRS"
+
+dns_zone_name   = "example.com"
+dns_record_name = "sparc"
+
+sparc_app_name      = "SPARC"
+sparc_contact_email = "compliance-team@example.com"
+sparc_org_name      = "My Organization"
+
+sparc_enable_oidc         = "true"
+sparc_oidc_issuer_url     = "https://your-idp.okta.com"
+sparc_oidc_client_id      = "your-client-id"
+sparc_oidc_client_secret  = "your-client-secret"
+sparc_oidc_provider_title = "Corporate Login"
+sparc_oidc_force_mfa      = "true"
+
+sparc_enable_smtp       = "true"
+sparc_smtp_address      = "smtp.sendgrid.net"
+sparc_smtp_port         = "587"
+sparc_smtp_username     = "apikey"
+sparc_smtp_password     = "CHANGE_ME"
+sparc_smtp_from_address = "no-reply@sparc.example.com"
+
+alarm_emails = ["ops-team@example.com", "oncall@example.com"]
