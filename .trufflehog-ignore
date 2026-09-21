@@ -1,0 +1,17 @@
+# .trufflehog-ignore — TruffleHog false positive exclusions
+#
+# Each line is a regex matched against the finding's Raw value or file path.
+# Documented per finding for audit trail.
+
+# FP: .env.production.example templates with CHANGE_ME placeholder credentials
+# These are example files showing the expected format — not real credentials.
+# Real values go in .tfvars (gitignored) or Secrets Manager.
+.env.production.example
+
+# FP: NIST SP 800-53 catalog contains UUIDs that match the Privacy detector.
+# These are OSCAL document identifiers from the official NIST publication.
+NIST_SP-800-53_rev5_HIGH-baseline-resolved-profile_catalog.json
+
+# FP: Git objects contain historical copies of the above patterns.
+# Cannot be excluded by path — TruffleHog scans .git/objects/ by default.
+# Use --exclude-paths to skip .git/ entirely if these persist.

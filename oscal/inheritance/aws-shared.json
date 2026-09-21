@@ -1,0 +1,169 @@
+{
+  "component-definition": {
+    "uuid": "de98eede-03fd-45e2-b5a6-b3fc0e156536",
+    "metadata": {
+      "title": "AWS CSP Shared Responsibility Controls",
+      "last-modified": "2026-04-16T19:34:02Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "csp",
+          "title": "Cloud Service Provider"
+        },
+        {
+          "id": "customer",
+          "title": "Customer (SPARC)"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "e12b817a-bc09-5c08-8082-95366a4af190",
+          "type": "organization",
+          "name": "Amazon Web Services (AWS)"
+        },
+        {
+          "uuid": "a1b2c3d4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ],
+      "revisions": [
+        {
+          "title": "AWS CSP Shared Responsibility Controls (superseded)",
+          "version": "1.0.0",
+          "oscal-version": "1.1.2",
+          "props": [
+            {
+              "name": "previous-uuid",
+              "ns": "https://risk-sentinel.io/ns/oscal",
+              "value": "29bbac49-2c49-5169-b0bb-45da71bd4f1b"
+            }
+          ],
+          "last-modified": "2026-03-26T20:32:26Z"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "94efa1a4-56a3-5e75-8458-380b25a18d57",
+        "type": "leveraged-authorization",
+        "title": "AWS FedRAMP Shared Responsibility Controls",
+        "description": "Controls with shared responsibility between AWS (platform) and SPARC (configuration/monitoring). These controls are partially inherited from the AWS FedRAMP authorization, with customer-specific implementation documented in individual infrastructure and application CDEFs. Source: AWS SSP Appendix J \u2014 CRM Workbook (v26.01.U).",
+        "responsible-roles": [
+          {
+            "role-id": "csp",
+            "party-uuids": [
+              "e12b817a-bc09-5c08-8082-95366a4af190"
+            ]
+          },
+          {
+            "role-id": "customer",
+            "party-uuids": [
+              "a1b2c3d4-0001-4000-a000-000000000001"
+            ]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "399986f0-1daa-5b7b-8a3f-03f1f5a3ab66",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 controls with shared AWS/customer responsibility",
+            "implemented-requirements": [
+              {
+                "uuid": "24ab366d-02e1-5497-8a58-e3cf12862790",
+                "control-id": "ac-12",
+                "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: AC-12. Customer responsibility: AWS customers are responsible for configuring their systems to automatically terminate a user session after [Assignment: organization-defined conditions or trigger events requiring session disconnect]."
+              },
+              {
+                "uuid": "6ba301bd-0125-5133-adba-c1cf2a3cdc21",
+                "control-id": "ac-17",
+                "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: AC-17.a, AC-17.b. Customer responsibility: AWS customers are responsible for establishing and documenting usage restrictions, configuration/connection requirements, and implementation guidance for each type of remote access allowed."
+              },
+              {
+                "uuid": "6c3da77b-4444-5ec5-bc11-0209022e56b3",
+                "control-id": "au-11",
+                "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: AU-11. Customer responsibility: AWS customers are responsible for retaining audit records for a period of [FedRAMP Assignment: at least one (1) year] or for a period defined by their audit and accountability policy to provide support for after-the-fact investigations of security incidents and to meet regulatory and organizational "
+              },
+              {
+                "uuid": "f29f381b-bd99-54ac-a507-3e2b0b0614c8",
+                "control-id": "au-12",
+                "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: AU-12.a, AU-12.b, AU-12.c. Customer responsibility: AWS customers are responsible for providing audit record generation capability for the auditable events defined in AU-2 a. at [FedRAMP Assignment: all information system components where audit capability is deployed/available]."
+              },
+              {
+                "uuid": "4b406826-95b2-5b3c-9d10-7da319e6c9c4",
+                "control-id": "cm-11",
+                "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: CM-11.a, CM-11.b, CM-11.c. Customer responsibility: AWS customers are responsible for establishing [Assignment: organization-defined policies] governing the installation of software by users."
+              },
+              {
+                "uuid": "d6ac293c-f78f-51a7-b39a-430abe035c4c",
+                "control-id": "ia-11",
+                "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: IA-11. Customer responsibility: Customers are responsible for requiring\u00a0users to re-authenticate when [Assignment: organization-defined circumstances or situations requiring re-authentication]."
+              },
+              {
+                "uuid": "608fdff6-4978-5c6f-b407-aac5b6a5bbcb",
+                "control-id": "ia-12",
+                "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: IA-12.a, IA-12.b, IA-12.c. Customer responsibility: Customers are responsible for identity proofing\u00a0users that require accounts for logical access to systems based on appropriate identity assurance level requirements as specified in applicable standards and guidelines."
+              },
+              {
+                "uuid": "eb7fb193-a77a-5883-a4ce-6e6ef2ba8222",
+                "control-id": "sa-11",
+                "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: SA-11.a, SA-11.b, SA-11.c, SA-11.d, SA-11.e. Customer responsibility: AWS customers are responsible for requiring the developer of the information system, system component, or information system service to create and implement a security assessment plan."
+              },
+              {
+                "uuid": "3872e708-c717-541a-aca3-17cd7214d389",
+                "control-id": "sa-15",
+                "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: SA-15.a, SA-15.b. Customer responsibility: AWS customers are responsible for requiring the developer of the information system, system component, or information system service to follow a documented development process that: (1) Explicitly addresses security requirements; (2) Identifies the standards and tools used in the development process"
+              },
+              {
+                "uuid": "df3b7ba1-73a0-5c90-8f3a-be9e44bbe1c5",
+                "control-id": "sc-12",
+                "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: SC-12. Customer responsibility: AWS customers are responsible for establishing and managing cryptographic keys for required cryptography employed within their system in accordance with organization-defined requirements for key generation, distribution, storage, access, and destruction."
+              },
+              {
+                "uuid": "52ff066c-4cd5-5be1-abe2-f631a3b7e9fc",
+                "control-id": "sc-13",
+                "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: SC-13.a, SC-13.b. Customer responsibility: AWS customers are responsible for determining the [Assignment: organization-defined cryptographic uses]."
+              },
+              {
+                "uuid": "0d615fc6-3718-5eb9-9efa-1e224cf7611d",
+                "control-id": "sc-17",
+                "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: SC-17.a, SC-17.b. Customer responsibility: AWS customers are responsible for issuing public key certificates under an organization-defined certificate policy or obtaining public key certificates from an approved service provider."
+              },
+              {
+                "uuid": "5a7cd540-58dd-5dba-bbf5-ed2245776a05",
+                "control-id": "sc-20",
+                "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: SC-20.a, SC-20.b. Customer responsibility: AWS customers are responsible for providing additional data origin authentication and integrity verification artifacts along with the authoritative name resolution data the system returns in response to external name/address resolution queries."
+              },
+              {
+                "uuid": "70d5059b-6fab-548e-a7ec-62f52ca8740a",
+                "control-id": "sc-21",
+                "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: SC-21. Customer responsibility: AWS customers are responsible for configuring their systems to perform data origin authentication and data integrity verification on DNS resolution responses received from authoritative sources."
+              },
+              {
+                "uuid": "07d8da0e-f759-5d89-b82c-a76e5a91aa0a",
+                "control-id": "sc-22",
+                "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: SC-22. Customer responsibility: AWS customers are responsible for ensuring that information systems collectively providing name resolution services to their organization are fault-tolerant and have implemented internal/external role separation."
+              },
+              {
+                "uuid": "f65a5d59-4d04-599d-b551-230100340b3a",
+                "control-id": "sc-23",
+                "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: SC-23. Customer responsibility: AWS customers are responsible for configuring their systems to protect the authenticity of communications sessions."
+              },
+              {
+                "uuid": "a7183e90-85c9-55e3-aa03-8655c06f20de",
+                "control-id": "sc-28",
+                "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: SC-28. Customer responsibility: AWS customers are responsible for configuring their systems to protect the confidentiality and/or integrity of organization-defined information at rest in accordance with their system and communications protection policy."
+              },
+              {
+                "uuid": "01eedd18-dc5a-5074-8217-cb0eed30a27a",
+                "control-id": "si-10",
+                "description": "Shared responsibility with AWS CSP. AWS provides the platform capability (FedRAMP authorized infrastructure). The customer (SPARC) configures, monitors, and documents use through Terraform IaC and/or application controls. Parts: SI-10. Customer responsibility: AWS customers are responsible for configuring their systems to check the validity of organization-defined inputs."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

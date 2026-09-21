@@ -1,0 +1,43 @@
+{
+  "component-definition": {
+    "uuid": "ac510002-0000-4000-a000-000000000011",
+    "metadata": {
+      "title": "SPARC Azure Container Registry Component Definition",
+      "last-modified": "2026-07-26T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [{ "id": "provider", "title": "Infrastructure Provider" }],
+      "parties": [{ "uuid": "ac510002-0001-4000-a000-000000000001", "type": "organization", "name": "SPARC Platform Team" }]
+    },
+    "components": [
+      {
+        "uuid": "ac510002-2222-4000-a000-000000000011",
+        "type": "service",
+        "title": "Azure Container Registry (ACR)",
+        "description": "Private registry for the SPARC + NGINX images the container app pulls. Admin user disabled; pulls use the container app's managed identity (AcrPull). Deployed via Terraform (Azure/ACK/modules/container_registry/). <!-- UPDATE: insert the ACR resource ID and login server. Premium SKU adds private endpoint, geo-replication, and content trust. -->",
+        "responsible-roles": [{ "role-id": "provider", "party-uuids": ["ac510002-0001-4000-a000-000000000001"] }],
+        "control-implementations": [
+          {
+            "uuid": "ac510002-3333-4000-a000-000000000011",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for Azure Container Registry",
+            "implemented-requirements": [
+              {
+                "uuid": "ac510002-4444-4000-a000-000000000002",
+                "control-id": "ia-2",
+                "description": "Identification and Authentication: The registry admin user is disabled; the container app pulls images using its managed identity granted the AcrPull role, avoiding stored registry credentials. Reference: DISA SRG-APP-000148, CIS Azure.",
+                "remarks": "Terraform: azurerm_container_registry.main admin_enabled=false; azurerm_role_assignment AcrPull on the container app principal."
+              },
+              {
+                "uuid": "ac510002-4444-4000-a000-000000000007",
+                "control-id": "si-7",
+                "description": "Software, Firmware, and Information Integrity: Image integrity is provided by the container-build-sign cosign pipeline (signatures verified at deploy) rather than ACR content-trust. Premium SKU can additionally enable image quarantine/scan. Reference: DISA SRG-APP.",
+                "remarks": "Signing handled in risk-sentinel/container-build-sign; ACR SKU var controls Premium features (private endpoint, geo-replication, quarantine)."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

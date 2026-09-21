@@ -1,0 +1,65 @@
+{
+  "component-definition": {
+    "uuid": "c1d2e3f4-1111-4000-a000-000000000006",
+    "metadata": {
+      "title": "SPARC Azure Cache for Redis Component Definition",
+      "last-modified": "2026-03-20T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "c1d2e3f4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "c1d2e3f4-2222-4000-a000-000000000006",
+        "type": "service",
+        "title": "Azure Cache for Redis",
+        "description": "Azure Cache for Redis with TLS 1.2 minimum, non-SSL port disabled, public network access disabled, and optional VNet integration for Standard/Premium SKUs. Deployed via Terraform (Azure/VM/modules/redis/). <!-- UPDATE: Insert Redis cache hostname, port, SKU, and resource group for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["c1d2e3f4-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "c1d2e3f4-3333-4000-a000-000000000006",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for Azure Cache for Redis",
+            "implemented-requirements": [
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000050",
+                "control-id": "sc-8",
+                "description": "Transmission Confidentiality and Integrity: Azure Cache for Redis enforces TLS 1.2 as the minimum protocol version (minimum_tls_version = 1.2). The non-SSL port is explicitly disabled (non_ssl_port_enabled = false), ensuring all client connections must use encrypted transport. This prevents plaintext Redis protocol communication and protects data in transit from interception. Reference: DISA SRG-APP-000439, CIS Azure 4.4.",
+                "remarks": "Terraform resource: azurerm_redis_cache.main with minimum_tls_version = var.minimum_tls_version (default 1.2), non_ssl_port_enabled = false."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000051",
+                "control-id": "sc-28",
+                "description": "Protection of Information at Rest: Azure Cache for Redis encrypts data at rest using Azure-managed keys. All cached data, RDB persistence files, and AOF logs are encrypted automatically by the Azure platform. The redis_configuration block allows further tuning of persistence and memory policies. Reference: DISA SRG-APP-000231.",
+                "remarks": "Terraform resource: azurerm_redis_cache.main with redis_configuration {}. Azure encrypts all Redis data at rest by default with platform-managed keys."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000052",
+                "control-id": "sc-7",
+                "description": "Boundary Protection: Public network access is disabled (public_network_access_enabled = false), restricting all access to private network paths. For Standard and Premium SKUs, VNet integration is enabled via subnet_id, placing the Redis cache endpoint within the private network. The Redis NSG in the networking module permits inbound connections on port 6380 (TLS port) only from the VM private subnet. Reference: DISA SRG-NET-000364.",
+                "remarks": "Terraform resource: azurerm_redis_cache.main with public_network_access_enabled = false, subnet_id (conditional on Standard/Premium SKU). NSG: azurerm_network_security_group.redis in networking module."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

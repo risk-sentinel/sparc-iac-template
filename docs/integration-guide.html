@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Integrating a Team and a Pipeline into SPARC</title>
+</head>
+<body>
+<style>
+  :root {
+    --paper:#f2f5f4; --surface:#ffffff; --surface-2:#e9eeec;
+    --ink:#16211f; --ink-soft:#4d5c59; --ink-faint:#7d8d89;
+    --rule:#dbe3e1; --rule-strong:#bfcdc9;
+    --people:#8c5a16; --people-soft:#f7ecdb;
+    --machine:#2f6f62; --machine-soft:#e1efec;
+    --warn:#9b4a26; --warn-soft:#f8e9e2;
+    --display: ui-serif, Charter, "Bitstream Charter", "Iowan Old Style", Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#0f1614; --surface:#17211f; --surface-2:#131c1a;
+      --ink:#e6eeeb; --ink-soft:#a4b3af; --ink-faint:#74847f;
+      --rule:#253330; --rule-strong:#35443f;
+      --people:#d9a758; --people-soft:#2a2114;
+      --machine:#6dbfa9; --machine-soft:#122924;
+      --warn:#e0937a; --warn-soft:#2d1a14;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#0f1614; --surface:#17211f; --surface-2:#131c1a;
+    --ink:#e6eeeb; --ink-soft:#a4b3af; --ink-faint:#74847f;
+    --rule:#253330; --rule-strong:#35443f;
+    --people:#d9a758; --people-soft:#2a2114;
+    --machine:#6dbfa9; --machine-soft:#122924;
+    --warn:#e0937a; --warn-soft:#2d1a14;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:0 1.25rem 6rem;
+    background:var(--paper); color:var(--ink);
+    font-family:var(--sans); font-size:16.5px; line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:74ch; margin:0 auto}
+
+  header.top{padding:4rem 0 2rem; border-bottom:2px solid var(--ink); margin-bottom:2.5rem}
+  .eyebrow{
+    font-family:var(--mono); font-size:.72rem; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--machine); margin:0 0 .9rem;
+  }
+  h1{
+    font-family:var(--display); font-weight:600;
+    font-size:clamp(2rem,5vw,2.85rem); line-height:1.1;
+    letter-spacing:-.015em; margin:0 0 .9rem; text-wrap:balance;
+  }
+  .standfirst{font-size:1.08rem; color:var(--ink-soft); margin:0; text-wrap:pretty}
+
+  h2{
+    font-family:var(--display); font-weight:600; font-size:1.5rem;
+    letter-spacing:-.01em; margin:3.25rem 0 .4rem;
+    padding-top:1.4rem; border-top:1px solid var(--rule); text-wrap:balance;
+  }
+  h3{font-size:1rem; font-weight:660; margin:1.9rem 0 .4rem}
+  p,li{text-wrap:pretty}
+  p{margin:0 0 1rem}
+  ul,ol{padding-left:1.15rem; margin:0 0 1.1rem}
+  li{margin-bottom:.42rem}
+  code{
+    font-family:var(--mono); font-size:.85em;
+    background:var(--surface-2); border:1px solid var(--rule);
+    padding:.08em .36em; border-radius:4px; overflow-wrap:break-word;
+  }
+  a{color:var(--machine)}
+  :focus-visible{outline:2px solid var(--machine); outline-offset:2px}
+
+  .diagram{
+    background:var(--surface); border:1px solid var(--rule);
+    border-radius:10px; padding:1.25rem; margin:1.5rem 0 2rem;
+    overflow-x:auto; text-align:center;
+  }
+
+  /* Two tracks run in parallel — panels, not numbers */
+  .tracks{display:grid; grid-template-columns:1fr 1fr; gap:1.1rem; margin:1.4rem 0 1.75rem}
+  @media(max-width:720px){.tracks{grid-template-columns:1fr}}
+  .track{background:var(--surface); border:1px solid var(--rule); border-radius:10px; padding:1.2rem 1.35rem}
+  .track.people{border-top:3px solid var(--people)}
+  .track.machine{border-top:3px solid var(--machine)}
+  .track h3{margin-top:0}
+  .track .who{
+    font-family:var(--mono); font-size:.68rem; letter-spacing:.13em;
+    text-transform:uppercase; margin:0 0 .5rem;
+  }
+  .track.people .who{color:var(--people)}
+  .track.machine .who{color:var(--machine)}
+  .track ol{padding-left:1.1rem; margin-bottom:0}
+  .track li{font-size:.94rem; color:var(--ink-soft)}
+  .track li strong{color:var(--ink)}
+
+  /* Prerequisites are genuinely sequential — so they are numbered */
+  ol.steps{counter-reset:s; list-style:none; padding:0; margin:1.3rem 0 0}
+  ol.steps>li{
+    counter-increment:s; position:relative; padding-left:2.7rem; margin-bottom:1rem;
+  }
+  ol.steps>li::before{
+    content:counter(s); position:absolute; left:0; top:.02rem;
+    font-family:var(--mono); font-size:.72rem; font-weight:700; color:var(--machine);
+    border:1px solid var(--rule-strong); border-radius:50%;
+    width:1.7rem; height:1.7rem; display:grid; place-items:center;
+  }
+
+  .scroll{overflow-x:auto; border:1px solid var(--rule); border-radius:10px; margin:1.2rem 0}
+  table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:520px}
+  th,td{text-align:left; padding:.6rem .8rem; border-bottom:1px solid var(--rule); vertical-align:top}
+  thead th{
+    background:var(--surface-2); font-size:11.5px; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--ink-soft); font-weight:700;
+  }
+  tbody tr:last-child td{border-bottom:none}
+  td code{background:transparent; border:none; padding:0; font-size:12.5px}
+
+  pre{
+    background:var(--surface); border:1px solid var(--rule); border-radius:10px;
+    padding:1rem 1.15rem; overflow-x:auto; margin:1.1rem 0;
+    font-family:var(--mono); font-size:12.8px; line-height:1.65; color:var(--ink-soft);
+  }
+  pre b{color:var(--ink); font-weight:600}
+  pre i{color:var(--ink-faint); font-style:normal}
+
+  .note{
+    background:var(--surface-2); border-left:3px solid var(--machine);
+    padding:1rem 1.2rem; margin:1.4rem 0; border-radius:0 8px 8px 0;
+  }
+  .note.caution{background:var(--warn-soft); border-left-color:var(--warn)}
+  .note .lbl{
+    font-family:var(--mono); font-size:.68rem; letter-spacing:.12em;
+    text-transform:uppercase; font-weight:700; color:var(--machine); margin:0 0 .35rem;
+  }
+  .note.caution .lbl{color:var(--warn)}
+  .note p:last-child{margin-bottom:0}
+
+  /* Responsibility split — proportion carries the point better than three numbers */
+  .split-bar{display:flex; height:2.6rem; border-radius:6px; overflow:hidden;
+    border:1px solid var(--rule-strong); margin:1.4rem 0 .5rem}
+  .split-bar span{
+    display:grid; place-items:center; font-family:var(--mono); font-size:.7rem;
+    font-weight:700; color:var(--surface); letter-spacing:.04em;
+  }
+  .split-bar .inh{background:var(--machine)}
+  .split-bar .shr{background:var(--people)}
+  .split-bar .own{background:var(--ink); color:var(--paper)}
+  .split-key{display:flex; flex-wrap:wrap; gap:.4rem 1.4rem; font-size:.83rem;
+    color:var(--ink-soft); margin:0 0 1.4rem; font-variant-numeric:tabular-nums}
+  .split-key i{font-style:normal; display:inline-block; width:.62rem; height:.62rem;
+    border-radius:2px; margin-right:.42rem; vertical-align:.02rem}
+  .visually-hidden{
+    position:absolute; width:1px; height:1px; margin:-1px; padding:0;
+    overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0;
+  }
+  .split-key .inh i{background:var(--machine)}
+  .split-key .shr i{background:var(--people)}
+  .split-key .own i{background:var(--ink)}
+
+  footer{
+    margin-top:3.5rem; padding-top:1.3rem; border-top:1px solid var(--rule);
+    font-family:var(--mono); font-size:.73rem; color:var(--ink-faint);
+  }
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="eyebrow">SPARC · Integration guide</p>
+  <h1>Integrating a team and a pipeline into SPARC</h1>
+  <p class="standfirst">Two things connect to SPARC, and they connect differently. People arrive through your identity provider and get authority derived from their group grants. Pipelines arrive through a service account token and push evidence over the API. Both attach to the same thing — an authorization boundary that has to exist first — and that boundary has to be modelled before the evidence means anything: what you inherit from the platform beneath you, and which components you owe a definition for.</p>
+</header>
+
+<h2>The shape of it</h2>
+<p>Nothing connects to SPARC in the abstract — it connects to a boundary. Create that first, then the two tracks can run independently and in either order.</p>
+
+<svg viewBox="0 0 760 350" role="img" width="100%"
+     aria-label="An authorization boundary is created first; from it run the people track, the pipeline track, and the modelling of the boundary. The people track ends in boundary-scoped access; the pipeline track ends in evidence attached to the boundary, which the modelling gives controls to land on."
+     style="max-width:760px;height:auto;font-family:var(--sans)">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-faint)"/>
+    </marker>
+  </defs>
+  <g stroke="var(--ink-faint)" stroke-width="1.4" fill="none" marker-end="url(#ah)">
+    <path d="M380 52 L150 92"/><path d="M380 52 L380 92"/><path d="M380 52 L610 92"/>
+    <path d="M150 136 L150 168"/><path d="M150 212 L150 244"/>
+    <path d="M610 136 L610 168"/><path d="M610 212 L610 244"/>
+  </g>
+  <path d="M380 136 L380 288 L470 288" stroke="var(--ink-faint)" stroke-width="1.4"
+        fill="none" stroke-dasharray="5 4" marker-end="url(#ah)"/>
+
+  <g font-size="12.5" text-anchor="middle">
+    <rect x="180" y="14" width="400" height="38" rx="6" fill="var(--surface-2)" stroke="var(--rule-strong)"/>
+    <text x="380" y="31" fill="var(--ink)" font-weight="600">Organization &#8594; Authorization Boundary &#8594; Roles</text>
+    <text x="380" y="46" fill="var(--ink-soft)" font-size="11">created in-app, before anything connects</text>
+
+    <rect x="40" y="94" width="220" height="42" rx="6" fill="var(--people-soft)" stroke="var(--people)"/>
+    <text x="150" y="120" fill="var(--ink)">IdP group grant</text>
+
+    <rect x="40" y="170" width="220" height="42" rx="6" fill="var(--surface)" stroke="var(--rule-strong)"/>
+    <text x="150" y="196" fill="var(--ink)">User logs in, claims parsed</text>
+
+    <rect x="40" y="246" width="220" height="42" rx="6" fill="var(--surface)" stroke="var(--rule-strong)"/>
+    <text x="150" y="266" fill="var(--ink)">Membership derived</text>
+    <text x="150" y="280" fill="var(--ink-soft)" font-size="11">per session</text>
+
+    <rect x="270" y="94" width="220" height="42" rx="6" fill="var(--surface)" stroke="var(--rule-strong)"/>
+    <text x="380" y="112" fill="var(--ink)">Model the boundary</text>
+    <text x="380" y="127" fill="var(--ink-soft)" font-size="11">inheritance &#183; one CDEF per component</text>
+
+    <rect x="500" y="94" width="220" height="42" rx="6" fill="var(--machine-soft)" stroke="var(--machine)"/>
+    <text x="610" y="120" fill="var(--ink)">Service account + token</text>
+
+    <rect x="500" y="170" width="220" height="42" rx="6" fill="var(--surface)" stroke="var(--rule-strong)"/>
+    <text x="610" y="196" fill="var(--ink)">CI job authenticates</text>
+
+    <rect x="500" y="246" width="220" height="42" rx="6" fill="var(--surface)" stroke="var(--rule-strong)"/>
+    <text x="610" y="272" fill="var(--ink)">POST results to the API</text>
+
+    <rect x="40" y="304" width="220" height="34" rx="6" fill="var(--surface-2)" stroke="var(--rule-strong)"/>
+    <text x="150" y="325" fill="var(--ink)" font-weight="600">Boundary-scoped access</text>
+
+    <rect x="470" y="304" width="250" height="34" rx="6" fill="var(--surface-2)" stroke="var(--rule-strong)"/>
+    <text x="595" y="325" fill="var(--ink)" font-weight="600">Evidence, SAR and POA&amp;M</text>
+  </g>
+  <g stroke="var(--ink-faint)" stroke-width="1.4" fill="none" marker-end="url(#ah)">
+    <path d="M150 288 L150 304"/><path d="M610 288 L610 304"/>
+  </g>
+</svg>
+
+<h2>Before you connect anything</h2>
+<p>These are prerequisites in the strict sense — each one has to exist before the next means anything, and a grant naming something that does not exist is recorded and surfaced, never auto-created. That restraint is deliberate: auto-creation would let your identity provider mint tenants.</p>
+
+<ol class="steps">
+  <li><strong>Create the Organization.</strong> Done in-app by an instance admin.</li>
+  <li><strong>Create the Authorization Boundary</strong> beneath it. This is the unit everything else scopes to — memberships, evidence, SSPs, assessment results.</li>
+  <li><strong>Define the roles</strong> and what each may do. SPARC owns what a role <em>means</em>; the IdP only ever answers whether a person holds it.</li>
+  <li><strong>Choose the API auth mode.</strong> <code>SPARC_API_AUTH</code> decides which token types the server will accept at all — get this wrong and every pipeline call fails identically regardless of the token.</li>
+</ol>
+
+<div class="scroll">
+<table>
+  <thead><tr><th>Mode</th><th>Accepts</th><th>Use for</th></tr></thead>
+  <tbody>
+    <tr><td><code>local</code> <i>(default)</i></td><td>SPARC tokens only</td><td>Development</td></tr>
+    <tr><td><code>oidc</code></td><td>OIDC JWTs only</td><td>Full SSO, humans only</td></tr>
+    <tr><td><code>hybrid</code></td><td>JWTs for people <em>and</em> service-account tokens for automation</td><td><strong>Production — the only mode where both tracks work at once</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>The two tracks</h2>
+<p>These are parallel, not sequential. Neither blocks the other once the boundary exists.</p>
+
+<div class="tracks">
+  <div class="track people">
+    <p class="who">Track A · People</p>
+    <h3>Onboard the team</h3>
+    <ol>
+      <li>Create an IdP group per role you want to grant.</li>
+      <li>Name it with the <strong>fully qualified convention</strong> — <code>sparc:boundary:org:boundary:role</code>, or <code>sparc:org:org:role</code> for org scope.</li>
+      <li>Add people to the group. Nothing is pushed to SPARC.</li>
+      <li>They log in. SPARC reads the grants from the configured claim and <strong>derives</strong> their access for that session.</li>
+      <li>Unmatched grants land in an admin queue rather than failing the login.</li>
+    </ol>
+  </div>
+  <div class="track machine">
+    <p class="who">Track B · Pipeline</p>
+    <h3>Connect the pipeline</h3>
+    <ol>
+      <li>Go to <strong>Admin → Service Accounts</strong> and create one per pipeline.</li>
+      <li>Scope it: restrict to the <strong>endpoints</strong> it needs, and to your runner <strong>CIDR</strong> range.</li>
+      <li>Copy the token — prefix <code>sparc_sa_</code> — and store it as a CI secret.</li>
+      <li>Send it as a bearer token on every request.</li>
+      <li>Push results at the end of your scan job.</li>
+    </ol>
+  </div>
+</div>
+
+<div class="note">
+  <p class="lbl">Why entitlement is derived, not synced</p>
+  <p>A person's authority comes from the grants presented at that login — grants are never written into SPARC and later diffed. That removes the destructive revoke step, and with it the failure mode where an IdP misconfiguration becomes a customer-wide outage. Remove someone from a group and the entitlement simply does not materialise next login; restore it and recovery is automatic, with no operator action.</p>
+</div>
+
+<h2>What you inherit, and what you own</h2>
+<p>Your system does not implement every control. It runs on top of an already-authorized provider, and that relationship has a direction: yours is the <strong>leveraging</strong> system, the cloud provider's authorization is the <strong>leveraged</strong> one. Every control in your baseline lands in one of three buckets, and getting the split right is what stops you writing implementation statements for things you do not control.</p>
+
+<p class="visually-hidden">Of 370 HIGH baseline controls, 37 are inherited, 18 are shared, and 315 are system-specific.</p>
+<div class="split-bar" aria-hidden="true">
+  <span class="inh" style="flex:37">37</span>
+  <span class="shr" style="flex:18">18</span>
+  <span class="own" style="flex:315">315 system-specific</span>
+</div>
+<p class="split-key">
+  <span class="inh"><i></i>Inherited — the CSP implements it, you cite it</span>
+  <span class="shr"><i></i>Shared — the CSP provides the capability, you configure it</span>
+  <span class="own"><i></i>Yours — you implement and evidence it</span>
+</p>
+
+<p>Those are the real numbers for the ECS boundary against the NIST 800-53 Rev 5 HIGH baseline, not an illustration. The inherited and shared sets are documented as component definitions:</p>
+
+<div class="scroll">
+<table>
+  <thead><tr><th>Bucket</th><th>Documented in</th><th>What you write in the SSP</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Inherited</strong></td><td><code>oscal/inheritance/aws-inherited.json</code></td><td>A statement citing the leveraged authorization — no implementation of your own</td></tr>
+    <tr><td><strong>Shared</strong></td><td><code>oscal/inheritance/aws-shared.json</code></td><td>What <em>you</em> configure on top of the provided capability. This is the bucket people get wrong by claiming full inheritance</td></tr>
+    <tr><td><strong>System-specific</strong></td><td>Your own CDEFs, per component</td><td>A full implementation statement plus evidence</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>How the relationship is expressed today</h3>
+<p>In the SPARC SSPs the leveraged authorization is carried by <strong>components typed <code>leveraged-authorization</code></strong> — one for the inherited set, one for the shared set — sitting alongside the 17 <code>service</code> components that make up the system itself.</p>
+
+<div class="note caution">
+  <p class="lbl">Three gaps in the current wiring</p>
+  <p><strong>The dedicated OSCAL assembly is empty.</strong> <code>system-implementation.leveraged-authorizations</code> has zero entries in all three SSPs, so there is no <code>party-uuid</code> and no <code>date-authorized</code> naming <em>which</em> authorization is being leveraged. A reviewer can see that you inherit, but not from what.</p>
+  <p><strong>The inheritance CDEFs are orphaned.</strong> The SSPs reference <code>aws-inherited.json</code> and <code>aws-shared.json</code> zero times — the same control sets are restated as SSP components instead, so the two copies can drift apart silently.</p>
+  <p><strong>21 of the 58 inherited controls fall outside the HIGH baseline</strong> you are assessed against. They are not wrong, but they are not load-bearing either, and counting all 58 as coverage overstates it.</p>
+</div>
+
+<h2>Which components need a CDEF</h2>
+<p>The rule is mechanical, which is what makes it auditable: <strong>one CDEF per distinct infrastructure component, mirroring the Terraform that builds it.</strong> The CDEF directory shadows the deployment pattern — <code>AWS/CDEF/ECS/</code> alongside <code>AWS/ECS/</code> — so a reviewer can walk the modules and the components side by side.</p>
+
+<p>Deriving the list for a new pattern:</p>
+<ol class="steps">
+  <li><strong>List the components the pattern actually deploys.</strong> For ECS Fargate that is VPC/networking, ALB, the Fargate service, RDS, IAM, KMS, S3, Secrets Manager, CloudWatch, Config, GuardDuty, ECR, ACM, Route&nbsp;53, SNS, SES and the pipeline itself — 18 CDEFs.</li>
+  <li><strong>Drop what you do not run.</strong> The EC2 pattern has no <code>ecs-fargate</code> CDEF and gains <code>ebs</code> and <code>elasticache</code>. A CDEF for a component you do not deploy is a claim you cannot evidence.</li>
+  <li><strong>Map each component's controls</strong> to the baseline, keyed by NIST control ID.</li>
+  <li><strong>Check for orphans in both directions</strong> — a Terraform module with no CDEF is an unmapped component; a CDEF with no module is a stale claim.</li>
+</ol>
+
+<div class="note">
+  <p class="lbl">Vendor CDEFs arrive in another dialect — SPARC translates them</p>
+  <p>CDEFs published by AWS are keyed to <strong>AWS Security Hub identifiers</strong> — <code>S3.1</code>, <code>S3.10</code>, <code>IAM.4</code> — not NIST 800-53 control IDs. You do not have to re-key them by hand. On import, SPARC enriches each Security-Hub-shaped control to NIST 800-53 through a two-hop chain: a direct lookup first, and failing that a hop via the control's AWS Config rule. Anything still unmatched is reported rather than silently dropped, and <code>rake mappings:coverage_report</code> tells you the direct, chained and unmapped counts against your live data.</p>
+  <p>Once controls are NIST-keyed, the control-mappings API crosswalks onward to whatever framework the assessment needs — Rev 4 to Rev 5, FedRAMP, ISO 27001. Curating a Config-rule mapping once benefits every Security Hub control referencing that rule on the next import, so the mapping effort compounds instead of repeating per service.</p>
+</div>
+
+<h2>What the pipeline actually pushes</h2>
+<p>Pick the endpoint by what you have and what you want it to become. Scan output usually arrives as HDF and is converted on the way in.</p>
+
+<div class="scroll">
+<table>
+  <thead><tr><th>You have</th><th>Endpoint</th><th>Result in SPARC</th></tr></thead>
+  <tbody>
+    <tr><td>A scan result file</td><td><code>POST /api/v1/evidences</code></td><td>Evidence record, with a durable resolver URL usable in OSCAL back-matter</td></tr>
+    <tr><td>HDF scan results</td><td><code>POST /api/v1/oscal/sar_from_hdf</code></td><td>OSCAL Assessment Results</td></tr>
+    <tr><td>HDF with failures</td><td><code>POST /api/v1/oscal/poam_from_hdf</code></td><td>POA&amp;M items</td></tr>
+    <tr><td>Raw scanner output</td><td><code>POST /api/v1/scanner_findings</code></td><td>Findings for triage</td></tr>
+    <tr><td>A component definition</td><td><code>POST /api/v1/cdef_documents</code></td><td>CDEF attached to the boundary</td></tr>
+    <tr><td>An existing SAR to reshape</td><td><code>POST /api/v1/sar_documents/convert</code></td><td>Converted SAR document</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>The shape of a push</h3>
+<p>Evidence accepts <code>multipart/form-data</code> when there is a file, or <code>application/json</code> for metadata only.</p>
+
+<pre><i># at the end of your scan job</i>
+curl -sS -X POST "$SPARC_URL/api/v1/evidences" \
+  -H "Authorization: Bearer <b>$SPARC_SA_TOKEN</b>" \
+  -F "evidence[authorization_boundary_id]=<b>$BOUNDARY_ID</b>" \
+  -F "evidence[title]=Nightly container scan" \
+  -F "evidence[file]=@results.hdf.json"</pre>
+
+<h2>Confirming it worked</h2>
+<ul>
+  <li><strong>People:</strong> the person signs in and sees the boundary. If they sign in but see nothing, check the admin unmatched-grant queue — that is where a misspelled group name surfaces.</li>
+  <li><strong>Pipeline:</strong> the record appears under the boundary and the job exits non-zero on failure. Assert on the HTTP status in CI; a silent 401 that never fails the build is the usual way a broken integration goes unnoticed for weeks.</li>
+</ul>
+
+<div class="note caution">
+  <p class="lbl">Three things that bite</p>
+  <p><strong>Wrong auth mode.</strong> In <code>oidc</code> mode a perfectly valid service-account token is rejected. Production wants <code>hybrid</code>.</p>
+  <p><strong>Local login left enabled.</strong> If a person can also sign in with a local password, disabling them at the IdP is not a complete offboard. In an IdP-as-source-of-record deployment, local login should be break-glass only.</p>
+  <p><strong>Grants that name nothing.</strong> A group naming an org, boundary or role that does not exist is skipped and recorded — the login still succeeds, so this fails quietly. Check the queue.</p>
+</div>
+
+<h2>Where the detail lives</h2>
+<ul>
+  <li><code>docs/api/authentication.md</code> <i>(sparc)</i> — token types, auth modes, service accounts, cURL examples</li>
+  <li><code>docs/api/endpoints/</code> <i>(sparc)</i> — one file per endpoint, including request and response shapes</li>
+  <li><code>docs/dev/idp_entitlement_flow.md</code> <i>(sparc)</i> — the entitlement model, its constraints, and the offboarding cases</li>
+  <li><code>wiki/Integrations.md</code> <i>(sparc)</i> — the catalogue of what SPARC connects to</li>
+  <li><code>docs/dev/aws_security_hub_nist_mapping.md</code> <i>(sparc)</i> — the two-hop enrichment chain and the coverage report</li>
+  <li><code>docs/api/endpoints/control-mappings.md</code> <i>(sparc)</i> — crosswalking between frameworks and catalog revisions</li>
+  <li><code>docs/CDEF_Guide.md</code> <i>(sparc-iac)</i> — CDEF structure, and the five steps for a new deployment pattern</li>
+  <li><code>oscal/inheritance/</code> <i>(sparc-iac)</i> — the inherited and shared control sets, as component definitions</li>
+  <li><code>AWS/CDEF/&lt;pattern&gt;/</code> <i>(sparc-iac)</i> — the per-component definitions, shadowing the Terraform</li>
+</ul>
+
+<footer>
+  Derived from the sparc and sparc-iac repositories' own API, entitlement and CDEF documentation
+</footer>
+
+</div>
+
+</body>
+</html>

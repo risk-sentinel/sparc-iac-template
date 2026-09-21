@@ -1,0 +1,355 @@
+{
+  "component-definition": {
+    "uuid": "c0f3eb01-c38e-4e00-aa9f-31aa37481121",
+    "metadata": {
+      "title": "AWS CSP Inherited Controls \u2014 FedRAMP Authorization",
+      "last-modified": "2026-04-16T19:34:02Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "csp",
+          "title": "Cloud Service Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "e12b817a-bc09-5c08-8082-95366a4af190",
+          "type": "organization",
+          "name": "Amazon Web Services (AWS)",
+          "remarks": "FedRAMP authorized CSP \u2014 US East/West (Moderate), GovCloud (High)"
+        }
+      ],
+      "revisions": [
+        {
+          "title": "AWS CSP Inherited Controls \u2014 FedRAMP Authorization (superseded)",
+          "version": "1.0.0",
+          "oscal-version": "1.1.2",
+          "props": [
+            {
+              "name": "previous-uuid",
+              "ns": "https://risk-sentinel.io/ns/oscal",
+              "value": "7516ae73-ff7c-5620-94bf-62304a1fa6af"
+            }
+          ],
+          "last-modified": "2026-03-26T20:31:14Z"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "b5595a67-f900-5efc-a75e-52b7b61a9b4c",
+        "type": "leveraged-authorization",
+        "title": "AWS FedRAMP Inherited Controls",
+        "description": "Controls fully inherited from AWS under the AWS FedRAMP authorization. Source: AWS SSP Appendix J \u2014 CIS and CRM Workbook (v26.01.U). These controls cover physical/environmental protection (PE), maintenance (MA), contingency planning (CP), media protection (MP), and select audit/monitoring controls. No customer implementation required.",
+        "responsible-roles": [
+          {
+            "role-id": "csp",
+            "party-uuids": [
+              "e12b817a-bc09-5c08-8082-95366a4af190"
+            ]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "b283bfba-4cc3-559b-8d0c-6957db901c94",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 controls fully inherited from AWS FedRAMP authorization",
+            "implemented-requirements": [
+              {
+                "uuid": "7af85c9c-a598-5e14-8e72-f03245e6114f",
+                "control-id": "au-6.6",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: AU-06(06). Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions."
+              },
+              {
+                "uuid": "5a206132-1339-58b5-9319-4f3af33fb80e",
+                "control-id": "cp-4.2",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-04(02).a, CP-04(02).b. Customer note: This control may be inheritable if the customer system is hosted exclusively in AWS."
+              },
+              {
+                "uuid": "89972c74-547d-5438-bebf-20df4a8f83b2",
+                "control-id": "cp-06",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-06.a, CP-06.b. Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions."
+              },
+              {
+                "uuid": "e1508582-3396-57f1-99ec-e65e0f58703c",
+                "control-id": "cp-6.1",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-06(01). Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions."
+              },
+              {
+                "uuid": "08574636-3f03-5bcc-b5ba-59bb84796088",
+                "control-id": "cp-6.2",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-06(02). Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions."
+              },
+              {
+                "uuid": "9164bb51-47eb-5052-9a0f-c2a577b34a7b",
+                "control-id": "cp-6.3",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-06(03). Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions."
+              },
+              {
+                "uuid": "baa54c34-8064-52de-baca-f8b4bfa72243",
+                "control-id": "cp-07",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-07.a, CP-07.b, CP-07.c. Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions."
+              },
+              {
+                "uuid": "fb2cf8ef-7d26-598c-9603-7f6836331364",
+                "control-id": "cp-7.1",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-07(01). Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions."
+              },
+              {
+                "uuid": "57373006-fb38-5ea0-a531-c41ffab824cd",
+                "control-id": "cp-7.2",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-07(02). Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions."
+              },
+              {
+                "uuid": "fe62bfef-fcf5-5760-9bc4-9eeced8a418e",
+                "control-id": "cp-7.4",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-07(04). Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions."
+              },
+              {
+                "uuid": "23d628e3-443b-58b5-93fc-84b5c6e0d7b7",
+                "control-id": "cp-08",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-08. Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions."
+              },
+              {
+                "uuid": "1c2fb78e-fa32-5340-957c-98eb26369d36",
+                "control-id": "cp-8.1",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-08(01).a, CP-08(01).b. Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions."
+              },
+              {
+                "uuid": "3ecfc825-db47-52da-97bd-5a53609eca62",
+                "control-id": "cp-8.2",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-08(02). Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions."
+              },
+              {
+                "uuid": "865ad733-71fb-50de-b569-9f257a7608b0",
+                "control-id": "cp-8.3",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-08(03). Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions."
+              },
+              {
+                "uuid": "df130d05-8a78-54f8-9d58-af96f1928440",
+                "control-id": "cp-8.4",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: CP-08(04).a, CP-08(04).b, CP-08(04).c. Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions."
+              },
+              {
+                "uuid": "ffba9723-8b7e-5d27-bb3e-7d1ef2fd7903",
+                "control-id": "ma-02",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MA-02.a, MA-02.b, MA-02.c, MA-02.d, MA-02.e, MA-02.f. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "e909e437-6f9d-5aef-a021-c029d64c723a",
+                "control-id": "ma-2.2",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MA-02(02).a, MA-02(02).b. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "7a0adf88-038f-5465-9b69-1c7b023fbce3",
+                "control-id": "ma-03",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MA-03.a, MA-03.b. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "5302884d-c74e-5669-9887-f09cb3c0c374",
+                "control-id": "ma-3.1",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MA-03(01). Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "c63673e1-52e2-59c1-ab60-729528c5b72c",
+                "control-id": "ma-3.2",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MA-03(02). Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "bc9f0501-48b1-5088-b32d-21ea4d9df379",
+                "control-id": "ma-3.3",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MA-03(03).a, MA-03(03).b, MA-03(03).c, MA-03(03).d. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "35e5ab8a-0b1a-5731-a1e6-6b2bb2fafc3c",
+                "control-id": "ma-05",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MA-05.a, MA-05.b, MA-05.c. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "6213c00c-1176-5e10-b798-8003f637598e",
+                "control-id": "ma-5.1",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MA-05(01).a, MA-05(01).b. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "8ebaad71-86da-5fdc-9007-9c111e703e5a",
+                "control-id": "ma-06",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MA-06. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "5ae98306-cc7f-59d4-a17f-6081114c001b",
+                "control-id": "mp-02",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MP-02. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "411ad5aa-83d9-5e05-b862-26024c364433",
+                "control-id": "mp-03",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MP-03.a, MP-03.b. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "9fcbcdd1-1876-586c-abd3-358a45a9d1f9",
+                "control-id": "mp-04",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MP-04.a, MP-04.b. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "8cad3173-4eb2-51d1-85d0-703917b40398",
+                "control-id": "mp-05",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MP-05.a, MP-05.b, MP-05.c, MP-05.d. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "9ea738c8-2098-5855-88c7-cdeab373176e",
+                "control-id": "mp-06",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MP-06.a, MP-06.b. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "b0fab06c-a0e4-577b-90ce-f0aa1b93c587",
+                "control-id": "mp-6.1",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MP-06(01). Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "808c875f-3df4-506a-9762-deaee86b837f",
+                "control-id": "mp-6.2",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MP-06(02). Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "10c82904-c29d-5d05-be5a-5b4f7f9e902f",
+                "control-id": "mp-07",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: MP-07.a, MP-07.b. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "c6c515ce-85ce-586d-8091-d9852ed73f4c",
+                "control-id": "pe-02",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-02.a, PE-02.b, PE-02.c, PE-02.d. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "0d2c59d9-e1c3-5d61-a707-03317abb7a4b",
+                "control-id": "pe-03",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-03.a, PE-03.b, PE-03.c, PE-03.d, PE-03.e, PE-03.f, PE-03.g. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "3d192ebb-9b67-566f-868d-129068efd6de",
+                "control-id": "pe-3.1",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-03(01). Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "ed341d18-ab59-5b7a-98a8-64d98470c40c",
+                "control-id": "pe-04",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-04. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "1fc5c920-097a-57bd-ad29-23307a98a7fd",
+                "control-id": "pe-05",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-05. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "93e3d760-c308-5f0f-b320-e9d9ec7de13b",
+                "control-id": "pe-06",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-06.a, PE-06.b, PE-06.c. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "740f6905-a26e-51c4-b3b8-4ccff376e4df",
+                "control-id": "pe-6.1",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-06(01). Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "d8616df5-575d-587f-8a64-e4dbc69df91e",
+                "control-id": "pe-6.4",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-06(04). Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "81c21c0a-b286-5f81-a2ab-84100d7d9a22",
+                "control-id": "pe-08",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-08.a, PE-08.b, PE-08.c. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "01e14006-a731-5706-982e-6751e004e564",
+                "control-id": "pe-8.1",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-08(01). Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "8f2aa0c2-4ad2-5158-9b2e-a5ebd4eb5bfc",
+                "control-id": "pe-09",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-09. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "7caad936-9591-5bf2-8e16-c83524319fbc",
+                "control-id": "pe-10",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-10.a, PE-10.b, PE-10.c. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "69013620-0fee-58ea-87f0-3790f54bbbf2",
+                "control-id": "pe-11",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-11. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "97684a39-ac63-5c4a-b31d-ab45a1fb596c",
+                "control-id": "pe-11.1",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-11(01). Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "5d48f783-3c92-5e12-b1ce-67cc2e246b13",
+                "control-id": "pe-12",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-12. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "4655805f-5475-5b5b-865e-52c156b44b2d",
+                "control-id": "pe-13",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-13. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "2949276e-fda1-5771-87fa-7b67095bd1c4",
+                "control-id": "pe-13.1",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-13(01). Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "b7084b56-a458-533c-8efa-4b81c53d0f3c",
+                "control-id": "pe-13.2",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-13(02).a, PE-13(02).b. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "e6a4ccee-6acf-5b1a-882f-a7882deda2fe",
+                "control-id": "pe-14",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-14.a, PE-14.b. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "4b31ab82-e1c6-555b-aadc-6da7e89fd38a",
+                "control-id": "pe-14.2",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-14(02). Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "a2c6db64-bb9b-5cfe-a405-0c7519276125",
+                "control-id": "pe-15",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-15. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "83d28977-ab29-50e1-905f-88e271c39966",
+                "control-id": "pe-15.1",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-15(01). Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "0014850e-0c9e-5902-9656-543b850d0d9e",
+                "control-id": "pe-16",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-16.a, PE-16.b. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "cb732f3b-30b1-5531-afb0-8d70724e8d18",
+                "control-id": "pe-17",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-17.a, PE-17.b, PE-17.c, PE-17.d. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "e7db7f44-c483-5c55-8cfd-a0bda2d9c00d",
+                "control-id": "pe-18",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: PE-18. Customer note: Can Be Inherited from CSP"
+              },
+              {
+                "uuid": "c281eef2-ee48-5423-a2e0-59c252e6c79f",
+                "control-id": "si-4.14",
+                "description": "This control is fully inherited from the AWS Cloud Service Provider (CSP) under the AWS FedRAMP authorization (US East/West \u2014 Moderate, GovCloud \u2014 High). AWS is responsible for implementing and maintaining this control for all infrastructure and physical security aspects. Parts: SI-04(14). Customer note: This control is inheritable as long as the customer system is hosted exclusively in AWS FedRAMP-authorized Regions."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

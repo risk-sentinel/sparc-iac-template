@@ -1,0 +1,59 @@
+{
+  "component-definition": {
+    "uuid": "c1d2e3f4-1111-4000-a000-000000000012",
+    "metadata": {
+      "title": "SPARC Azure DNS Component Definition",
+      "last-modified": "2026-03-20T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "c1d2e3f4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "c1d2e3f4-2222-4000-a000-000000000012",
+        "type": "service",
+        "title": "Azure DNS",
+        "description": "Azure DNS zone with A record pointing to the Application Gateway public IP. Uses an existing DNS zone data source and creates the application DNS record. Deployed via Terraform (Azure/VM/modules/dns/). <!-- UPDATE: Insert DNS zone name, record name, and target IP for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["c1d2e3f4-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "c1d2e3f4-3333-4000-a000-000000000012",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for Azure DNS",
+            "implemented-requirements": [
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000110",
+                "control-id": "sc-20",
+                "description": "Secure Name/Address Resolution Service (Authoritative Source): Azure DNS provides authoritative DNS resolution for the application domain. The DNS zone is referenced via data source (data.azurerm_dns_zone.main) and an A record is created pointing the application hostname (var.record_name) to the Application Gateway public IP (var.target_ip) with a 300-second TTL. Azure DNS is hosted on Azure's global anycast network of name servers, providing high availability and fast query resolution. DNS records are managed as infrastructure-as-code via Terraform, preventing unauthorized modification. Reference: DISA SRG-NET-000131.",
+                "remarks": "Terraform resources: data.azurerm_dns_zone.main (existing zone), azurerm_dns_a_record.main with ttl = 300, records = [var.target_ip]."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000111",
+                "control-id": "sc-22",
+                "description": "Architecture and Provisioning for Name/Address Resolution Service: Azure DNS provides a 100% availability SLA for DNS query resolution. The service uses a global anycast network with name servers distributed across multiple Azure regions, ensuring DNS resolution remains available even during regional failures. The DNS zone is managed within the same resource group as the deployment, and record changes are version-controlled through Terraform. No single point of failure exists in the DNS resolution path. Reference: DISA SRG-NET-000133.",
+                "remarks": "Azure DNS 100% SLA: https://azure.microsoft.com/en-us/support/legal/sla/dns/. DNS zone and records managed via Terraform for audit trail and change control."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

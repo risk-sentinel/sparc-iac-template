@@ -1,0 +1,275 @@
+{
+  "format_version": "1.0",
+  "values": {
+    "root_module": {
+      "resources": [],
+      "child_modules": [
+        {
+          "address": "module.networking",
+          "resources": [
+            {
+              "type": "aws_vpc",
+              "name": "main",
+              "provider_name": "registry.terraform.io/hashicorp/aws",
+              "values": {
+                "id": "vpc-001",
+                "arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-001",
+                "cidr_block": "10.0.0.0/16",
+                "tags": {"Name": "example-vpc"}
+              }
+            },
+            {
+              "type": "aws_subnet",
+              "name": "public_a",
+              "provider_name": "registry.terraform.io/hashicorp/aws",
+              "values": {
+                "id": "subnet-pub-a",
+                "cidr_block": "10.0.1.0/24",
+                "tags": {"Name": "example-public-a"}
+              }
+            },
+            {
+              "type": "aws_subnet",
+              "name": "private_a",
+              "provider_name": "registry.terraform.io/hashicorp/aws",
+              "values": {
+                "id": "subnet-priv-a",
+                "cidr_block": "10.0.10.0/24",
+                "tags": {"Name": "example-private-a"}
+              }
+            },
+            {
+              "type": "aws_nat_gateway",
+              "name": "main",
+              "provider_name": "registry.terraform.io/hashicorp/aws",
+              "values": {"id": "nat-001"}
+            },
+            {
+              "type": "aws_security_group",
+              "name": "alb",
+              "provider_name": "registry.terraform.io/hashicorp/aws",
+              "values": {
+                "id": "sg-alb",
+                "name": "example-alb-sg",
+                "ingress": [
+                  {"from_port": 443, "to_port": 443, "protocol": "tcp", "cidr_blocks": ["0.0.0.0/0"], "security_groups": []}
+                ],
+                "egress": []
+              }
+            },
+            {
+              "type": "aws_security_group",
+              "name": "ecs",
+              "provider_name": "registry.terraform.io/hashicorp/aws",
+              "values": {
+                "id": "sg-ecs",
+                "name": "example-ecs-sg",
+                "ingress": [
+                  {"from_port": 8080, "to_port": 8080, "protocol": "tcp", "cidr_blocks": [], "security_groups": ["sg-alb"]}
+                ],
+                "egress": []
+              }
+            },
+            {
+              "type": "aws_security_group",
+              "name": "rds",
+              "provider_name": "registry.terraform.io/hashicorp/aws",
+              "values": {
+                "id": "sg-rds",
+                "name": "example-rds-sg",
+                "ingress": [
+                  {"from_port": 5432, "to_port": 5432, "protocol": "tcp", "cidr_blocks": [], "security_groups": ["sg-ecs"]}
+                ],
+                "egress": []
+              }
+            },
+            {
+              "type": "aws_security_group",
+              "name": "redis",
+              "provider_name": "registry.terraform.io/hashicorp/aws",
+              "values": {
+                "id": "sg-redis",
+                "name": "example-redis-sg",
+                "ingress": [
+                  {"from_port": 6379, "to_port": 6379, "protocol": "tcp", "cidr_blocks": [], "security_groups": ["sg-ecs"]}
+                ],
+                "egress": []
+              }
+            }
+          ]
+        },
+        {
+          "address": "module.alb",
+          "resources": [
+            {
+              "type": "aws_lb",
+              "name": "main",
+              "provider_name": "registry.terraform.io/hashicorp/aws",
+              "values": {
+                "id": "alb-001",
+                "arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/example-alb/abc",
+                "name": "example-alb"
+              }
+            },
+            {
+              "type": "aws_lb_target_group",
+              "name": "main",
+              "provider_name": "registry.terraform.io/hashicorp/aws",
+              "values": {
+                "id": "tg-001",
+                "arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/example-tg/def",
+                "port": 8080,
+                "protocol": "HTTP"
+              }
+            },
+            {
+              "type": "aws_lb_listener",
+              "name": "https",
+              "provider_name": "registry.terraform.io/hashicorp/aws",
+              "values": {
+                "id": "listener-443",
+                "load_balancer_arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/example-alb/abc",
+                "port": 443,
+                "protocol": "HTTPS",
+                "ssl_policy": "ELBSecurityPolicy-TLS13-1-2-2021-06",
+                "default_action": [{"type": "forward"}]
+              }
+            },
+            {
+              "type": "aws_lb_listener",
+              "name": "http",
+              "provider_name": "registry.terraform.io/hashicorp/aws",
+              "values": {
+                "id": "listener-80",
+                "load_balancer_arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/example-alb/abc",
+                "port": 80,
+                "protocol": "HTTP",
+                "ssl_policy": "",
+                "default_action": [{"type": "redirect"}]
+              }
+            }
+          ]
+        },
+        {
+          "address": "module.ecs_fargate",
+          "resources": [
+            {
+              "type": "aws_ecs_cluster",
+              "name": "main",
+              "provider_name": "registry.terraform.io/hashicorp/aws",
+              "values": {"id": "cluster-001", "arn": "arn:aws:ecs:us-east-1:123456789012:cluster/example"}
+            },
+            {
+              "type": "aws_ecs_service",
+              "name": "main",
+              "provider_name": "registry.terraform.io/hashicorp/aws",
+              "values": {"id": "service-001"}
+            },
+            {
+              "type": "aws_ecs_task_definition",
+              "name": "main",
+              "provider_name": "registry.terraform.io/hashicorp/aws",
+              "values": {
+                "id": "taskdef-001",
+                "arn": "arn:aws:ecs:us-east-1:123456789012:task-definition/example:1",
+                "container_definitions": "[{\"name\":\"example-nginx\",\"image\":\"ecr/nginx:latest\",\"portMappings\":[{\"containerPort\":8080,\"protocol\":\"tcp\"}]},{\"name\":\"example\",\"image\":\"ecr/sparc:latest\",\"portMappings\":[{\"containerPort\":3000,\"protocol\":\"tcp\"}]}]"
+              }
+            }
+          ]
+        },
+        {
+          "address": "module.rds",
+          "resources": [
+            {
+              "type": "aws_db_instance",
+              "name": "main",
+              "provider_name": "registry.terraform.io/hashicorp/aws",
+              "values": {
+                "id": "db-001",
+                "arn": "arn:aws:rds:us-east-1:123456789012:db:example",
+                "engine": "postgres",
+                "engine_version": "15.17",
+                "parameter_group_name": "example-pg",
+                "storage_encrypted": true
+              }
+            },
+            {
+              "type": "aws_db_parameter_group",
+              "name": "main",
+              "provider_name": "registry.terraform.io/hashicorp/aws",
+              "values": {
+                "id": "pg-001",
+                "name": "example-pg",
+                "parameter": [
+                  {"name": "rds.force_ssl", "value": "1"}
+                ]
+              }
+            },
+            {
+              "type": "aws_secretsmanager_secret",
+              "name": "db",
+              "provider_name": "registry.terraform.io/hashicorp/aws",
+              "values": {
+                "id": "secret-db",
+                "arn": "arn:aws:secretsmanager:us-east-1:123456789012:secret:example-db-EXAMPLE0001",
+                "name": "example/db-credentials"
+              }
+            }
+          ]
+        },
+        {
+          "address": "module.elasticache",
+          "resources": [
+            {
+              "type": "aws_elasticache_replication_group",
+              "name": "main",
+              "provider_name": "registry.terraform.io/hashicorp/aws",
+              "values": {
+                "id": "redis-001",
+                "arn": "arn:aws:elasticache:us-east-1:123456789012:replicationgroup:example",
+                "transit_encryption_enabled": true
+              }
+            }
+          ]
+        },
+        {
+          "address": "module.iam",
+          "resources": [
+            {
+              "type": "aws_iam_role",
+              "name": "ecs_task",
+              "provider_name": "registry.terraform.io/hashicorp/aws",
+              "values": {
+                "id": "role-task",
+                "arn": "arn:aws:iam::123456789012:role/example-ecs-task",
+                "name": "example-ecs-task"
+              }
+            },
+            {
+              "type": "aws_iam_role_policy",
+              "name": "ecs_task_secrets",
+              "provider_name": "registry.terraform.io/hashicorp/aws",
+              "values": {
+                "id": "policy-secrets",
+                "name": "example-ecs-task-secrets",
+                "role": "example-ecs-task",
+                "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"secretsmanager:GetSecretValue\",\"Resource\":\"arn:aws:secretsmanager:us-east-1:123456789012:secret:example-*\"}]}"
+              }
+            }
+          ]
+        },
+        {
+          "address": "module.cloudwatch",
+          "resources": [
+            {"type": "aws_cloudwatch_metric_alarm", "name": "a1", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"id": "al-1", "alarm_name": "example-alb-5xx"}},
+            {"type": "aws_cloudwatch_metric_alarm", "name": "a2", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"id": "al-2", "alarm_name": "example-ecs-cpu"}},
+            {"type": "aws_cloudwatch_metric_alarm", "name": "a3", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"id": "al-3", "alarm_name": "example-ecs-mem"}},
+            {"type": "aws_cloudwatch_metric_alarm", "name": "a4", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"id": "al-4", "alarm_name": "example-rds-cpu"}},
+            {"type": "aws_cloudwatch_metric_alarm", "name": "a5", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"id": "al-5", "alarm_name": "example-rds-storage"}},
+            {"type": "aws_sns_topic", "name": "alarms", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"id": "sns-1", "arn": "arn:aws:sns:us-east-1:123456789012:example-alarms", "name": "example-alarms"}}
+          ]
+        }
+      ]
+    }
+  }
+}

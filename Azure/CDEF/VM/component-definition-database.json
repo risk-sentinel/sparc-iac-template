@@ -1,0 +1,71 @@
+{
+  "component-definition": {
+    "uuid": "c1d2e3f4-1111-4000-a000-000000000005",
+    "metadata": {
+      "title": "SPARC Azure PostgreSQL Flexible Server Component Definition",
+      "last-modified": "2026-03-20T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "c1d2e3f4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "c1d2e3f4-2222-4000-a000-000000000005",
+        "type": "service",
+        "title": "Azure PostgreSQL Flexible Server",
+        "description": "PostgreSQL Flexible Server with encrypted storage, SSL enforcement, private DNS zone integration, delegated subnet, auto-generated credentials stored in Azure Key Vault, and configurable high availability. Deployed via Terraform (Azure/VM/modules/database/). <!-- UPDATE: Insert server FQDN, Key Vault secret name, database name, and resource group for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["c1d2e3f4-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "c1d2e3f4-3333-4000-a000-000000000005",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for Azure PostgreSQL Flexible Server",
+            "implemented-requirements": [
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000040",
+                "control-id": "sc-28",
+                "description": "Protection of Information at Rest: PostgreSQL Flexible Server storage is encrypted at rest using Azure-managed keys. SSL/TLS is enforced via server configuration parameter require_secure_transport = on, ensuring all client connections use encrypted transport. Data, backups (7-day retention), and optional geo-redundant backups are all encrypted. Reference: DISA SRG-APP-000231, CIS Azure 4.3.1.",
+                "remarks": "Terraform resources: azurerm_postgresql_flexible_server.main, azurerm_postgresql_flexible_server_configuration.require_secure_transport with value = on. Backup retention: backup_retention_days = 7."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000041",
+                "control-id": "ia-5",
+                "description": "Authenticator Management: Database administrator credentials are generated using Terraform's random_password resource (32 characters, special = false for broad compatibility). The password is immediately stored in Azure Key Vault as a JSON secret containing username, password, host, port, and dbname. Key Vault provides encryption at rest, access auditing via RBAC, and rotation capability. The password is never stored in tfvars files or exposed in Terraform plan output. Reference: DISA SRG-APP-000175.",
+                "remarks": "Terraform resources: random_password.db (length = 32, special = false), azurerm_key_vault_secret.db_credentials with jsonencode payload. The VM retrieves credentials via managed identity access to Key Vault."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000042",
+                "control-id": "sc-7",
+                "description": "Boundary Protection: The PostgreSQL Flexible Server is deployed in a delegated subnet (Microsoft.DBforPostgreSQL/flexibleServers) with private DNS zone integration (privatelink.postgres.database.azure.com). The server has no public endpoint. Network access is restricted to the VNet via the delegated subnet and private DNS zone virtual network link. The DB NSG permits inbound connections on port 5432 only from the VM private subnet. Reference: DISA SRG-NET-000364.",
+                "remarks": "Terraform resources: azurerm_postgresql_flexible_server.main with delegated_subnet_id and private_dns_zone_id, azurerm_private_dns_zone.postgres, azurerm_private_dns_zone_virtual_network_link.postgres, azurerm_network_security_group.db (in networking module)."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000043",
+                "control-id": "au-2",
+                "description": "Event Logging: PostgreSQL Flexible Server provides built-in server logs for query execution, errors, and connection events. CPU and storage utilization are monitored via Azure Monitor metric alerts (cpu_percent > 80%, storage_percent > 80%) configured in the monitoring module. These alerts trigger notifications through the action group for operational awareness. Reference: DISA SRG-APP-000089.",
+                "remarks": "Metric alerts defined in monitoring module: azurerm_monitor_metric_alert.db_cpu (cpu_percent), azurerm_monitor_metric_alert.db_storage (storage_percent). PostgreSQL server logs are available via Azure Monitor diagnostic settings."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

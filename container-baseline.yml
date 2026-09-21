@@ -1,0 +1,378 @@
+# container-baseline.yml — CI runner container CVE disposition tracking
+#
+# Follows the same workflow as checkov-baseline.yml:
+#   discovered → triaged → accepted/deferred/remediated
+#
+# CVEs are from the sparc-ci-runner container image scanned by Trivy.
+# These are build-time tools, NOT deployed to production infrastructure.
+#
+# Risk context: These tools run in ephemeral CI runners with no access
+# to customer data. Attack surface is limited to the CI pipeline itself.
+# Supply chain risk is mitigated by cosign image signing and Trivy
+# scanning on every build.
+#
+# New HIGH or CRITICAL CVEs not in this baseline will block the build.
+
+findings:
+
+  # ==========================================================================
+  # CRITICAL — Accepted (5 unique CVEs)
+  # ==========================================================================
+
+  # ── Node.js / SAF CLI dependencies ────────────────────────────────────
+  - cve_id: CVE-2026-25896
+    package: fast-xml-parser
+    severity: CRITICAL
+    disposition: accepted
+    rationale: "Transitive dependency of @mitre/saf. XML parsing vulnerability — SAF CLI only processes trusted HDF/SARIF inputs from our own scan tools, not untrusted XML. No user-controlled XML input path."
+    nist_control: si-10
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  # ── Go stdlib (embedded in Terraform/TruffleHog/cosign binaries) ──────
+  - cve_id: CVE-2024-45337
+    package: golang.org/x/crypto
+    severity: CRITICAL
+    disposition: accepted
+    rationale: "Go crypto CVE in Terraform binary. CI runner only — outbound TLS connections to AWS APIs. No inbound attack surface."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2025-68121
+    package: stdlib (Go)
+    severity: CRITICAL
+    disposition: accepted
+    rationale: "Go stdlib CVE embedded in compiled binaries. CI runner only — not deployed to production."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2026-33186
+    package: google.golang.org/grpc
+    severity: CRITICAL
+    disposition: accepted
+    rationale: "gRPC CVE in Go binaries (Terraform, TruffleHog, cosign). Outbound connections only — not exposed as gRPC servers."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  # ==========================================================================
+  # HIGH — Debian base image (python:3.12-slim) — 41 findings, 10 unique CVEs
+  # ==========================================================================
+
+  # ── CPython vulnerabilities (CI runner does not use IMAP/POP3/email/webbrowser) ──
+  - cve_id: CVE-2025-13836
+    package: libpython3.13
+    severity: HIGH
+    disposition: accepted
+    rationale: "http.client DoS via excessive read buffering. CI runner makes only short HTTP calls to AWS APIs. No long-lived HTTP client sessions."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2025-15366
+    package: libpython3.13
+    severity: HIGH
+    disposition: accepted
+    rationale: "IMAP command injection. CI runner does not use imaplib or connect to any IMAP servers."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2025-15367
+    package: libpython3.13
+    severity: HIGH
+    disposition: accepted
+    rationale: "POP3 command injection. CI runner does not use poplib or connect to any POP3 servers."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2025-8194
+    package: libpython3.13
+    severity: HIGH
+    disposition: accepted
+    rationale: "Infinite loop parsing tar files. CI runner does not parse untrusted tar archives."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2026-1299
+    package: libpython3.13
+    severity: HIGH
+    disposition: accepted
+    rationale: "Email header injection via unquoted newlines. CI runner does not send emails or use email.* modules."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2026-4519
+    package: libpython3.13
+    severity: HIGH
+    disposition: accepted
+    rationale: "webbrowser.open() command injection. CI runner has no browser and does not call webbrowser.open()."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  # ── System libraries ──────────────────────────────────────────────────
+  - cve_id: CVE-2025-69720
+    package: libncursesw6
+    severity: HIGH
+    disposition: accepted
+    rationale: "ncurses buffer overflow. CI runner has no interactive terminal. ncurses installed as Python dependency, not used directly."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2026-24882
+    package: gnupg
+    severity: HIGH
+    disposition: accepted
+    rationale: "GnuPG tpm2daemon stack overflow. CI runner does not use TPM. GnuPG installed for apt package verification only."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2026-25210
+    package: libexpat1
+    severity: HIGH
+    disposition: accepted
+    rationale: "libexpat information disclosure. CI runner does not parse untrusted XML via expat."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2026-27135
+    package: libnghttp2-14
+    severity: HIGH
+    disposition: accepted
+    rationale: "nghttp2 DoS via malformed HTTP/2 frames. CI runner makes outbound HTTPS calls only — not an HTTP/2 server."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2026-29111
+    package: libsystemd0
+    severity: HIGH
+    disposition: accepted
+    rationale: "systemd arbitrary code execution via IPC. Container does not run systemd — library is a transitive dependency."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2026-4046
+    package: libc6
+    severity: HIGH
+    disposition: accepted
+    rationale: "glibc iconv DoS. CI runner does not perform character set conversions on untrusted input."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  # ==========================================================================
+  # HIGH — Node.js / SAF CLI (4 findings, 4 unique CVEs)
+  # ==========================================================================
+
+  - cve_id: CVE-2026-25128
+    package: fast-xml-parser
+    severity: HIGH
+    disposition: accepted
+    rationale: "RangeError DoS in fast-xml-parser. SAF CLI only processes trusted HDF/SARIF from our own scan tools."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2026-26278
+    package: fast-xml-parser
+    severity: HIGH
+    disposition: accepted
+    rationale: "XML entity expansion DoS. SAF CLI does not process untrusted XML — inputs are from Checkov/Semgrep SARIF."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2026-33036
+    package: fast-xml-parser
+    severity: HIGH
+    disposition: accepted
+    rationale: "XML entity expansion bypass. Same trusted input context as above."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2026-33671
+    package: picomatch
+    severity: HIGH
+    disposition: accepted
+    rationale: "ReDoS via crafted extglob pattern. SAF CLI does not accept user-controlled glob patterns."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  # ==========================================================================
+  # HIGH — Terraform 1.9.8 (12 findings, 12 unique CVEs)
+  # ==========================================================================
+
+  - cve_id: CVE-2025-0377
+    package: github.com/hashicorp/go-slug
+    severity: HIGH
+    disposition: accepted
+    rationale: "Zip slip in go-slug. Terraform does not process untrusted slug archives in our CI pipeline."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2025-8959
+    package: github.com/hashicorp/go-getter
+    severity: HIGH
+    disposition: accepted
+    rationale: "Arbitrary file read in go-getter. Our Terraform modules use local paths and S3 backend only — no remote module sources from untrusted URLs."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2025-22868
+    package: golang.org/x/oauth2
+    severity: HIGH
+    disposition: accepted
+    rationale: "Memory consumption during token parsing. Terraform processes OAuth tokens from AWS STS only — trusted source."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2025-22869
+    package: golang.org/x/crypto
+    severity: HIGH
+    disposition: accepted
+    rationale: "SSH key exchange DoS. Terraform does not use SSH in our pipeline — S3 backend over HTTPS."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2025-30204
+    package: github.com/golang-jwt/jwt/v4
+    severity: HIGH
+    disposition: accepted
+    rationale: "JWT header parsing memory allocation. Terraform processes JWTs from AWS STS only."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2025-47907
+    package: stdlib (Go)
+    severity: HIGH
+    disposition: accepted
+    rationale: "Postgres scan race condition in database/sql. Terraform uses the AWS provider, not direct Postgres connections."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2025-58183
+    package: stdlib (Go)
+    severity: HIGH
+    disposition: accepted
+    rationale: "archive/tar unbounded allocation. Terraform does not process untrusted tar archives in our pipeline."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2025-61726
+    package: stdlib (Go)
+    severity: HIGH
+    disposition: accepted
+    rationale: "net/url query parameter parsing memory exhaustion. Terraform constructs URLs to known AWS endpoints."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2025-61728
+    package: stdlib (Go)
+    severity: HIGH
+    disposition: accepted
+    rationale: "archive/zip CPU consumption. Terraform does not process untrusted zip archives in our pipeline."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2025-61729
+    package: stdlib (Go)
+    severity: HIGH
+    disposition: accepted
+    rationale: "crypto/x509 DoS via excessive resource consumption. Terraform validates AWS API certificates — trusted CA chain."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2026-24051
+    package: go.opentelemetry.io/otel/sdk
+    severity: HIGH
+    disposition: accepted
+    rationale: "OpenTelemetry PATH hijacking. CI runner PATH is controlled — no untrusted directories. Affects Terraform and cosign binaries."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  - cve_id: CVE-2026-25679
+    package: stdlib (Go)
+    severity: HIGH
+    disposition: accepted
+    rationale: "net/url IPv6 parsing issue. Terraform connects to AWS endpoints via hostnames, not raw IPv6 literals."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  # ==========================================================================
+  # HIGH — cosign (3 findings, 3 unique CVEs)
+  # ==========================================================================
+
+  - cve_id: CVE-2025-15558
+    package: github.com/docker/cli
+    severity: HIGH
+    disposition: accepted
+    rationale: "Docker CLI privilege escalation via malicious plugin. CI runner does not install Docker plugins — cosign uses Docker libraries for image operations only."
+    nist_control: si-2
+    reviewed_by: "@clem-field"
+    discovery_date: "2026-04-03"
+    next_review_date: "2026-05-03"
+
+  # CVE-2026-24051 and CVE-2026-25679 also affect cosign — covered under
+  # Terraform entries above (same Go stdlib CVEs, same rationale applies).
+
+# POA&M reference: These accepted findings are included in the FedRAMP
+# package via Trivy HDF → hdf_to_oscal.py → pipeline SAR → POA&M.
+# The generate_poam.py script creates POA&M items from the baseline
+# rationale and review dates.

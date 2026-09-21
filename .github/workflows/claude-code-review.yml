@@ -1,0 +1,30 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+
+jobs:
+  claude-review:
+    # Skip dependabot PRs — they don't get the Claude OAuth secret (run fails),
+    # and dependency bumps don't need an AI review.
+    if: vars.CLAUDE_INTEGRATION_ENABLED == 'true' && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: "Review this pull request for security issues, Terraform best practices, and compliance concerns. Check for hardcoded secrets, overly permissive IAM policies, missing encryption, and OSCAL CDEF consistency."

@@ -1,0 +1,1982 @@
+{
+  "assessment-results": {
+    "uuid": "ce404b17-d8bd-4c7d-9696-df855290863f",
+    "metadata": {
+      "title": "SPARC Azure VM Assessment Results",
+      "last-modified": "2026-04-16T19:31:17Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "assessor",
+          "title": "Automated Assessor (Checkov)"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "d013d778-f501-5a9b-895d-1e6e860d1b53",
+          "type": "organization",
+          "name": "Checkov",
+          "remarks": "Vendor/producer of the Checkov assessment tool"
+        }
+      ],
+      "revisions": [
+        {
+          "title": "SPARC Azure VM Assessment Results (superseded)",
+          "version": "1.0.0",
+          "oscal-version": "1.1.2",
+          "props": [
+            {
+              "name": "previous-uuid",
+              "ns": "https://risk-sentinel.io/ns/oscal",
+              "value": "e210a24a-4013-5165-bba6-1525b1ace9b4"
+            }
+          ],
+          "last-modified": "2026-03-21T20:36:04Z"
+        }
+      ]
+    },
+    "import-ap": {
+      "href": "#assessment-plan",
+      "remarks": "Automated assessment via Checkov static analysis"
+    },
+    "results": [
+      {
+        "uuid": "f00beb97-2ea7-5af4-8886-6078329e6151",
+        "title": "Checkov Scan \u2014 2026-03-21T20:36:04Z",
+        "description": "Automated Terraform configuration scan. Passed: 53, Failed: 18, Pass rate: 74.6%",
+        "start": "2026-03-21T20:36:04Z",
+        "end": "2026-03-21T20:36:04Z",
+        "reviewed-controls": {
+          "control-selections": [
+            {
+              "description": "All controls in the imported assessment plan's profile are in scope for this automated scan.",
+              "include-all": {}
+            }
+          ]
+        },
+        "observations": [
+          {
+            "uuid": "a57d159a-80ed-4968-be76-1d7d95a60d9b",
+            "title": "PASS: CKV_AZURE_41",
+            "description": "CKV_AZURE_41",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: azurerm_key_vault_secret.app_secrets"
+          },
+          {
+            "uuid": "7f51884c-e7fd-41a2-81f3-75aeeced391d",
+            "title": "PASS: CKV_AZURE_114",
+            "description": "CKV_AZURE_114",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: azurerm_key_vault_secret.app_secrets"
+          },
+          {
+            "uuid": "89b23a7d-02bc-4c50-875c-eec8f1c4a6f1",
+            "title": "PASS: CKV_AZURE_217",
+            "description": "CKV_AZURE_217",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.app_gateway.azurerm_application_gateway.main"
+          },
+          {
+            "uuid": "f586ce0e-26f8-4944-841b-3320b18149f4",
+            "title": "PASS: CKV_AZURE_33",
+            "description": "CKV_AZURE_33",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.blob_storage.azurerm_storage_account.main"
+          },
+          {
+            "uuid": "d5afca6f-5978-438b-bd41-b206fa7cfcae",
+            "title": "PASS: CKV_AZURE_59",
+            "description": "CKV_AZURE_59",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.blob_storage.azurerm_storage_account.main"
+          },
+          {
+            "uuid": "7500c577-e68a-4d70-8e99-0356d156d01d",
+            "title": "PASS: CKV_AZURE_35",
+            "description": "CKV_AZURE_35",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.blob_storage.azurerm_storage_account.main"
+          },
+          {
+            "uuid": "13b2463c-7a82-4d9e-b901-d6b2c3c52476",
+            "title": "PASS: CKV_AZURE_244",
+            "description": "CKV_AZURE_244",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.blob_storage.azurerm_storage_account.main"
+          },
+          {
+            "uuid": "12a7efa9-5744-4bbc-b56d-ee8fc54a527b",
+            "title": "PASS: CKV_AZURE_44",
+            "description": "CKV_AZURE_44",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.blob_storage.azurerm_storage_account.main"
+          },
+          {
+            "uuid": "6c7d92fd-14eb-4a24-a3c5-5cd81bf7783e",
+            "title": "PASS: CKV_AZURE_36",
+            "description": "CKV_AZURE_36",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.blob_storage.azurerm_storage_account.main"
+          },
+          {
+            "uuid": "2042cfa6-b3ad-4d15-98cb-cf0f2e73efb2",
+            "title": "PASS: CKV_AZURE_3",
+            "description": "CKV_AZURE_3",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.blob_storage.azurerm_storage_account.main"
+          },
+          {
+            "uuid": "580562f5-c08b-4e9d-bf43-f26c36071fbe",
+            "title": "PASS: CKV_AZURE_190",
+            "description": "CKV_AZURE_190",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.blob_storage.azurerm_storage_account.main"
+          },
+          {
+            "uuid": "cc6f36a8-879a-4ddd-9dd4-7263d2e007a3",
+            "title": "PASS: CKV_AZURE_34",
+            "description": "CKV_AZURE_34",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.blob_storage.azurerm_storage_container.main"
+          },
+          {
+            "uuid": "373032b0-7b27-4630-bf04-a48532bece83",
+            "title": "PASS: CKV_AZURE_41",
+            "description": "CKV_AZURE_41",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.database.azurerm_key_vault_secret.db_credentials"
+          },
+          {
+            "uuid": "e9eb9705-8ab2-4f3b-8350-bf9a73737fab",
+            "title": "PASS: CKV_AZURE_114",
+            "description": "CKV_AZURE_114",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.database.azurerm_key_vault_secret.db_credentials"
+          },
+          {
+            "uuid": "854e8c88-5eb4-49d0-9819-a439b75aafe0",
+            "title": "PASS: CKV_AZURE_42",
+            "description": "CKV_AZURE_42",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.key_vault.azurerm_key_vault.main"
+          },
+          {
+            "uuid": "1c6e844b-d73c-47fd-9b48-a884349f0997",
+            "title": "PASS: CKV_AZURE_111",
+            "description": "CKV_AZURE_111",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.key_vault.azurerm_key_vault.main"
+          },
+          {
+            "uuid": "37fc58d8-7fd7-40ac-aefd-856e78b1acb8",
+            "title": "PASS: CKV_AZURE_110",
+            "description": "CKV_AZURE_110",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.key_vault.azurerm_key_vault.main"
+          },
+          {
+            "uuid": "f50d6994-efd3-404b-9450-40f50203299b",
+            "title": "PASS: CKV_AZURE_12",
+            "description": "CKV_AZURE_12",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.monitoring.azurerm_network_watcher_flow_log.nsg"
+          },
+          {
+            "uuid": "b22c3268-0396-473a-886a-3ae7c1f22e09",
+            "title": "PASS: CKV_AZURE_77",
+            "description": "CKV_AZURE_77",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.networking.azurerm_network_security_group.app_gateway"
+          },
+          {
+            "uuid": "7ee7a45f-c3c7-4f77-8a34-59a1d1bbae43",
+            "title": "PASS: CKV_AZURE_10",
+            "description": "CKV_AZURE_10",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.networking.azurerm_network_security_group.app_gateway"
+          },
+          {
+            "uuid": "70e91d18-2f26-4318-82a4-90b4cb23ac71",
+            "title": "PASS: CKV_AZURE_9",
+            "description": "CKV_AZURE_9",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.networking.azurerm_network_security_group.app_gateway"
+          },
+          {
+            "uuid": "7d09932a-ea6b-445d-be55-dd66325af102",
+            "title": "PASS: CKV_AZURE_77",
+            "description": "CKV_AZURE_77",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.networking.azurerm_network_security_group.vm"
+          },
+          {
+            "uuid": "d022ce1c-90c9-4014-af5f-6394fa473bd6",
+            "title": "PASS: CKV_AZURE_10",
+            "description": "CKV_AZURE_10",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.networking.azurerm_network_security_group.vm"
+          },
+          {
+            "uuid": "8f4b608c-62e4-4bf1-8c70-206c3b81f6a6",
+            "title": "PASS: CKV_AZURE_9",
+            "description": "CKV_AZURE_9",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.networking.azurerm_network_security_group.vm"
+          },
+          {
+            "uuid": "4c131644-c2b0-4f96-ac08-39d9e7c90651",
+            "title": "PASS: CKV_AZURE_160",
+            "description": "CKV_AZURE_160",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.networking.azurerm_network_security_group.vm"
+          },
+          {
+            "uuid": "689780c1-6724-4d58-a56e-7e6dbba16fb9",
+            "title": "PASS: CKV_AZURE_77",
+            "description": "CKV_AZURE_77",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.networking.azurerm_network_security_group.db"
+          },
+          {
+            "uuid": "dac90aa9-c2ba-43f9-a2d4-4f0dafbfde10",
+            "title": "PASS: CKV_AZURE_10",
+            "description": "CKV_AZURE_10",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.networking.azurerm_network_security_group.db"
+          },
+          {
+            "uuid": "a5b5cfa1-898f-4113-acef-daac3ae6c650",
+            "title": "PASS: CKV_AZURE_9",
+            "description": "CKV_AZURE_9",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.networking.azurerm_network_security_group.db"
+          },
+          {
+            "uuid": "ac792fb3-94e7-46ac-b10c-a44ff898a8d2",
+            "title": "PASS: CKV_AZURE_160",
+            "description": "CKV_AZURE_160",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.networking.azurerm_network_security_group.db"
+          },
+          {
+            "uuid": "840d783a-e2e4-4a5d-8b66-f16ec9a6eb1c",
+            "title": "PASS: CKV_AZURE_77",
+            "description": "CKV_AZURE_77",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.networking.azurerm_network_security_group.redis"
+          },
+          {
+            "uuid": "91e0ccd4-3840-401c-907d-d92509cb6b57",
+            "title": "PASS: CKV_AZURE_10",
+            "description": "CKV_AZURE_10",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.networking.azurerm_network_security_group.redis"
+          },
+          {
+            "uuid": "bc6c96ce-e4df-4d8a-8695-fe3c3a25ece7",
+            "title": "PASS: CKV_AZURE_9",
+            "description": "CKV_AZURE_9",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.networking.azurerm_network_security_group.redis"
+          },
+          {
+            "uuid": "7081b5e0-b74a-412a-a0a2-276162acea62",
+            "title": "PASS: CKV_AZURE_160",
+            "description": "CKV_AZURE_160",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.networking.azurerm_network_security_group.redis"
+          },
+          {
+            "uuid": "5808e23f-368d-4c3e-a6ba-9663ce6d716f",
+            "title": "PASS: CKV_AZURE_148",
+            "description": "CKV_AZURE_148",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.redis.azurerm_redis_cache.main"
+          },
+          {
+            "uuid": "59b0224f-a9f0-42f3-a6b0-cd08eb0af941",
+            "title": "PASS: CKV_AZURE_91",
+            "description": "CKV_AZURE_91",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.redis.azurerm_redis_cache.main"
+          },
+          {
+            "uuid": "d39cf7e5-7c2f-4a82-9b16-93c0888d5a4a",
+            "title": "PASS: CKV_AZURE_89",
+            "description": "CKV_AZURE_89",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.redis.azurerm_redis_cache.main"
+          },
+          {
+            "uuid": "0647ac3a-e229-4bb7-ba0c-8356d8894c65",
+            "title": "PASS: CKV_AZURE_251",
+            "description": "CKV_AZURE_251",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.storage.azurerm_managed_disk.data"
+          },
+          {
+            "uuid": "2d94af49-2026-485e-b81f-d3fd272d5606",
+            "title": "PASS: CKV_AZURE_2",
+            "description": "CKV_AZURE_2",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.storage.azurerm_managed_disk.data"
+          },
+          {
+            "uuid": "7530ee21-f834-4dc5-b6af-320c1a103aa6",
+            "title": "PASS: CKV_AZURE_118",
+            "description": "CKV_AZURE_118",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.vm.azurerm_network_interface.main"
+          },
+          {
+            "uuid": "b9ccb733-26e8-42e6-ac24-4f1d32e7506c",
+            "title": "PASS: CKV_AZURE_92",
+            "description": "CKV_AZURE_92",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.vm.azurerm_linux_virtual_machine.main"
+          },
+          {
+            "uuid": "c1e58026-94bc-4427-8570-d6ea05798b5b",
+            "title": "PASS: CKV_AZURE_178",
+            "description": "CKV_AZURE_178",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.vm.azurerm_linux_virtual_machine.main"
+          },
+          {
+            "uuid": "7e9733ea-11f8-40df-9932-f9dbf80b9099",
+            "title": "PASS: CKV_AZURE_50",
+            "description": "CKV_AZURE_50",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.vm.azurerm_linux_virtual_machine.main"
+          },
+          {
+            "uuid": "fdd0f512-7487-410c-891f-04fdc202643b",
+            "title": "PASS: CKV_AZURE_149",
+            "description": "CKV_AZURE_149",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.vm.azurerm_linux_virtual_machine.main"
+          },
+          {
+            "uuid": "eb1042db-d8df-48e0-a044-8fb045ac514c",
+            "title": "PASS: CKV_AZURE_179",
+            "description": "CKV_AZURE_179",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.vm.azurerm_linux_virtual_machine.main"
+          },
+          {
+            "uuid": "6d7e7d30-21cc-4f17-8bc1-78c57381df0c",
+            "title": "PASS: CKV_AZURE_1",
+            "description": "CKV_AZURE_1",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.vm.azurerm_linux_virtual_machine.main"
+          },
+          {
+            "uuid": "96e90dfa-af70-4896-b7a1-fb1db7ef1b00",
+            "title": "PASS: CKV2_AZURE_38",
+            "description": "CKV2_AZURE_38",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.blob_storage.azurerm_storage_account.main"
+          },
+          {
+            "uuid": "ebdc4f78-256d-4f91-b08b-8c048cf17903",
+            "title": "PASS: CKV2_AZURE_8",
+            "description": "CKV2_AZURE_8",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.blob_storage.azurerm_storage_container.main"
+          },
+          {
+            "uuid": "9b5b95ad-a24a-4b79-8e98-342b1e20fe31",
+            "title": "PASS: CKV2_AZURE_47",
+            "description": "CKV2_AZURE_47",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.blob_storage.azurerm_storage_account.main"
+          },
+          {
+            "uuid": "54f89f16-dea6-4d4a-9995-e773dd484592",
+            "title": "PASS: CKV_AZURE_119",
+            "description": "CKV_AZURE_119",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.vm.azurerm_network_interface.main"
+          },
+          {
+            "uuid": "17f1b7dc-8a9c-4f27-8fa5-bc1b04d02d7c",
+            "title": "PASS: CKV2_AZURE_39",
+            "description": "CKV2_AZURE_39",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.vm.azurerm_network_interface.main"
+          },
+          {
+            "uuid": "d0b040f1-d2a1-483f-8c4f-f5eef0646230",
+            "title": "PASS: CKV2_AZURE_31",
+            "description": "CKV2_AZURE_31",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.networking.azurerm_subnet.public"
+          },
+          {
+            "uuid": "386289a4-e27f-4369-b5d7-9d493d143440",
+            "title": "PASS: CKV2_AZURE_31",
+            "description": "CKV2_AZURE_31",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.networking.azurerm_subnet.private"
+          },
+          {
+            "uuid": "4148fae7-f0cc-4eeb-aef3-5544fe232479",
+            "title": "PASS: CKV2_AZURE_31",
+            "description": "CKV2_AZURE_31",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.networking.azurerm_subnet.database"
+          },
+          {
+            "uuid": "8e2919ef-266f-43b4-9445-1c837607950f",
+            "title": "FAIL: CKV_AZURE_218",
+            "description": "CKV_AZURE_218",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.app_gateway.azurerm_application_gateway.main. File: /modules/app_gateway/main.tf"
+          },
+          {
+            "uuid": "7edf2a8f-b790-4a0e-bb4b-b676b4f95797",
+            "title": "FAIL: CKV_AZURE_206",
+            "description": "CKV_AZURE_206",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.blob_storage.azurerm_storage_account.main. File: /modules/blob_storage/main.tf"
+          },
+          {
+            "uuid": "a7daf7ec-b6ef-45c4-8ef2-594c59b26383",
+            "title": "FAIL: CKV_AZURE_136",
+            "description": "CKV_AZURE_136",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.database.azurerm_postgresql_flexible_server.main. File: /modules/database/main.tf"
+          },
+          {
+            "uuid": "ba6680ef-93e1-4ca9-b1da-dd280f4e5317",
+            "title": "FAIL: CKV_AZURE_189",
+            "description": "CKV_AZURE_189",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.key_vault.azurerm_key_vault.main. File: /modules/key_vault/main.tf"
+          },
+          {
+            "uuid": "020f5589-bdba-4a15-b11c-c9d896296387",
+            "title": "FAIL: CKV_AZURE_109",
+            "description": "CKV_AZURE_109",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.key_vault.azurerm_key_vault.main. File: /modules/key_vault/main.tf"
+          },
+          {
+            "uuid": "c7c2a7e1-6e58-476d-975f-983efb5d0b55",
+            "title": "FAIL: CKV_AZURE_183",
+            "description": "CKV_AZURE_183",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.networking.azurerm_virtual_network.main. File: /modules/networking/main.tf"
+          },
+          {
+            "uuid": "cb114359-8007-4292-8ebf-22500d7fda4e",
+            "title": "FAIL: CKV_AZURE_182",
+            "description": "CKV_AZURE_182",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.networking.azurerm_virtual_network.main. File: /modules/networking/main.tf"
+          },
+          {
+            "uuid": "fa688995-c369-477e-9c94-1258499e8f80",
+            "title": "FAIL: CKV_AZURE_160",
+            "description": "CKV_AZURE_160",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.networking.azurerm_network_security_group.app_gateway. File: /modules/networking/main.tf"
+          },
+          {
+            "uuid": "886bac46-8006-4722-8a48-e20cc4783a08",
+            "title": "FAIL: CKV_AZURE_230",
+            "description": "CKV_AZURE_230",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.redis.azurerm_redis_cache.main. File: /modules/redis/main.tf"
+          },
+          {
+            "uuid": "1d74bdfd-bc6d-48f8-b1d9-4d1ca13ceca9",
+            "title": "FAIL: CKV_AZURE_93",
+            "description": "CKV_AZURE_93",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.storage.azurerm_managed_disk.data. File: /modules/storage/main.tf"
+          },
+          {
+            "uuid": "0bdc7c39-2bd8-4698-9527-bd1a94aa5d04",
+            "title": "FAIL: CKV2_AZURE_41",
+            "description": "CKV2_AZURE_41",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.blob_storage.azurerm_storage_account.main. File: /modules/blob_storage/main.tf"
+          },
+          {
+            "uuid": "379d490e-2866-4b8c-8ef2-a72664bb07b7",
+            "title": "FAIL: CKV2_AZURE_32",
+            "description": "CKV2_AZURE_32",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.key_vault.azurerm_key_vault.main. File: /modules/key_vault/main.tf"
+          },
+          {
+            "uuid": "d4b1174e-f940-4963-99b0-dddd0d9575ac",
+            "title": "FAIL: CKV2_AZURE_33",
+            "description": "CKV2_AZURE_33",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.blob_storage.azurerm_storage_account.main. File: /modules/blob_storage/main.tf"
+          },
+          {
+            "uuid": "27e1930f-7d3c-49c5-ae3a-012d013478bf",
+            "title": "FAIL: CKV2_AZURE_40",
+            "description": "CKV2_AZURE_40",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.blob_storage.azurerm_storage_account.main. File: /modules/blob_storage/main.tf"
+          },
+          {
+            "uuid": "b075b5d0-f083-4b36-a69f-8aa1ee5952bc",
+            "title": "FAIL: CKV2_AZURE_57",
+            "description": "CKV2_AZURE_57",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.database.azurerm_postgresql_flexible_server.main. File: /modules/database/main.tf"
+          },
+          {
+            "uuid": "ab5e85c4-7125-46ac-ad87-bdcd1b0dcc38",
+            "title": "FAIL: CKV2_AZURE_21",
+            "description": "CKV2_AZURE_21",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.blob_storage.azurerm_storage_container.main. File: /modules/blob_storage/main.tf"
+          },
+          {
+            "uuid": "12228a86-f8a3-4554-acaf-de959b6c7fad",
+            "title": "FAIL: CKV_AZURE_120",
+            "description": "CKV_AZURE_120",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.app_gateway.azurerm_application_gateway.main. File: /modules/app_gateway/main.tf"
+          },
+          {
+            "uuid": "cc04a866-8c8f-448c-8ee8-350c528a6380",
+            "title": "FAIL: CKV2_AZURE_1",
+            "description": "CKV2_AZURE_1",
+            "methods": [
+              "AUTOMATED"
+            ],
+            "collected": "2026-03-21T20:36:04Z",
+            "remarks": "Resource: module.blob_storage.azurerm_storage_account.main. File: /modules/blob_storage/main.tf"
+          }
+        ],
+        "findings": [
+          {
+            "uuid": "e0ed3fac-86fa-46d9-a4f6-35f56735d10a",
+            "title": "CKV_AZURE_41",
+            "description": "Passed check on azurerm_key_vault_secret.app_secrets",
+            "target": {
+              "type": "objective-id",
+              "target-id": "ia-5",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "a57d159a-80ed-4968-be76-1d7d95a60d9b"
+              }
+            ]
+          },
+          {
+            "uuid": "559b9d2e-d0e6-45e1-b7a4-81b3eead7f60",
+            "title": "CKV_AZURE_114",
+            "description": "Passed check on azurerm_key_vault_secret.app_secrets",
+            "target": {
+              "type": "objective-id",
+              "target-id": "ia-5",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "7f51884c-e7fd-41a2-81f3-75aeeced391d"
+              }
+            ]
+          },
+          {
+            "uuid": "95d5d4e2-57bc-4f8f-9ef6-54446aa65e6d",
+            "title": "CKV_AZURE_217",
+            "description": "Passed check on module.app_gateway.azurerm_application_gateway.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "89b23a7d-02bc-4c50-875c-eec8f1c4a6f1"
+              }
+            ]
+          },
+          {
+            "uuid": "2f4941bf-ed20-421f-a382-4e057fbdb466",
+            "title": "CKV_AZURE_33",
+            "description": "Passed check on module.blob_storage.azurerm_storage_account.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "au-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "f586ce0e-26f8-4944-841b-3320b18149f4"
+              }
+            ]
+          },
+          {
+            "uuid": "b170d926-7f97-4eb6-96f1-ceb854218e5d",
+            "title": "CKV_AZURE_59",
+            "description": "Passed check on module.blob_storage.azurerm_storage_account.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "ac-3",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "d5afca6f-5978-438b-bd41-b206fa7cfcae"
+              }
+            ]
+          },
+          {
+            "uuid": "69e1cc42-2d66-469b-b56d-163869bead5f",
+            "title": "CKV_AZURE_35",
+            "description": "Passed check on module.blob_storage.azurerm_storage_account.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "7500c577-e68a-4d70-8e99-0356d156d01d"
+              }
+            ]
+          },
+          {
+            "uuid": "2765f21b-cbda-44c4-ab38-d5b78151a9d8",
+            "title": "CKV_AZURE_244",
+            "description": "Passed check on module.blob_storage.azurerm_storage_account.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "13b2463c-7a82-4d9e-b901-d6b2c3c52476"
+              }
+            ]
+          },
+          {
+            "uuid": "bc9520e6-f7d6-447e-8496-7fb329711641",
+            "title": "CKV_AZURE_44",
+            "description": "Passed check on module.blob_storage.azurerm_storage_account.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "12a7efa9-5744-4bbc-b56d-ee8fc54a527b"
+              }
+            ]
+          },
+          {
+            "uuid": "c4299d21-5399-44fa-8b4c-51ba96a0218a",
+            "title": "CKV_AZURE_36",
+            "description": "Passed check on module.blob_storage.azurerm_storage_account.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "6c7d92fd-14eb-4a24-a3c5-5cd81bf7783e"
+              }
+            ]
+          },
+          {
+            "uuid": "24d4a5f8-2e30-4375-b2c8-88388e674715",
+            "title": "CKV_AZURE_3",
+            "description": "Passed check on module.blob_storage.azurerm_storage_account.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "2042cfa6-b3ad-4d15-98cb-cf0f2e73efb2"
+              }
+            ]
+          },
+          {
+            "uuid": "f92db7c1-72de-42fd-b5a5-cd502a6f912f",
+            "title": "CKV_AZURE_190",
+            "description": "Passed check on module.blob_storage.azurerm_storage_account.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "580562f5-c08b-4e9d-bf43-f26c36071fbe"
+              }
+            ]
+          },
+          {
+            "uuid": "cd782c06-2b0d-46ac-aae0-4bdef4c0d496",
+            "title": "CKV_AZURE_34",
+            "description": "Passed check on module.blob_storage.azurerm_storage_container.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "cc6f36a8-879a-4ddd-9dd4-7263d2e007a3"
+              }
+            ]
+          },
+          {
+            "uuid": "8d2f6bd1-7306-4e82-beae-012c00d8dd3a",
+            "title": "CKV_AZURE_41",
+            "description": "Passed check on module.database.azurerm_key_vault_secret.db_credentials",
+            "target": {
+              "type": "objective-id",
+              "target-id": "ia-5",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "373032b0-7b27-4630-bf04-a48532bece83"
+              }
+            ]
+          },
+          {
+            "uuid": "c5beed09-19b1-4e7d-b5d6-c52570b55701",
+            "title": "CKV_AZURE_114",
+            "description": "Passed check on module.database.azurerm_key_vault_secret.db_credentials",
+            "target": {
+              "type": "objective-id",
+              "target-id": "ia-5",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "e9eb9705-8ab2-4f3b-8350-bf9a73737fab"
+              }
+            ]
+          },
+          {
+            "uuid": "ce810eae-d906-4d48-8421-9af85fe66923",
+            "title": "CKV_AZURE_42",
+            "description": "Passed check on module.key_vault.azurerm_key_vault.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "854e8c88-5eb4-49d0-9819-a439b75aafe0"
+              }
+            ]
+          },
+          {
+            "uuid": "a7d7adda-defe-4596-a7fb-550b7a4620f9",
+            "title": "CKV_AZURE_111",
+            "description": "Passed check on module.key_vault.azurerm_key_vault.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "1c6e844b-d73c-47fd-9b48-a884349f0997"
+              }
+            ]
+          },
+          {
+            "uuid": "562a0c68-ea43-40bb-9ab5-90d7f0c18f89",
+            "title": "CKV_AZURE_110",
+            "description": "Passed check on module.key_vault.azurerm_key_vault.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "37fc58d8-7fd7-40ac-aefd-856e78b1acb8"
+              }
+            ]
+          },
+          {
+            "uuid": "991f001f-b039-4ebe-a709-4001ceadf1ff",
+            "title": "CKV_AZURE_12",
+            "description": "Passed check on module.monitoring.azurerm_network_watcher_flow_log.nsg",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "f50d6994-efd3-404b-9450-40f50203299b"
+              }
+            ]
+          },
+          {
+            "uuid": "473e53c8-4e4f-43ce-b050-77be1c238631",
+            "title": "CKV_AZURE_77",
+            "description": "Passed check on module.networking.azurerm_network_security_group.app_gateway",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "b22c3268-0396-473a-886a-3ae7c1f22e09"
+              }
+            ]
+          },
+          {
+            "uuid": "3b5dcce5-3fc8-4f20-96da-4de2f941904b",
+            "title": "CKV_AZURE_10",
+            "description": "Passed check on module.networking.azurerm_network_security_group.app_gateway",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "7ee7a45f-c3c7-4f77-8a34-59a1d1bbae43"
+              }
+            ]
+          },
+          {
+            "uuid": "17471381-b7d8-4084-9856-b3cd9a2b6753",
+            "title": "CKV_AZURE_9",
+            "description": "Passed check on module.networking.azurerm_network_security_group.app_gateway",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "70e91d18-2f26-4318-82a4-90b4cb23ac71"
+              }
+            ]
+          },
+          {
+            "uuid": "737228dc-e58e-42d0-8da4-d530506fa7b8",
+            "title": "CKV_AZURE_77",
+            "description": "Passed check on module.networking.azurerm_network_security_group.vm",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "7d09932a-ea6b-445d-be55-dd66325af102"
+              }
+            ]
+          },
+          {
+            "uuid": "0820a188-6e9a-4239-830b-89f764a3f330",
+            "title": "CKV_AZURE_10",
+            "description": "Passed check on module.networking.azurerm_network_security_group.vm",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "d022ce1c-90c9-4014-af5f-6394fa473bd6"
+              }
+            ]
+          },
+          {
+            "uuid": "daa7d3fd-9cf1-468d-9643-63eee79ecfe0",
+            "title": "CKV_AZURE_9",
+            "description": "Passed check on module.networking.azurerm_network_security_group.vm",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "8f4b608c-62e4-4bf1-8c70-206c3b81f6a6"
+              }
+            ]
+          },
+          {
+            "uuid": "d027c79d-72c9-4ae1-b62a-090cd79ea737",
+            "title": "CKV_AZURE_160",
+            "description": "Passed check on module.networking.azurerm_network_security_group.vm",
+            "target": {
+              "type": "objective-id",
+              "target-id": "ac-3",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "4c131644-c2b0-4f96-ac08-39d9e7c90651"
+              }
+            ]
+          },
+          {
+            "uuid": "87c5c04c-74d0-4152-98d5-7230a6bb5cc2",
+            "title": "CKV_AZURE_77",
+            "description": "Passed check on module.networking.azurerm_network_security_group.db",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "689780c1-6724-4d58-a56e-7e6dbba16fb9"
+              }
+            ]
+          },
+          {
+            "uuid": "2cd86d4f-611e-4a10-b26b-9ad3bd169bee",
+            "title": "CKV_AZURE_10",
+            "description": "Passed check on module.networking.azurerm_network_security_group.db",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "dac90aa9-c2ba-43f9-a2d4-4f0dafbfde10"
+              }
+            ]
+          },
+          {
+            "uuid": "93608c9b-9091-4a74-a54e-a7a4e962f94e",
+            "title": "CKV_AZURE_9",
+            "description": "Passed check on module.networking.azurerm_network_security_group.db",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "a5b5cfa1-898f-4113-acef-daac3ae6c650"
+              }
+            ]
+          },
+          {
+            "uuid": "c38a85f3-3449-4393-a097-ade699d918e3",
+            "title": "CKV_AZURE_160",
+            "description": "Passed check on module.networking.azurerm_network_security_group.db",
+            "target": {
+              "type": "objective-id",
+              "target-id": "ac-3",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "ac792fb3-94e7-46ac-b10c-a44ff898a8d2"
+              }
+            ]
+          },
+          {
+            "uuid": "60340a4a-5a64-4554-b4d6-1c67b39966cb",
+            "title": "CKV_AZURE_77",
+            "description": "Passed check on module.networking.azurerm_network_security_group.redis",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "840d783a-e2e4-4a5d-8b66-f16ec9a6eb1c"
+              }
+            ]
+          },
+          {
+            "uuid": "a233adbd-8b82-4e37-bb60-0e73fbc285e2",
+            "title": "CKV_AZURE_10",
+            "description": "Passed check on module.networking.azurerm_network_security_group.redis",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "91e0ccd4-3840-401c-907d-d92509cb6b57"
+              }
+            ]
+          },
+          {
+            "uuid": "40440d73-6b53-4163-8a64-045771d7a090",
+            "title": "CKV_AZURE_9",
+            "description": "Passed check on module.networking.azurerm_network_security_group.redis",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "bc6c96ce-e4df-4d8a-8695-fe3c3a25ece7"
+              }
+            ]
+          },
+          {
+            "uuid": "21aeec7b-bf5d-4d52-9d95-579ae8e890b4",
+            "title": "CKV_AZURE_160",
+            "description": "Passed check on module.networking.azurerm_network_security_group.redis",
+            "target": {
+              "type": "objective-id",
+              "target-id": "ac-3",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "7081b5e0-b74a-412a-a0a2-276162acea62"
+              }
+            ]
+          },
+          {
+            "uuid": "6e94ed6f-41ed-461d-b477-cc50e87cf49c",
+            "title": "CKV_AZURE_148",
+            "description": "Passed check on module.redis.azurerm_redis_cache.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "5808e23f-368d-4c3e-a6ba-9663ce6d716f"
+              }
+            ]
+          },
+          {
+            "uuid": "aad9e990-a818-45ff-9e1c-12e02fac2252",
+            "title": "CKV_AZURE_91",
+            "description": "Passed check on module.redis.azurerm_redis_cache.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "59b0224f-a9f0-42f3-a6b0-cd08eb0af941"
+              }
+            ]
+          },
+          {
+            "uuid": "8ec21af9-99d1-44a0-84cb-aacd463c6962",
+            "title": "CKV_AZURE_89",
+            "description": "Passed check on module.redis.azurerm_redis_cache.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "d39cf7e5-7c2f-4a82-9b16-93c0888d5a4a"
+              }
+            ]
+          },
+          {
+            "uuid": "9330acbe-453e-4d26-b2a6-0858e544c6d9",
+            "title": "CKV_AZURE_251",
+            "description": "Passed check on module.storage.azurerm_managed_disk.data",
+            "target": {
+              "type": "objective-id",
+              "target-id": "sc-28",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "0647ac3a-e229-4bb7-ba0c-8356d8894c65"
+              }
+            ]
+          },
+          {
+            "uuid": "d6be97a8-8329-4e78-8f76-3ffafcb0b69f",
+            "title": "CKV_AZURE_2",
+            "description": "Passed check on module.storage.azurerm_managed_disk.data",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "2d94af49-2026-485e-b81f-d3fd272d5606"
+              }
+            ]
+          },
+          {
+            "uuid": "80724675-82c1-47c7-86b3-8f6e44022277",
+            "title": "CKV_AZURE_118",
+            "description": "Passed check on module.vm.azurerm_network_interface.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "7530ee21-f834-4dc5-b6af-320c1a103aa6"
+              }
+            ]
+          },
+          {
+            "uuid": "71dc1fbe-2f65-494a-9af0-5236931e67b0",
+            "title": "CKV_AZURE_92",
+            "description": "Passed check on module.vm.azurerm_linux_virtual_machine.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "b9ccb733-26e8-42e6-ac24-4f1d32e7506c"
+              }
+            ]
+          },
+          {
+            "uuid": "399b5950-c59b-454d-ac69-e6af49d564cf",
+            "title": "CKV_AZURE_178",
+            "description": "Passed check on module.vm.azurerm_linux_virtual_machine.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "c1e58026-94bc-4427-8570-d6ea05798b5b"
+              }
+            ]
+          },
+          {
+            "uuid": "35b821f6-08bd-4d77-8969-f6058fb26c2a",
+            "title": "CKV_AZURE_50",
+            "description": "Passed check on module.vm.azurerm_linux_virtual_machine.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-7",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "7e9733ea-11f8-40df-9932-f9dbf80b9099"
+              }
+            ]
+          },
+          {
+            "uuid": "f4fa65cf-aa39-4e31-af4c-e23db683a990",
+            "title": "CKV_AZURE_149",
+            "description": "Passed check on module.vm.azurerm_linux_virtual_machine.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "fdd0f512-7487-410c-891f-04fdc202643b"
+              }
+            ]
+          },
+          {
+            "uuid": "1acdc46e-853e-4856-b43b-60a9cb56899d",
+            "title": "CKV_AZURE_179",
+            "description": "Passed check on module.vm.azurerm_linux_virtual_machine.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "eb1042db-d8df-48e0-a044-8fb045ac514c"
+              }
+            ]
+          },
+          {
+            "uuid": "b3ed2708-2434-4f28-a49b-1b720c6d2af7",
+            "title": "CKV_AZURE_1",
+            "description": "Passed check on module.vm.azurerm_linux_virtual_machine.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "6d7e7d30-21cc-4f17-8bc1-78c57381df0c"
+              }
+            ]
+          },
+          {
+            "uuid": "af586ef9-ec44-4cc2-991a-6d4ab82f9849",
+            "title": "CKV2_AZURE_38",
+            "description": "Passed check on module.blob_storage.azurerm_storage_account.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "96e90dfa-af70-4896-b7a1-fb1db7ef1b00"
+              }
+            ]
+          },
+          {
+            "uuid": "afbf5dcd-a407-471f-a2ff-7bcef6d6ca72",
+            "title": "CKV2_AZURE_8",
+            "description": "Passed check on module.blob_storage.azurerm_storage_container.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "ebdc4f78-256d-4f91-b08b-8c048cf17903"
+              }
+            ]
+          },
+          {
+            "uuid": "607e40c4-a867-44aa-93ed-6c7af382807e",
+            "title": "CKV2_AZURE_47",
+            "description": "Passed check on module.blob_storage.azurerm_storage_account.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "9b5b95ad-a24a-4b79-8e98-342b1e20fe31"
+              }
+            ]
+          },
+          {
+            "uuid": "5a882f69-289e-469d-aa9a-586dcea38f2a",
+            "title": "CKV_AZURE_119",
+            "description": "Passed check on module.vm.azurerm_network_interface.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "54f89f16-dea6-4d4a-9995-e773dd484592"
+              }
+            ]
+          },
+          {
+            "uuid": "b2b186bc-fa1e-4c73-b4ed-d5bd534aa59a",
+            "title": "CKV2_AZURE_39",
+            "description": "Passed check on module.vm.azurerm_network_interface.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "17f1b7dc-8a9c-4f27-8fa5-bc1b04d02d7c"
+              }
+            ]
+          },
+          {
+            "uuid": "b1fac7b1-bb3b-49c4-82e5-5a5594b5f26b",
+            "title": "CKV2_AZURE_31",
+            "description": "Passed check on module.networking.azurerm_subnet.public",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "d0b040f1-d2a1-483f-8c4f-f5eef0646230"
+              }
+            ]
+          },
+          {
+            "uuid": "3af28e46-5271-4442-93d0-cc58ee621173",
+            "title": "CKV2_AZURE_31",
+            "description": "Passed check on module.networking.azurerm_subnet.private",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "386289a4-e27f-4369-b5d7-9d493d143440"
+              }
+            ]
+          },
+          {
+            "uuid": "fa1102ca-d053-4e7b-879f-1586ae85d8f4",
+            "title": "CKV2_AZURE_31",
+            "description": "Passed check on module.networking.azurerm_subnet.database",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "4148fae7-f0cc-4eeb-aef3-5544fe232479"
+              }
+            ]
+          },
+          {
+            "uuid": "73fc0de7-5d5b-41ec-87a9-e24a8b58e863",
+            "title": "CKV_AZURE_218",
+            "description": "Failed check on module.app_gateway.azurerm_application_gateway.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "sc-8",
+              "status": {
+                "state": "not-satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "8e2919ef-266f-43b4-9445-1c837607950f"
+              }
+            ]
+          },
+          {
+            "uuid": "2a12c463-11c7-47ea-a350-9635a8546c1d",
+            "title": "CKV_AZURE_206",
+            "description": "Failed check on module.blob_storage.azurerm_storage_account.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cp-9",
+              "status": {
+                "state": "not-satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "7edf2a8f-b790-4a0e-bb4b-b676b4f95797"
+              }
+            ]
+          },
+          {
+            "uuid": "1a145f67-64c3-41ba-845a-0fc1e74eaa94",
+            "title": "CKV_AZURE_136",
+            "description": "Failed check on module.database.azurerm_postgresql_flexible_server.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cp-9",
+              "status": {
+                "state": "not-satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "a7daf7ec-b6ef-45c4-8ef2-594c59b26383"
+              }
+            ]
+          },
+          {
+            "uuid": "daf54e57-8788-41ef-b83f-0517a37d7e56",
+            "title": "CKV_AZURE_189",
+            "description": "Failed check on module.key_vault.azurerm_key_vault.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "sc-7",
+              "status": {
+                "state": "not-satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "ba6680ef-93e1-4ca9-b1da-dd280f4e5317"
+              }
+            ]
+          },
+          {
+            "uuid": "b8fe27fd-abd6-4b87-8c8f-8fc26d9bfcba",
+            "title": "CKV_AZURE_109",
+            "description": "Failed check on module.key_vault.azurerm_key_vault.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "sc-7",
+              "status": {
+                "state": "not-satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "020f5589-bdba-4a15-b11c-c9d896296387"
+              }
+            ]
+          },
+          {
+            "uuid": "a611fc3b-aeb1-48f6-9d90-84f7edc6ec42",
+            "title": "CKV_AZURE_183",
+            "description": "Failed check on module.networking.azurerm_virtual_network.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "not-satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "c7c2a7e1-6e58-476d-975f-983efb5d0b55"
+              }
+            ]
+          },
+          {
+            "uuid": "e4b8e425-fbea-4f50-9efd-8859c359a990",
+            "title": "CKV_AZURE_182",
+            "description": "Failed check on module.networking.azurerm_virtual_network.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "sc-20",
+              "status": {
+                "state": "not-satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "cb114359-8007-4292-8ebf-22500d7fda4e"
+              }
+            ]
+          },
+          {
+            "uuid": "aa023961-f4db-4722-92f6-deb5fa3bcfb9",
+            "title": "CKV_AZURE_160",
+            "description": "Failed check on module.networking.azurerm_network_security_group.app_gateway",
+            "target": {
+              "type": "objective-id",
+              "target-id": "ac-3",
+              "status": {
+                "state": "not-satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "fa688995-c369-477e-9c94-1258499e8f80"
+              }
+            ]
+          },
+          {
+            "uuid": "8f2b7213-e7a8-4c42-824e-5fab75ff090c",
+            "title": "CKV_AZURE_230",
+            "description": "Failed check on module.redis.azurerm_redis_cache.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cp-9",
+              "status": {
+                "state": "not-satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "886bac46-8006-4722-8a48-e20cc4783a08"
+              }
+            ]
+          },
+          {
+            "uuid": "72b79a70-a3ac-42e9-8090-c9c97b6b8f80",
+            "title": "CKV_AZURE_93",
+            "description": "Failed check on module.storage.azurerm_managed_disk.data",
+            "target": {
+              "type": "objective-id",
+              "target-id": "sc-28",
+              "status": {
+                "state": "not-satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "1d74bdfd-bc6d-48f8-b1d9-4d1ca13ceca9"
+              }
+            ]
+          },
+          {
+            "uuid": "878f8c99-2e61-4bda-9d8c-2a5067d77d40",
+            "title": "CKV2_AZURE_41",
+            "description": "Failed check on module.blob_storage.azurerm_storage_account.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "not-satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "0bdc7c39-2bd8-4698-9527-bd1a94aa5d04"
+              }
+            ]
+          },
+          {
+            "uuid": "646a626f-7f2e-4dc1-a360-8cba74489822",
+            "title": "CKV2_AZURE_32",
+            "description": "Failed check on module.key_vault.azurerm_key_vault.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "not-satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "379d490e-2866-4b8c-8ef2-a72664bb07b7"
+              }
+            ]
+          },
+          {
+            "uuid": "787c6691-f352-4551-bbdc-a4280eac8579",
+            "title": "CKV2_AZURE_33",
+            "description": "Failed check on module.blob_storage.azurerm_storage_account.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "not-satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "d4b1174e-f940-4963-99b0-dddd0d9575ac"
+              }
+            ]
+          },
+          {
+            "uuid": "bc70ebf6-b646-4257-b590-ef448c1688ce",
+            "title": "CKV2_AZURE_40",
+            "description": "Failed check on module.blob_storage.azurerm_storage_account.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "not-satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "27e1930f-7d3c-49c5-ae3a-012d013478bf"
+              }
+            ]
+          },
+          {
+            "uuid": "4ab493c5-9c91-4772-81c8-bc58ab8d8a6b",
+            "title": "CKV2_AZURE_57",
+            "description": "Failed check on module.database.azurerm_postgresql_flexible_server.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "not-satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "b075b5d0-f083-4b36-a69f-8aa1ee5952bc"
+              }
+            ]
+          },
+          {
+            "uuid": "88ee9b8b-583a-4ad7-85cc-bb10173ecca0",
+            "title": "CKV2_AZURE_21",
+            "description": "Failed check on module.blob_storage.azurerm_storage_container.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "not-satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "ab5e85c4-7125-46ac-ad87-bdcd1b0dcc38"
+              }
+            ]
+          },
+          {
+            "uuid": "c29e9132-eb79-4006-955e-fd0bcdf22d5f",
+            "title": "CKV_AZURE_120",
+            "description": "Failed check on module.app_gateway.azurerm_application_gateway.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "sc-7",
+              "status": {
+                "state": "not-satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "12228a86-f8a3-4554-acaf-de959b6c7fad"
+              }
+            ]
+          },
+          {
+            "uuid": "0ebe6c3f-18d9-42cc-bf86-903a67511a11",
+            "title": "CKV2_AZURE_1",
+            "description": "Failed check on module.blob_storage.azurerm_storage_account.main",
+            "target": {
+              "type": "objective-id",
+              "target-id": "cm-2",
+              "status": {
+                "state": "not-satisfied"
+              }
+            },
+            "related-observations": [
+              {
+                "observation-uuid": "cc04a866-8c8f-448c-8ee8-350c528a6380"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
