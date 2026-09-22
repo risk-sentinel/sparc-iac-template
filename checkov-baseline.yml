@@ -1,0 +1,1681 @@
+schema_version: '1.2'
+last_reviewed: '2026-08-03'
+findings:
+- check_id: CKV2_AWS_5
+  disposition: accepted
+  category: cross-module
+  patterns:
+  - ecs
+  rationale: SGs attached via cross-module refs; checkov cannot follow module.networking.xxx_sg_id references
+  expected_count: 5
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AWS_11
+  disposition: accepted
+  category: cross-module
+  patterns:
+  - ecs
+  rationale: VPC flow logs enabled in cloudwatch module; checkov cannot detect cross-module association
+  expected_count: 1
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AWS_12
+  disposition: remediated
+  category: cross-module
+  patterns:
+  - ecs
+  rationale: "Default SG unused; all resources use explicitly defined SGs \u2014 no longer flagged by\
+    \ checkov"
+  expected_count: 0
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-03-25'
+  remediated_date: '2026-03-25'
+- check_id: CKV_AWS_158
+  disposition: accepted
+  category: false-positive
+  patterns:
+  - ecs
+  rationale: WAF log group IS CMK-encrypted in prod (enable_cmk=true populates waf_log_kms_key_arn). The
+    ternary exists only so the module works in a no-CMK deployment; checkov cannot statically resolve
+    it. Migrated from an inline checkov:skip in modules/alb/waf.tf (#611).
+  expected_count: 1
+  nist_control: sc-13
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  remediated_date: null
+  next_review_date: '2027-02-03'
+- check_id: CKV_AWS_149
+  disposition: accepted
+  category: kms-cmk-optional
+  patterns:
+  - ecs
+  rationale: "Two Secrets Manager secrets use AWS-managed KMS rather than a CMK: module.rds (DB credential)\
+    \ and module.db_scanner_runner runner_app_key. All six module.secrets entries pass. Accepted pending\
+    \ #145 (RDS/ECR CMK migration) \u2014 a CMK on the DB credential secret needs a key-policy and recovery\
+    \ design first: a deleted or mis-scoped key makes the secret unreadable and locks us out of the data.\
+    \ FedRAMP High target, so this is deliberately time-boxed rather than open-ended."
+  expected_count: 2
+  nist_control: sc-28
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: '2027-02-03'
+  remediated_date: null
+- check_id: CKV_AWS_136
+  disposition: remediated
+  category: kms-cmk-optional
+  patterns:
+  - ecs
+  rationale: All six ECR repos now KMS-encrypted; posture improved independently. Verified 0 failures.
+  expected_count: 0
+  nist_control: sc-28
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: '2026-08-03'
+- check_id: CKV_AWS_145
+  disposition: accepted
+  category: kms-cmk-optional
+  patterns:
+  - ecs
+  rationale: SES inbound-mail bucket uses SSE-S3 (AES256) so the SES receipt S3 action can write without
+    granting SES a CMK; the raw mail is transient (lifecycle-expired) and read only by the forwarder Lambda
+    (#528).
+  expected_count: 2
+  nist_control: sc-28
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-12'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AWS_191
+  disposition: remediated
+  category: kms-cmk-optional
+  patterns:
+  - ecs
+  rationale: "ElastiCache KMS \u2014 no longer flagged by checkov"
+  expected_count: 0
+  nist_control: sc-28
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-03-25'
+  remediated_date: '2026-03-25'
+- check_id: CKV_AWS_354
+  disposition: remediated
+  category: kms-cmk-optional
+  patterns:
+  - ecs
+  rationale: "RDS Performance Insights KMS \u2014 no longer flagged by checkov"
+  expected_count: 0
+  nist_control: sc-28
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-03-25'
+  remediated_date: '2026-03-25'
+- check_id: CKV_AWS_130
+  disposition: remediated
+  category: intentional-design
+  patterns:
+  - ecs
+  rationale: Public subnet IPs required for ALB; map_public_ip_on_launch=true is intentional
+  expected_count: 0
+  nist_control: ac-4
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: '2026-04-06'
+- check_id: CKV_AWS_260
+  disposition: accepted
+  category: intentional-design
+  patterns:
+  - ecs
+  rationale: ALB port 80 ingress intentional; listener returns 301 redirect to HTTPS
+  expected_count: 1
+  nist_control: ac-3
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AWS_382
+  disposition: accepted
+  category: intentional-design
+  patterns:
+  - ecs
+  rationale: Broad egress on alb / ecs / redis SGs. The RDS SG was tightened, so this narrowed from 4
+    to 3 (#518). Redis egress tightening is tracked separately.
+  expected_count: 3
+  nist_control: ac-4
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AWS_157
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - ecs
+  rationale: "RDS Multi-AZ is off by deliberate cost choice for this deployment. Single-AZ confirmed live\
+    \ 2026-08-03. (Reworded in #518 \u2014 the prior text framed this as a dev-vs-prod distinction, which\
+    \ is wrong: this IS prod.)"
+  expected_count: 1
+  nist_control: cp-9
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AWS_91
+  disposition: remediated
+  category: user-configurable
+  patterns:
+  - ecs
+  rationale: "ALB access logs \u2014 no longer flagged by checkov"
+  expected_count: 0
+  nist_control: sc-8
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-03-25'
+  remediated_date: '2026-03-25'
+- check_id: CKV2_AWS_57
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - ecs
+  rationale: "Secret rotation requires application support; users enable per their rotation policy. Count\
+    \ covers: app-secrets and heimdall-credentials (rotation tracked in heimdall follow-up issue 196 and\
+    \ other rotation issues), sparc-validate runner PAT (issue 188 / automation issue 190), SPARC_HASH\
+    \ (issue 195 \u2014 rotation requires SPARC sparc:reencrypt rake-task coordination, manually driven),\
+    \ and rotation-lambda-token (issue 197 \u2014 rotated on the SPARC service-account side, sparc-iac\
+    \ just stores the latest value), and hibernate-watchdog-gh-app (issue 573 \u2014 holds an external\
+    \ GitHub App private key rotated at GitHub, not via a Secrets Manager rotation Lambda)."
+  expected_count: 7
+  nist_control: ia-5
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AWS_50
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - ecs
+  rationale: Automatic failover enabled when redis_num_cache_nodes > 1
+  expected_count: 1
+  nist_control: cp-9
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AWS_60
+  disposition: remediated
+  category: user-configurable
+  patterns:
+  - ecs
+  rationale: copy_tags_to_snapshot = true added to modules/rds/main.tf (#518). Verified 0 failures.
+  expected_count: 0
+  nist_control: cp-9
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: '2026-08-03'
+- check_id: CKV2_AWS_30
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - ecs
+  rationale: RDS query logging requires PostgreSQL parameter group changes
+  expected_count: 1
+  nist_control: au-2
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AWS_144
+  disposition: accepted
+  category: cost-tradeoff
+  patterns:
+  - ecs
+  rationale: "S3 cross-region replication adds significant cost; enable for DR requirements. Count raised\
+    \ to 3 for the new audit-logs bucket (#484) \u2014 single-region test system, same disposition as\
+    \ the uploads and evidence buckets."
+  expected_count: 4
+  nist_control: cp-9
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-07-06'
+  next_review_date: '2026-10-06'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AWS_18
+  disposition: accepted
+  category: false-positive
+  patterns:
+  - ecs
+  rationale: "Access logging IS configured via aws_s3_bucket_logging.uploads in modules/logging; checkov\
+    \ cannot follow the [0] indexed reference through the count guard (#310). NOT remediated \u2014 #518/#611\
+    \ read 0 failures only because an inline checkov:skip was hiding it; the skip was removed in #611."
+  expected_count: 1
+  nist_control: au-2
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AWS_61
+  disposition: accepted
+  category: false-positive
+  patterns:
+  - ecs
+  rationale: Lifecycle IS configured via aws_s3_bucket_lifecycle_configuration.uploads (90-day noncurrent
+    expiry + 7-day abort-incomplete-multipart); checkov cannot follow the [0] indexed reference through
+    the count guard (#310). Migrated from an inline checkov:skip in modules/s3/main.tf (#611).
+  expected_count: 1
+  nist_control: si-12
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AWS_62
+  disposition: accepted
+  category: cost-tradeoff
+  patterns:
+  - ecs
+  rationale: "S3 event notifications not needed for ActiveStorage uploads, evidence, or audit-log buckets.\
+    \ Count raised to 3 for the new audit-logs bucket (#484) \u2014 same disposition as the uploads and\
+    \ evidence buckets."
+  expected_count: 4
+  nist_control: si-4
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-07-06'
+  next_review_date: '2026-10-06'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_109
+  disposition: accepted
+  category: cross-module
+  patterns:
+  - azure-vm
+  rationale: Network Watcher flow logs configured at subscription level, not per-resource
+  expected_count: 1
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_120
+  disposition: accepted
+  category: cross-module
+  patterns:
+  - azure-vm
+  rationale: NSG flow logs configured at subscription level via Network Watcher
+  expected_count: 1
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_136
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - azure-vm
+  rationale: Azure Backup configured per recovery requirements; not all VMs need backup
+  expected_count: 1
+  nist_control: cp-9
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_160
+  disposition: accepted
+  category: intentional-design
+  patterns:
+  - azure-vm
+  rationale: RBAC configured at resource group level, not individual resources
+  expected_count: 1
+  nist_control: ac-3
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_182
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - azure-vm
+  rationale: DNS zone DNSSEC requires registrar support; enable per domain requirements
+  expected_count: 1
+  nist_control: sc-20
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_183
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - azure-vm
+  rationale: DNS zone DNSSEC signing requires registrar DS record delegation
+  expected_count: 1
+  nist_control: sc-20
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_189
+  disposition: accepted
+  category: intentional-design
+  patterns:
+  - azure-vm
+  rationale: NSG allows required inbound traffic; restrictive rules applied per service
+  expected_count: 1
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_206
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - azure-vm
+  rationale: Azure Backup soft delete is user-configurable per retention policy
+  expected_count: 1
+  nist_control: cp-9
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_218
+  disposition: accepted
+  category: intentional-design
+  patterns:
+  - azure-vm
+  rationale: HTTPS enforcement handled at application/load balancer layer
+  expected_count: 1
+  nist_control: sc-8
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_230
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - azure-vm
+  rationale: Recovery Services vault soft delete is user-configurable
+  expected_count: 1
+  nist_control: cp-9
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AWS_65
+  disposition: remediated
+  category: compute
+  patterns:
+  - ecs
+  rationale: Enabled containerInsights setting on ECS cluster
+  expected_count: 0
+  nist_control: cm-2
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-03-20'
+  remediated_date: '2026-03-20'
+- check_id: CKV_AWS_338
+  disposition: remediated
+  category: monitoring
+  patterns:
+  - ecs
+  rationale: Changed ECS log group retention from 30 to 365 days
+  expected_count: 0
+  nist_control: au-2
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-03-20'
+  remediated_date: '2026-03-20'
+- check_id: CKV_AWS_23
+  disposition: remediated
+  category: networking
+  patterns:
+  - ecs
+  rationale: Added description to all 4 security group egress rules
+  expected_count: 0
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-03-20'
+  remediated_date: '2026-03-20'
+- check_id: CKV_AWS_131
+  disposition: remediated
+  category: networking
+  patterns:
+  - ecs
+  rationale: Added drop_invalid_header_fields=true to ALB
+  expected_count: 0
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-03-20'
+  remediated_date: '2026-03-20'
+- check_id: CKV_AWS_150
+  disposition: remediated
+  category: networking
+  patterns:
+  - ecs
+  rationale: Enabled enable_deletion_protection=true on ALB
+  expected_count: 0
+  nist_control: cp-9
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-03-20'
+  remediated_date: '2026-03-20'
+- check_id: CKV_AWS_118
+  disposition: remediated
+  category: database
+  patterns:
+  - ecs
+  rationale: Added 60-second enhanced monitoring interval with dedicated IAM role
+  expected_count: 0
+  nist_control: au-2
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-03-20'
+  remediated_date: '2026-03-20'
+- check_id: CKV_AWS_226
+  disposition: remediated
+  category: database
+  patterns:
+  - ecs
+  rationale: Enabled auto_minor_version_upgrade=true on RDS
+  expected_count: 0
+  nist_control: si-2
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-03-20'
+  remediated_date: '2026-03-20'
+- check_id: CKV_AWS_293
+  disposition: remediated
+  category: database
+  patterns:
+  - ecs
+  rationale: Added deletion_protection variable (default true) to RDS
+  expected_count: 0
+  nist_control: cp-9
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-03-20'
+  remediated_date: '2026-03-20'
+- check_id: CKV_AWS_353
+  disposition: remediated
+  category: database
+  patterns:
+  - ecs
+  rationale: Enabled performance_insights_enabled=true on RDS
+  expected_count: 0
+  nist_control: au-2
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-03-20'
+  remediated_date: '2026-03-20'
+- check_id: CKV_AWS_161
+  disposition: remediated
+  category: database
+  patterns:
+  - ecs
+  rationale: Enabled iam_database_authentication_enabled=true on RDS
+  expected_count: 0
+  nist_control: ia-2
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-03-20'
+  remediated_date: '2026-03-20'
+- check_id: CKV_AWS_129
+  disposition: remediated
+  category: database
+  patterns:
+  - ecs
+  rationale: Added enabled_cloudwatch_logs_exports=[postgresql, upgrade] to RDS
+  expected_count: 0
+  nist_control: au-2
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-03-20'
+  remediated_date: '2026-03-20'
+- check_id: CKV_AWS_31
+  disposition: remediated
+  category: cache
+  patterns:
+  - ecs
+  rationale: Added auth_token with auto-generated 32-char random password to ElastiCache
+  expected_count: 0
+  nist_control: sc-8
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-03-20'
+  remediated_date: '2026-03-20'
+- check_id: CKV_AWS_26
+  disposition: remediated
+  category: notifications
+  patterns:
+  - ecs
+  rationale: Added kms_master_key_id=alias/aws/sns to SNS topic
+  expected_count: 0
+  nist_control: sc-28
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-15'
+  reviewed_date: '2026-03-20'
+  remediated_date: '2026-03-20'
+- check_id: CKV_AWS_189
+  disposition: passing
+  category: kms-cmk-optional
+  patterns:
+  - ecs
+  rationale: Secrets Manager secret has resource-based policy; currently passing
+  expected_count: 0
+  nist_control: sc-28
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-25'
+  reviewed_date: '2026-03-25'
+- check_id: CKV_AWS_135
+  disposition: passing
+  category: compute
+  patterns:
+  - ecs
+  rationale: ECS cluster has logging configuration; currently passing
+  expected_count: 0
+  nist_control: cm-2
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-25'
+  reviewed_date: '2026-03-25'
+- check_id: CKV_AZURE_114
+  disposition: passing
+  category: secrets
+  patterns:
+  - azure-vm
+  rationale: Key Vault key has expiration date set; currently passing
+  expected_count: 0
+  nist_control: ia-5
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-25'
+  reviewed_date: '2026-03-25'
+- check_id: CKV_AZURE_251
+  disposition: passing
+  category: encryption
+  patterns:
+  - azure-vm
+  rationale: Azure Storage Account encryption at rest enabled; currently passing
+  expected_count: 0
+  nist_control: sc-28
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-25'
+  reviewed_date: '2026-03-25'
+- check_id: CKV_AZURE_33
+  disposition: passing
+  category: monitoring
+  patterns:
+  - azure-vm
+  rationale: Azure Storage Account logging enabled; currently passing
+  expected_count: 0
+  nist_control: au-2
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-25'
+  reviewed_date: '2026-03-25'
+- check_id: CKV_AZURE_41
+  disposition: passing
+  category: secrets
+  patterns:
+  - azure-vm
+  rationale: Key Vault secret has expiration date set; currently passing
+  expected_count: 0
+  nist_control: ia-5
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-25'
+  reviewed_date: '2026-03-25'
+- check_id: CKV_AZURE_50
+  disposition: passing
+  category: compute
+  patterns:
+  - azure-vm
+  rationale: Azure Function App not using outdated runtime; currently passing
+  expected_count: 0
+  nist_control: cm-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-25'
+  reviewed_date: '2026-03-25'
+- check_id: CKV_AZURE_59
+  disposition: passing
+  category: access-control
+  patterns:
+  - azure-vm
+  rationale: Azure Storage Account public access disabled; currently passing
+  expected_count: 0
+  nist_control: ac-3
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-25'
+  reviewed_date: '2026-03-25'
+- check_id: CKV_AZURE_93
+  disposition: accepted
+  category: encryption
+  patterns:
+  - azure-vm
+  rationale: Managed disk uses Azure platform-managed encryption (SSE) by default. Customer-managed key
+    (CMK) encryption not required for PoC/demo. Revisit when Azure Key Vault CMK infrastructure is implemented.
+  expected_count: 1
+  nist_control: sc-28
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-25'
+  reviewed_date: '2026-03-27'
+  next_review_date: '2026-09-27'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AZURE_1
+  disposition: accepted
+  category: networking
+  patterns:
+  - azure-vm
+  rationale: Storage Account network_rules has default_action=Deny already configured in blob_storage
+    module. Checkov may flag due to graph-check evaluation order. Verified in Azure/VM/modules/blob_storage/main.tf.
+  expected_count: 1
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-25'
+  reviewed_date: '2026-03-27'
+  next_review_date: '2026-09-27'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AZURE_21
+  disposition: deferred
+  category: monitoring
+  patterns:
+  - azure-vm
+  rationale: "Blob-specific logging not enabled \u2014 queue logging is configured (delete/read/write\
+    \ with 7-day retention). Blob logging requires azurerm_storage_account_blob_service_properties or\
+    \ diagnostic settings. Low priority for PoC."
+  expected_count: 1
+  nist_control: au-2
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-25'
+  reviewed_date: '2026-03-27'
+  next_review_date: '2026-09-27'
+  target_remediation_date: '2026-06-30'
+  remediated_date: null
+- check_id: CKV2_AZURE_32
+  disposition: accepted
+  category: networking
+  patterns:
+  - azure-vm
+  rationale: "Key Vault private endpoint not configured \u2014 requires VNet integration and private DNS\
+    \ zone. Key Vault has network_acls with bypass=AzureServices. Private endpoint is a production hardening\
+    \ item for full Azure deployment (#9/#10/#11)."
+  expected_count: 1
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-25'
+  reviewed_date: '2026-03-27'
+  next_review_date: '2026-09-27'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AZURE_33
+  disposition: accepted
+  category: networking
+  patterns:
+  - azure-vm
+  rationale: "Storage Account private endpoint not configured \u2014 same as Key Vault, requires VNet\
+    \ integration. Network rules with default_action=Deny provide boundary protection. Private endpoint\
+    \ is a production hardening item."
+  expected_count: 1
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-25'
+  reviewed_date: '2026-03-27'
+  next_review_date: '2026-09-27'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AZURE_40
+  disposition: remediated
+  category: networking
+  patterns:
+  - azure-vm
+  rationale: "Storage Account default_action=Deny is configured in the blob_storage module network_rules\
+    \ block, and checkov now evaluates it correctly \u2014 0 failures as of 2026-08-03 (surfaced by the\
+    \ count_drift metric, #611). CAVEAT: this is a graph check that has historically evaluated inconsistently\
+    \ (it was accepted as a duplicate of CKV2_AZURE_1). If it re-fires, suspect graph-check flapping rather\
+    \ than a posture loss and verify network_rules before treating the regression as real."
+  expected_count: 0
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-25'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: '2026-08-03'
+- check_id: CKV2_AZURE_41
+  disposition: remediated
+  category: access-control
+  patterns:
+  - azure-vm
+  rationale: Added SystemAssigned managed identity and disabled shared access keys (shared_access_key_enabled=false)
+    on Storage Account.
+  expected_count: 0
+  nist_control: ac-3
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-25'
+  reviewed_date: '2026-03-27'
+  next_review_date: null
+  target_remediation_date: null
+  remediated_date: '2026-03-27'
+- check_id: CKV2_AZURE_57
+  disposition: accepted
+  category: database
+  patterns:
+  - azure-vm
+  rationale: "PostgreSQL Flexible Server geo_redundant_backup is variable-driven (var.geo_redundant_backup).\
+    \ Depends on environment tfvars \u2014 prod should enable. Not enforced in Terraform default for cost\
+    \ reasons on PoC/demo."
+  expected_count: 1
+  nist_control: cp-9
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-25'
+  reviewed_date: '2026-03-27'
+  next_review_date: '2026-09-27'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AWS_19
+  disposition: accepted
+  category: networking
+  patterns:
+  - ecs
+  rationale: "EIP is associated with the NAT gateway, not an EC2 instance. Checkov expects EIP\u2192EC2\
+    \ association but this is a Fargate stack \u2014 EIP\u2192NAT is the correct architecture. No EC2\
+    \ instances exist."
+  expected_count: 1
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-25'
+  reviewed_date: '2026-03-27'
+  next_review_date: null
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AWS_252
+  disposition: accepted
+  category: intentional-design
+  patterns:
+  - ecs
+  rationale: "CloudTrail SNS notification requires a CMK on the SNS topic \u2014 the AWS-managed key (alias/aws/sns)\
+    \ does not allow CloudTrail access. Admin secret access monitoring is handled by CloudWatch metric\
+    \ filter \u2192 alarm \u2192 SNS instead. Enable when CMK is active (enable_cmk=true)."
+  expected_count: 1
+  nist_control: au-2
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-27'
+  reviewed_date: '2026-03-27'
+  next_review_date: '2026-09-27'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AWS_336
+  disposition: remediated
+  category: intentional-design
+  patterns:
+  - ecs
+  rationale: Heimdall Lite (mitre/heimdall-lite) is an NGINX-based container that requires write access
+    to root filesystem for temp files and cache. Read-only root would break the container.
+  expected_count: 0
+  nist_control: cm-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-28'
+  reviewed_date: '2026-03-28'
+  next_review_date: '2026-09-28'
+  target_remediation_date: null
+  remediated_date: '2026-04-11'
+- check_id: CKV_AWS_378
+  disposition: remediated
+  category: intentional-design
+  patterns:
+  - ecs
+  rationale: "Heimdall target group uses HTTP because HTTPS terminates at the ALB. ALB\u2192container\
+    \ communication is internal within the VPC. This is standard Fargate architecture \u2014 same pattern\
+    \ as the SPARC app target group."
+  expected_count: 0
+  nist_control: sc-8
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-28'
+  reviewed_date: '2026-03-28'
+  next_review_date: '2026-09-28'
+  target_remediation_date: null
+  remediated_date: '2026-04-11'
+- check_id: CKV_AWS_300
+  disposition: remediated
+  category: intentional-design
+  patterns:
+  - ecs
+  rationale: "S3 bucket lifecycle configuration is present and correct \u2014 transitions to STANDARD_IA\
+    \ at 90 days, GLACIER at 365 days. Checkov may flag because the lifecycle uses a broad filter. This\
+    \ is intentional for security artifact archival."
+  expected_count: 0
+  nist_control: cm-2
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-03-25'
+  reviewed_date: '2026-03-27'
+  next_review_date: '2026-09-27'
+  target_remediation_date: null
+  remediated_date: '2026-04-06'
+- check_id: CKV2_AWS_3
+  disposition: accepted
+  category: intentional-design
+  patterns:
+  - ecs
+  rationale: GuardDuty org config requires delegated admin designation (org-level operation outside terraform
+    scope). Detector is enabled account-wide with ECS Runtime Monitoring.
+  expected_count: 1
+  nist_control: si-4
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-04-11'
+  reviewed_date: '2026-04-12'
+  next_review_date: '2026-10-12'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AWS_116
+  disposition: accepted
+  category: intentional-design
+  patterns:
+  - ecs
+  rationale: "Lambda DLQ not configured \u2014 secret-alert is a low-volume notification handler (fires\
+    \ only on human secret operations); ses-forwarder is invoked by SES. Failed invocations are visible\
+    \ in CloudWatch logs with 365-day retention. Also covers hibernate-watchdog (#573) \u2014 an idempotent\
+    \ reconciler on a ~5 min schedule where the next tick self-heals and the Errors alarm surfaces persistent\
+    \ failures, so a DLQ of scheduled invocations adds no recovery value."
+  expected_count: 3
+  nist_control: si-4
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-04-18'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AWS_117
+  disposition: accepted
+  category: intentional-design
+  patterns:
+  - ecs
+  rationale: "Lambda runs outside VPC \u2014 secret-alert/ses-forwarder only call public AWS endpoints\
+    \ (SNS/SES) with no sensitive data. hibernate-watchdog (#573) MUST run non-VPC by design \u2014 hibernate\
+    \ destroys the NAT gateway, so a private-subnet Lambda would lose egress exactly when it needs to\
+    \ call GitHub to wake prod (deadlock). Non-VPC AWS-managed egress is the whole point."
+  expected_count: 3
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-04-18'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AWS_272
+  disposition: accepted
+  category: intentional-design
+  patterns:
+  - ecs
+  rationale: "Lambda code-signing not configured \u2014 enterprise overhead for simple Terraform-IaC-deployed\
+    \ Lambdas. Code integrity is enforced by the Terraform plan/apply workflow and source_code_hash verification.\
+    \ Expanded count to cover the admin-credential rotation Lambda (issue 151) which follows the same\
+    \ deployment + integrity model. Count 3 -> 4 (#611): the hibernate_watchdog Lambda (#573) joined secret_alert,\
+    \ admin_rotation and ses_forwarder. The gate reported \"no new findings\" at the time because the\
+    \ check_id was already accepted \u2014 this drift was surfaced by the new count_drift metric added\
+    \ in the same PR."
+  expected_count: 4
+  nist_control: si-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-04-18'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AWS_111
+  disposition: accepted
+  category: least-privilege
+  patterns:
+  - ecs
+  rationale: packer AMI build needs ec2 image/snapshot write actions that cannot be constrained to a pre-existing
+    ARN. Isolated OIDC build role is the boundary (#368). Migrated from an inline checkov:skip in AWS/IAM/cis_rhel9_runner.tf
+    (#611).
+  expected_count: 5
+  nist_control: ac-6
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-04-20'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AWS_356
+  disposition: accepted
+  category: least-privilege
+  patterns:
+  - ecs
+  rationale: "packer ec2:Describe*/RunInstances/CreateImage and ssm:StartSession have no usable resource-level\
+    \ scoping \u2014 the ARNs do not exist until the build creates them. The isolated OIDC build role\
+    \ is itself the trust boundary (#368). Migrated from an inline checkov:skip in AWS/IAM/cis_rhel9_runner.tf\
+    \ (#611)."
+  expected_count: 8
+  nist_control: ac-6
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-04-20'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AWS_273
+  disposition: accepted
+  category: intentional-design
+  patterns:
+  - ecs
+  rationale: "The ses-smtp send-as user is an IAM *user* by necessity \u2014 SES SMTP has no OIDC/role\
+    \ credential path, so a long-lived IAM user is required for mail-client send-as. Scope is ses:SendRawEmail\
+    \ only (#528)."
+  expected_count: 1
+  nist_control: ac-6
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-12'
+  reviewed_date: '2026-07-12'
+  next_review_date: '2026-10-12'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AWS_40
+  disposition: accepted
+  category: intentional-design
+  patterns:
+  - ecs
+  rationale: "The ses-smtp user carries its own inline ses:SendRawEmail policy (not a group) \u2014 it\
+    \ is a single-purpose service user, so a group indirection adds no value (#528)."
+  expected_count: 1
+  nist_control: ac-6
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-12'
+  reviewed_date: '2026-07-12'
+  next_review_date: '2026-10-12'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AWS_304
+  disposition: accepted
+  category: false-positive
+  patterns:
+  - ecs
+  rationale: Secrets Manager rotation must rotate within 90 days. The admin rotation Lambda (issue 151)
+    is configured with automatically_after_days = var.admin_rotation_period_days (default 30, well under
+    90). Checkov's static analyzer does not resolve the variable default through module indirection, so
+    it false-positives. Confirmed safe by inspection.
+  expected_count: 1
+  nist_control: ia-5
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-04-26'
+  reviewed_date: '2026-04-26'
+  next_review_date: '2026-10-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AWS_76
+  disposition: accepted
+  category: tooling-limitation
+  patterns:
+  - ecs
+  rationale: False negative from conditional resources, NOT a real gap (#578). The ALB IS attached to
+    a WAFv2 web ACL (module.alb.aws_wafv2_web_acl_association) whose KnownBadInputs rule group BLOCKS
+    Log4Shell (CVE-2021-44228) in prod. CKV2_AWS_76 fails only because checkov evaluates the module with
+    the enable_waf default (false) -> the count-gated association/web ACL are absent from its static graph;
+    prod sets enable_waf=true. The rule-level Log4Shell check CKV_AWS_192 genuinely PASSES (not baselined),
+    confirming the protection. Live-verify with aws wafv2 get-web-acl-for-resource on the prod ALB.
+  expected_count: 1
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-25'
+  reviewed_date: '2026-07-25'
+  next_review_date: '2026-10-25'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AWS_297
+  disposition: accepted
+  category: kms-cmk-optional
+  patterns:
+  - ecs
+  rationale: "EventBridge Scheduler CMK not configured for the hibernate-watchdog schedule (#573). The\
+    \ schedule carries an empty target payload \u2014 the Lambda takes no event input and reads all config\
+    \ from its env + Secrets Manager \u2014 so there is no data at rest for a CMK to protect. AWS-managed\
+    \ encryption is sufficient; upgrade to a CMK if a future schedule carries sensitive input."
+  expected_count: 1
+  nist_control: sc-28
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-25'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AZURE_1
+  disposition: accepted
+  category: kms-cmk-optional
+  patterns:
+  - aas
+  rationale: Storage uses platform-managed encryption; customer-managed keys are optional (enable for
+    IL4+).
+  expected_count: 1
+  nist_control: sc-28
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AZURE_21
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - aas
+  rationale: Blob read logging is optional; enable per environment via storage diagnostic settings.
+  expected_count: 1
+  nist_control: au-2
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AZURE_32
+  disposition: accepted
+  category: false-negative
+  patterns:
+  - aas
+  rationale: The Key Vault HAS a private endpoint (private_endpoints module); checkov's graph check cannot
+    follow the cross-module private-endpoint association.
+  expected_count: 1
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AZURE_33
+  disposition: accepted
+  category: false-negative
+  patterns:
+  - aas
+  rationale: The storage account HAS a private endpoint (private_endpoints module); checkov's graph check
+    cannot follow the cross-module private-endpoint association.
+  expected_count: 1
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AZURE_57
+  disposition: accepted
+  category: not-applicable
+  patterns:
+  - aas
+  rationale: PostgreSQL Flexible Server uses VNet integration (delegated subnet + private DNS), not a
+    private endpoint, so this check does not apply.
+  expected_count: 1
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_109
+  disposition: accepted
+  category: intentional-design
+  patterns:
+  - aas
+  rationale: 'Paired with CKV_AZURE_189: Key Vault network default is Allow so the deployer can write
+    secrets; the app reaches it via a private endpoint.'
+  expected_count: 1
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_13
+  disposition: accepted
+  category: intentional-design
+  patterns:
+  - aas
+  rationale: SPARC performs OIDC in-application; App Service built-in authentication is intentionally
+    not enabled.
+  expected_count: 1
+  nist_control: ia-2
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_136
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - aas
+  rationale: PostgreSQL geo-redundant backup is set per environment via db_geo_redundant_backup (on in
+    prod).
+  expected_count: 1
+  nist_control: cp-9
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_17
+  disposition: accepted
+  category: intentional-design
+  patterns:
+  - aas
+  rationale: SPARC performs its own OIDC authentication; App Service incoming client certificates are
+    not used.
+  expected_count: 1
+  nist_control: ia-2
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_189
+  disposition: accepted
+  category: intentional-design
+  patterns:
+  - aas
+  rationale: Key Vault is kept at default_action=Allow + bypass=AzureServices so the deployer can write
+    secrets; the app reaches it over a private endpoint. Tighten to Deny with an in-VNet runner for prod
+    hardening.
+  expected_count: 1
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_206
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - aas
+  rationale: Storage replication is set per environment via storage_replication_type (GRS in prod).
+  expected_count: 1
+  nist_control: cp-9
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_211
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - aas
+  rationale: Production-grade plan SKU is set per environment via app_service_sku (e.g. P1v3 in prod).
+  expected_count: 1
+  nist_control: cp-10
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_212
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - aas
+  rationale: Minimum failover instances are set per environment via the plan SKU/scale settings.
+  expected_count: 1
+  nist_control: cp-10
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_222
+  disposition: accepted
+  category: intentional-design
+  patterns:
+  - aas
+  rationale: The app tier (App Service / Container App ingress) is the public inbound entry point by design;
+    the data tier is private via VNet integration + private endpoints.
+  expected_count: 1
+  nist_control: ac-4
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_225
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - aas
+  rationale: App Service Plan zone redundancy is set per environment (app_service_zone_redundant / Premium
+    v3); off in dev.
+  expected_count: 1
+  nist_control: cp-10
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_41
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - aas
+  rationale: Connection secrets (redis-url, blob-access-key) rotate with their source, not on a fixed
+    calendar date, so no expiration is set.
+  expected_count: 2
+  nist_control: ia-5
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_88
+  disposition: accepted
+  category: intentional-design
+  patterns:
+  - aas
+  rationale: Container-based deployment; no Azure Files mount is required.
+  expected_count: 1
+  nist_control: cm-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AZURE_1
+  disposition: accepted
+  category: kms-cmk-optional
+  patterns:
+  - ack
+  rationale: Storage uses platform-managed encryption; customer-managed keys are optional (enable for
+    IL4+).
+  expected_count: 1
+  nist_control: sc-28
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AZURE_21
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - ack
+  rationale: Blob read logging is optional; enable per environment via storage diagnostic settings.
+  expected_count: 1
+  nist_control: au-2
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AZURE_32
+  disposition: accepted
+  category: false-negative
+  patterns:
+  - ack
+  rationale: The Key Vault HAS a private endpoint (private_endpoints module); checkov's graph check cannot
+    follow the cross-module private-endpoint association.
+  expected_count: 1
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AZURE_33
+  disposition: accepted
+  category: false-negative
+  patterns:
+  - ack
+  rationale: The storage account HAS a private endpoint (private_endpoints module); checkov's graph check
+    cannot follow the cross-module private-endpoint association.
+  expected_count: 1
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AZURE_57
+  disposition: accepted
+  category: not-applicable
+  patterns:
+  - ack
+  rationale: PostgreSQL Flexible Server uses VNet integration (delegated subnet + private DNS), not a
+    private endpoint, so this check does not apply.
+  expected_count: 1
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_109
+  disposition: accepted
+  category: intentional-design
+  patterns:
+  - ack
+  rationale: 'Paired with CKV_AZURE_189: Key Vault network default is Allow so the deployer can write
+    secrets; the app reaches it via a private endpoint.'
+  expected_count: 1
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_136
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - ack
+  rationale: PostgreSQL geo-redundant backup is set per environment via db_geo_redundant_backup (on in
+    prod).
+  expected_count: 1
+  nist_control: cp-9
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_139
+  disposition: accepted
+  category: intentional-design
+  patterns:
+  - ack
+  rationale: Standard ACR is public with identity-based AcrPull; use Premium + private endpoint for prod
+    hardening.
+  expected_count: 1
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_164
+  disposition: accepted
+  category: intentional-design
+  patterns:
+  - ack
+  rationale: Image signing is handled by the container-build-sign cosign pipeline, not ACR content-trust.
+  expected_count: 1
+  nist_control: si-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_165
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - ack
+  rationale: ACR geo-replication is a Premium multi-region feature; single-region is the default.
+  expected_count: 1
+  nist_control: cp-10
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_166
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - ack
+  rationale: Image quarantine/scan is a Premium/preview ACR feature; images are scanned in CI (container-build-sign)
+    before push.
+  expected_count: 1
+  nist_control: ra-5
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_189
+  disposition: accepted
+  category: intentional-design
+  patterns:
+  - ack
+  rationale: Key Vault is kept at default_action=Allow + bypass=AzureServices so the deployer can write
+    secrets; the app reaches it over a private endpoint. Tighten to Deny with an in-VNet runner for prod
+    hardening.
+  expected_count: 1
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_206
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - ack
+  rationale: Storage replication is set per environment via storage_replication_type (GRS in prod).
+  expected_count: 1
+  nist_control: cp-9
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_233
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - ack
+  rationale: ACR zone redundancy requires the Premium SKU; Standard is the dev default.
+  expected_count: 1
+  nist_control: cp-10
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_237
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - ack
+  rationale: ACR dedicated data endpoints are a Premium feature; Standard is the dev default.
+  expected_count: 1
+  nist_control: sc-7
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AZURE_41
+  disposition: accepted
+  category: user-configurable
+  patterns:
+  - ack
+  rationale: Connection secrets (redis-url, blob-access-key) rotate with their source, not on a fixed
+    calendar date, so no expiration is set.
+  expected_count: 2
+  nist_control: ia-5
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-07-26'
+  reviewed_date: '2026-07-26'
+  next_review_date: '2027-01-26'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_AWS_21
+  disposition: accepted
+  category: false-positive
+  patterns:
+  - ecs
+  rationale: "Versioning IS configured via aws_s3_bucket_versioning.uploads; checkov cannot follow the\
+    \ [0] indexed reference through the count guard (#310). Migrated from an inline checkov:skip in modules/s3/main.tf\
+    \ (#611) \u2014 had no baseline entry at all."
+  expected_count: 1
+  nist_control: cp-10
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-08-03'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AWS_6
+  disposition: accepted
+  category: false-positive
+  patterns:
+  - ecs
+  rationale: "Public Access Block IS configured via aws_s3_bucket_public_access_block.uploads; checkov\
+    \ cannot follow the [0] indexed reference through the count guard (#310). Migrated from an inline\
+    \ checkov:skip in modules/s3/main.tf (#611) \u2014 had no baseline entry at all."
+  expected_count: 1
+  nist_control: ac-3
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-08-03'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV_DOCKER_2
+  disposition: deferred
+  category: container
+  patterns:
+  - ecs
+  rationale: 'AWS/ECS/nginx/Dockerfile has no HEALTHCHECK. Not reachable by CI (terraform framework only),
+    so it never enters the gate. Deferred rather than accepted: risk-sentinel/container-build-sign owns
+    building and publishing the nginx image, so a HEALTHCHECK added here would not necessarily reach the
+    shipped artifact. Tracked cross-repo; ECS already health-checks the container via the task definition
+    and ALB target group.'
+  expected_count: 0
+  nist_control: si-4
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-08-03'
+  reviewed_date: '2026-08-03'
+  next_review_date: '2027-02-03'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AWS_45
+  disposition: accepted
+  category: cost-scoped-coverage
+  patterns:
+  - ecs
+  rationale: "recorder does not record all supported resource types. Deliberate scope decision (#132),\
+    \ not an omission. all_supported=false with an explicit exclusion_by_resource_types list covering\
+    \ ONLY services this boundary does not deploy \u2014 API Gateway, EC2 Auto Scaling, Elastic Beanstalk,\
+    \ CodeBuild, DMS, EC2 instances, EFS, OpenSearch, Classic ELB, EMR \u2014 each annotated in-code with\
+    \ why it is excluded. Recording every supported type would bill per configuration item for services\
+    \ that will never emit one. Note AWS::EC2::* is not wholly excluded: VPC, Subnet, SecurityGroup, NAT,\
+    \ EIP, FlowLog and NetworkInterface are distinct resource types and remain recorded, so the network\
+    \ boundary stays covered. Re-evaluate when the boundary adopts a service currently on the exclusion\
+    \ list."
+  expected_count: 1
+  nist_control: cm-8
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-08-18'
+  reviewed_date: '2026-08-18'
+  next_review_date: '2027-02-18'
+  target_remediation_date: null
+  remediated_date: null
+- check_id: CKV2_AWS_48
+  disposition: accepted
+  category: cost-scoped-coverage
+  patterns:
+  - ecs
+  rationale: recorder does not include global resource types. include_global_resource_types=false is deliberate
+    (#132). Global types (IAM) are recorded once per account by the home-region recorder; enabling them
+    here would duplicate configuration items and their billing in every region without adding coverage.
+    IAM posture is independently evidenced by the conformance pack rules and by sparc-validate's AWS Config
+    scan, so this is a cost decision rather than a coverage gap.
+  expected_count: 1
+  nist_control: cm-8
+  reviewed_by: '@brandonfield'
+  discovery_date: '2026-08-18'
+  reviewed_date: '2026-08-18'
+  next_review_date: '2027-02-18'
+  target_remediation_date: null
+  remediated_date: null

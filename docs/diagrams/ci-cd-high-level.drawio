@@ -1,0 +1,85 @@
+<mxfile host="65bd71144e">
+    <diagram name="Page-1" id="Gm4fPzZsPyvIUI8I55gu">
+        <mxGraphModel dx="889" dy="517" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="10" value="Push to Branch" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4a9eff;fontColor=#ffffff;strokeColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="14" y="113" width="120" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" value="Terraform Plan&#xa;(all patterns)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="174" y="83" width="130" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e10_20" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="10" target="20">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="30" value="Compliance&#xa;(Security Gate)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e9;" vertex="1" parent="1">
+                    <mxGeometry x="174" y="153" width="130" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e10_30" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="10" target="30">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="40" value="Human Reviews&#xa;Plan + Compliance" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff3e0;" vertex="1" parent="1">
+                    <mxGeometry x="354" y="93" width="100" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="e20_40" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="20" target="40">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e30_40" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="30" target="40">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="50" value="PR Approved&#xa;Merge to Main" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2ea44f;fontColor=#ffffff;strokeColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="504" y="108" width="120" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e40_50" value="Approve" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="40" target="50">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="45" value="Revise Code" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d73a49;fontColor=#ffffff;strokeColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="354" y="213" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="e40_45" value="Reject" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="40" target="45">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="60" value="Compliance&#xa;Re-validation&#xa;(on main)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="664" y="108" width="130" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e50_60" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="50" target="60">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="70" value="Passes?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#4a9eff;fontColor=#ffffff;" vertex="1" parent="1">
+                    <mxGeometry x="834" y="103" width="70" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="e60_70" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="60" target="70">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="80" value="Terraform Plan&#xa;+ Apply" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ff7f0e;fontColor=#ffffff;strokeColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="944" y="105" width="120" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e70_80" value="Yes" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="70" target="80">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="75" value="Deploy&#xa;Blocked" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d73a49;fontColor=#ffffff;strokeColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="834" y="213" width="70" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="e70_75" value="No" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="70" target="75">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="90" value="Upload Artifacts&#xa;to S3" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#6f42c1;fontColor=#ffffff;" vertex="1" parent="1">
+                    <mxGeometry x="664" y="250" width="130" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="e60_90" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="60" target="90">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="100" value="Record&#xa;Workflow Times" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="944" y="186" width="120" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="e80_100" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="80" target="100">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e90_100" style="edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="90" target="100">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

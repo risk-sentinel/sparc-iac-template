@@ -1,0 +1,413 @@
+name: SBOM + SCA
+
+# Source-dependency SBOM + SCA for the public template.
+#
+# This is a SELF-CONTAINED copy. The private repo's sbom-and-sca.yml is a thin
+# caller around two reusable workflows owned by risk-sentinel/container-build-sign,
+# which is an INTERNAL repository. A public repository cannot resolve a reusable
+# workflow owned by an internal one: the dispatch is refused at parse time with
+# `HTTP 422 ... workflow was not found`, so the lane never runs and never reports
+# (#741). The steps are therefore inlined here rather than called.
+#
+# Keep in step with container-build-sign's sbom-source.yml / sca-scan.yml when
+# those change — nothing enforces that automatically, which is the cost of
+# inlining and the reason the private repo still calls the reusables.
+#
+# Everything that identifies a repository is DERIVED, never hardcoded. The
+# private copy names sparc-iac literally in the bucket, the evidence prefix and
+# the cosign identity, which is correct exactly once — anywhere else it either
+# writes under the wrong slug or fails outright (#672, #741).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  scan:
+    name: SBOM + SCA
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SEVERITY_GATE: CRITICAL
+      ALLOWLIST_PATH: .security/sca-allowlist.yaml
+      SBOM_PATH: sbom-output/cyclonedx.json
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Prepare output directory
+        run: mkdir -p sbom-output
+
+      - name: Generate SBOM (Syft → CycloneDX JSON)
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          path: '.'
+          format: cyclonedx-json
+          output-file: sbom-output/cyclonedx.json
+          upload-artifact: false   # explicit upload below, for a stable filename
+
+      - name: Summarize SBOM
+        run: |
+          set -euo pipefail
+          if [ ! -s "$SBOM_PATH" ]; then
+            echo "::error::SBOM was not emitted at $SBOM_PATH"
+            exit 1
+          fi
+          COMPONENTS=$(jq '.components | length' "$SBOM_PATH")
+          {
+            echo "## Source SBOM"
+            echo
+            echo "- Path: \`$SBOM_PATH\`"
+            echo "- Format: CycloneDX JSON"
+            echo "- Components detected: **$COMPONENTS**"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: cyclonedx-sbom
+          path: sbom-output/cyclonedx.json
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Grype scan (primary, SBOM-driven)
+        id: grype
+        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
+        with:
+          sbom: sbom-output/cyclonedx.json
+          severity-cutoff: critical
+          output-format: json
+          fail-build: false
+          by-cve: true
+
+      - name: Trivy fs scan (secondary signal)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: '.'
+          format: json
+          output: trivy-fs-results.json
+          severity: CRITICAL
+          exit-code: '0'
+          ignore-unfixed: false
+
+      - name: Reconcile findings against allow-list
+        id: reconcile
+        env:
+          GRYPE_OUTPUT: ${{ steps.grype.outputs.json }}
+          TRIVY_OUTPUT: trivy-fs-results.json
+          SUMMARY_OUT: sca-summary.md
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet pyyaml
+          python3 <<'PY'
+          import json, os, sys
+          from datetime import date, datetime
+          import yaml
+
+          gate_order = ['UNKNOWN', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
+          severity_gate = os.environ['SEVERITY_GATE'].upper()
+          if severity_gate not in gate_order:
+              print(f"::error::SEVERITY_GATE '{severity_gate}' must be one of {gate_order[1:]}")
+              sys.exit(2)
+          gate_threshold = gate_order.index(severity_gate)
+
+          grype_hits = []
+          grype_path = os.environ.get('GRYPE_OUTPUT', '')
+          if grype_path and os.path.exists(grype_path):
+              with open(grype_path) as f:
+                  grype = json.load(f)
+              for match in grype.get('matches', []):
+                  vuln = match.get('vulnerability', {}) or {}
+                  art = match.get('artifact', {}) or {}
+                  sev = (vuln.get('severity') or 'UNKNOWN').upper()
+                  if sev not in gate_order or gate_order.index(sev) < gate_threshold:
+                      continue
+                  fix = vuln.get('fix', {}) or {}
+                  grype_hits.append({
+                      'scanner': 'grype',
+                      'id': vuln.get('id', '-'),
+                      'severity': sev,
+                      'pkg': art.get('name', '-'),
+                      'version': art.get('version', '-'),
+                      'fixed': ','.join(fix.get('versions', []) or []) or '-',
+                  })
+          else:
+              print(f"::warning::Grype output not found at '{grype_path}' — primary scanner produced no report")
+
+          trivy_hits = []
+          trivy_path = os.environ.get('TRIVY_OUTPUT', '')
+          if trivy_path and os.path.exists(trivy_path):
+              with open(trivy_path) as f:
+                  trivy = json.load(f)
+              for result in trivy.get('Results', []) or []:
+                  for v in result.get('Vulnerabilities', []) or []:
+                      sev = (v.get('Severity') or 'UNKNOWN').upper()
+                      if sev not in gate_order or gate_order.index(sev) < gate_threshold:
+                          continue
+                      trivy_hits.append({
+                          'scanner': 'trivy',
+                          'id': v.get('VulnerabilityID', '-'),
+                          'severity': sev,
+                          'pkg': v.get('PkgName', '-'),
+                          'version': v.get('InstalledVersion', '-'),
+                          'fixed': v.get('FixedVersion') or '-',
+                      })
+
+          all_hits = grype_hits + trivy_hits
+
+          allowed = {}
+          allowlist_path = os.environ['ALLOWLIST_PATH']
+          today = date.today()
+          if os.path.exists(allowlist_path):
+              with open(allowlist_path) as f:
+                  doc = yaml.safe_load(f) or {}
+              for entry in doc.get('cves', []) or []:
+                  cve_id = entry.get('id')
+                  if not cve_id:
+                      print(f"::warning::Allow-list entry missing 'id': {entry}")
+                      continue
+                  exp = entry.get('expires')
+                  if not exp:
+                      print(f"::warning::Allow-list entry {cve_id} missing 'expires' — finding will gate")
+                      continue
+                  if isinstance(exp, date):
+                      exp_date = exp
+                  else:
+                      try:
+                          exp_date = datetime.strptime(str(exp), '%Y-%m-%d').date()
+                      except ValueError:
+                          print(f"::warning::Allow-list entry {cve_id} has invalid 'expires' value '{exp}' — finding will gate")
+                          continue
+                  if exp_date < today:
+                      print(f"::warning::Allow-list entry {cve_id} expired {exp_date} — finding will gate")
+                      continue
+                  allowed[cve_id] = {'reason': entry.get('reason', '').strip(), 'expires': exp_date}
+          else:
+              print(f"::notice::No allow-list at '{allowlist_path}' — proceeding with empty list")
+
+          suppressed, gating = [], []
+          for hit in all_hits:
+              if hit['id'] in allowed:
+                  hit['allowed_reason'] = allowed[hit['id']]['reason']
+                  hit['allowed_until'] = str(allowed[hit['id']]['expires'])
+                  suppressed.append(hit)
+              else:
+                  gating.append(hit)
+
+          lines = [f"# SCA scan summary — gate `{severity_gate}`", ""]
+          lines.append("- Scanners: Grype (SBOM-based), Trivy (fs)")
+          lines.append(f"- Allow-list: `{allowlist_path}` ({len(allowed)} active entries)")
+          lines.append(f"- Findings at/above `{severity_gate}`: **{len(all_hits)}** ({len(gating)} gating, {len(suppressed)} allow-listed)")
+          lines.append("")
+          if gating:
+              lines += [f"## Gating findings ({len(gating)})", "",
+                        "| Scanner | CVE | Severity | Package | Installed | Fixed |",
+                        "|---|---|---|---|---|---|"]
+              for h in gating:
+                  lines.append(f"| {h['scanner']} | {h['id']} | {h['severity']} | {h['pkg']} | {h['version']} | {h['fixed']} |")
+              lines.append("")
+          if suppressed:
+              lines += ["## Allow-listed (suppressed)", "",
+                        "| Scanner | CVE | Severity | Package | Until | Reason |",
+                        "|---|---|---|---|---|---|"]
+              for h in suppressed:
+                  reason = (h['allowed_reason'] or '-').replace('\n', ' ').replace('|', '\\|')
+                  lines.append(f"| {h['scanner']} | {h['id']} | {h['severity']} | {h['pkg']} | {h['allowed_until']} | {reason} |")
+              lines.append("")
+
+          rendered = "\n".join(lines) + "\n"
+          with open(os.environ['SUMMARY_OUT'], 'w') as f:
+              f.write(rendered)
+          step_summary = os.environ.get('GITHUB_STEP_SUMMARY')
+          if step_summary:
+              with open(step_summary, 'a') as f:
+                  f.write(rendered)
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"count={len(gating)}\n")
+
+          print(f"Reconciled: {len(gating)} gating, {len(suppressed)} suppressed")
+          PY
+
+      - name: Stage reports for upload
+        if: always()
+        env:
+          GRYPE_JSON: ${{ steps.grype.outputs.json }}
+        run: |
+          mkdir -p sca-reports
+          [ -f sca-summary.md ] && cp sca-summary.md sca-reports/ || true
+          [ -f trivy-fs-results.json ] && cp trivy-fs-results.json sca-reports/ || true
+          if [ -n "${GRYPE_JSON:-}" ] && [ -f "$GRYPE_JSON" ]; then
+            cp "$GRYPE_JSON" sca-reports/grype-results.json
+          fi
+          ls -la sca-reports/
+
+      - name: Upload scan reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sca-reports
+          path: sca-reports/
+          if-no-files-found: warn
+          retention-days: 90
+
+      # Soft mode, matching the private repo's rollout posture: findings are
+      # reported, not blocking. An adopter who wants this to gate should fail the
+      # job on steps.reconcile.outputs.count here.
+      - name: Report gating findings
+        run: |
+          echo "::notice::SCA gating findings at/above ${SEVERITY_GATE}: ${{ steps.reconcile.outputs.count }} (soft mode — not blocking)"
+
+  emit:
+    name: Emit BOM to S3
+    needs: scan
+    # Evidence emission, not deployment — a fork answers those separately.
+    # Without the variable AND the bucket, this skips rather than failing.
+    if: >-
+      github.event_name != 'pull_request' &&
+      vars.EVIDENCE_EMIT_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      id-token: write   # Sigstore keyless signing + AWS OIDC
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      # Emission is all-or-nothing, and deliberately NOT tolerant once configured.
+      #
+      # This job only runs when EVIDENCE_EMIT_ENABLED is true — the repository has
+      # already declared that it emits. Inside that gate a missing bucket or an
+      # unassumable role is a fault, not a reason to go quiet: a green run that
+      # filed nothing is exactly what hid the #719 outage for forty minutes. The
+      # "skip nicely for adopters" behaviour belongs at the job gate, which a fork
+      # that never opted in does not pass, not at every step inside it.
+      - name: Resolve emit configuration
+        id: cfg
+        env:
+          BUCKET: ${{ secrets.COMPLIANCE_S3_BUCKET }}
+          # NOT S3_EMIT_ROLE_ARN. That is the *declared parameter name* of the
+          # reusable workflows the other lanes call, which their callers satisfy
+          # from a real secret. This workflow is not a reusable, so that name
+          # resolves to nothing and the assume silently no-ops. scrub-map rewrites
+          # SPARC_IAC_TEMPLATE_EMIT_ARN to the template's own secret on export.
+          ROLE: ${{ secrets.SPARC_IAC_TEMPLATE_EMIT_ARN }}
+        run: |
+          set -euo pipefail
+          missing=
+          [ -z "${BUCKET:-}" ] && missing="$missing COMPLIANCE_S3_BUCKET"
+          [ -z "${ROLE:-}" ]   && missing="$missing SPARC_IAC_TEMPLATE_EMIT_ARN"
+          if [ -n "$missing" ]; then
+            echo "::error::EVIDENCE_EMIT_ENABLED is true but emission is not configured — missing:$missing"
+            echo "::error::Supply them, or unset EVIDENCE_EMIT_ENABLED so this job does not run."
+            exit 1
+          fi
+          echo "configured=true" >> "$GITHUB_OUTPUT"
+
+      - name: Download SBOM artifact
+        if: steps.cfg.outputs.configured == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: cyclonedx-sbom
+          path: sbom-output
+
+      - name: Enrich BOM (Terraform providers + Action pins)
+        if: steps.cfg.outputs.configured == 'true'
+        env:
+          REPO_SLUG: ${{ github.event.repository.name }}
+        run: |
+          set -euo pipefail
+          python3 oscal/scripts/enrich_sbom.py \
+            --in sbom-output/cyclonedx.json \
+            --repo-root . \
+            --out "sbom-output/${REPO_SLUG}.cdx.json"
+
+      - name: Install Cosign
+        if: steps.cfg.outputs.configured == 'true'
+        uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5 # v3.10.1
+
+      - name: Sign BOM (keyless OIDC)
+        if: steps.cfg.outputs.configured == 'true'
+        env:
+          REPO_SLUG: ${{ github.event.repository.name }}
+        run: |
+          set -euo pipefail
+          cosign sign-blob --yes \
+            "sbom-output/${REPO_SLUG}.cdx.json" \
+            --bundle "sbom-output/${REPO_SLUG}.cdx.json.cosign.bundle"
+
+      - name: Verify signature
+        if: steps.cfg.outputs.configured == 'true'
+        env:
+          REPO_SLUG: ${{ github.event.repository.name }}
+          # Derived from the running repository, not hardcoded — a literal identity
+          # verifies only in the repo it was written for.
+          IDENTITY: https://github.com/${{ github.repository }}/
+        run: |
+          set -euo pipefail
+          cosign verify-blob \
+            --bundle "sbom-output/${REPO_SLUG}.cdx.json.cosign.bundle" \
+            --certificate-identity-regexp "$IDENTITY" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+            "sbom-output/${REPO_SLUG}.cdx.json"
+
+      - name: Configure AWS credentials (OIDC)
+        id: aws
+        # No continue-on-error: the role is known to be set by the step above, so a
+        # failure here is a real fault (trust policy, OIDC subject, expired role)
+        # and must surface rather than quietly skipping the upload.
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ secrets.SPARC_IAC_TEMPLATE_EMIT_ARN }}
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
+      - name: Emit BOM + signature to S3
+        env:
+          BUCKET: ${{ secrets.COMPLIANCE_S3_BUCKET }}
+          BOUNDARY: ${{ vars.EVIDENCE_BOUNDARY || 'sparc' }}
+          REPO_SLUG: ${{ github.event.repository.name }}
+        run: |
+          set -euo pipefail
+          DATE="$(date -u +%F)"
+          {
+            echo "## SBOM emitted to S3"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+          for f in "${REPO_SLUG}.cdx.json" "${REPO_SLUG}.cdx.json.cosign.bundle"; do
+            for key in "${BOUNDARY}/${DATE}/${REPO_SLUG}/sca/${f}" "${BOUNDARY}/latest/${REPO_SLUG}/sca/${f}"; do
+              # --sse aws:kms is required, not decorative: the evidence bucket
+              # denies PutObject when the request omits the header (#721).
+              aws s3 cp "sbom-output/${f}" "s3://${BUCKET}/${key}" --sse aws:kms
+              echo "- \`s3://${BUCKET}/${key}\`" >> "$GITHUB_STEP_SUMMARY"
+            done
+          done
+
+      # Confirm by object, not by exit code. "The step was green" has been wrong
+      # about this bucket before — a refused PutObject is not always a non-zero
+      # aws-cli exit on every code path.
+      - name: Confirm the objects landed
+        env:
+          BUCKET: ${{ secrets.COMPLIANCE_S3_BUCKET }}
+          BOUNDARY: ${{ vars.EVIDENCE_BOUNDARY || 'sparc' }}
+          REPO_SLUG: ${{ github.event.repository.name }}
+        run: |
+          set -euo pipefail
+          DATE="$(date -u +%F)"
+          for f in "${REPO_SLUG}.cdx.json" "${REPO_SLUG}.cdx.json.cosign.bundle"; do
+            key="${BOUNDARY}/${DATE}/${REPO_SLUG}/sca/${f}"
+            if ! aws s3api head-object --bucket "$BUCKET" --key "$key" >/dev/null 2>&1; then
+              echo "::error::emit reported success but s3://${BUCKET}/${key} is not present"
+              exit 1
+            fi
+          done
+          echo "::notice::verified ${BOUNDARY}/${DATE}/${REPO_SLUG}/sca/ holds both objects"

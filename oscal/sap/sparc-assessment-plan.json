@@ -1,0 +1,127 @@
+{
+  "assessment-plan": {
+    "uuid": "e53a7a4d-97ad-488d-9940-a8fd1503c8f1",
+    "metadata": {
+      "title": "SPARC Infrastructure Automated Assessment Plan",
+      "last-modified": "2026-04-16T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "assessor",
+          "title": "Automated Assessment Tool"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "f1e2d3c4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "Checkov",
+          "remarks": "Bridgecrew/Prisma Cloud — vendor of the Checkov static analysis tool for Terraform. The tool itself is declared in assessment-assets/components (type=software). Enterprise validation tooling (InSpec, Prisma CAS, Lula) can extend this plan post-release."
+        }
+      ]
+    },
+    "import-ssp": {
+      "href": "#system-security-plan",
+      "remarks": "References the pattern-specific SSP (ECS, EC2, or Azure VM)"
+    },
+    "terms-and-conditions": {
+      "parts": [
+        {
+          "name": "objective",
+          "title": "Assessment Objective and Methodology",
+          "prose": "Validate that SPARC Terraform-defined infrastructure configurations satisfy the applicable NIST SP 800-53 Rev 5 HIGH baseline controls. This assessment plan defines automated validation of SPARC infrastructure configurations against the NIST SP 800-53 Rev 5 HIGH Impact Baseline. Assessment is performed via static analysis of Terraform configurations using Checkov. Results are converted to OSCAL Assessment Results (SAR) and gaps are tracked as POA&M items. Enterprise validation tooling (InSpec, Prisma CAS, Lula) may extend this baseline post-release.",
+          "props": [
+            {
+              "name": "method",
+              "value": "EXAMINE"
+            }
+          ]
+        }
+      ]
+    },
+    "reviewed-controls": {
+      "control-selections": [
+        {
+          "description": "All controls in the NIST SP 800-53 Rev 5 HIGH baseline (370 controls). Infrastructure CDEFs currently cover approximately 40 controls across access control (AC), audit (AU), configuration management (CM), contingency planning (CP), identification and authentication (IA), incident response (IR), media protection (MP), system and communications protection (SC), system and information integrity (SI), and risk assessment (CA) families.",
+          "include-all": {}
+        }
+      ]
+    },
+    "assessment-assets": {
+      "components": [
+        {
+          "uuid": "f1e2d3c4-2222-4000-a000-000000000001",
+          "type": "software",
+          "title": "Checkov",
+          "description": "Static analysis tool for Terraform configurations. Validates against 1000+ built-in policies covering AWS, Azure, and GCP. Outputs JSON and SARIF for integration with CI/CD pipelines and OSCAL conversion.",
+          "status": {
+            "state": "operational"
+          }
+        },
+        {
+          "uuid": "f1e2d3c4-2222-4000-a000-000000000002",
+          "type": "software",
+          "title": "OSCAL Assembly Scripts",
+          "description": "Python scripts (oscal/scripts/) that assemble SSPs from CDEFs, convert Checkov results to OSCAL Assessment Results, and generate POA&M from accepted risks.",
+          "status": {
+            "state": "operational"
+          }
+        }
+      ],
+      "assessment-platforms": [
+        {
+          "uuid": "f1e2d3c4-5555-4000-a000-000000000001",
+          "title": "SPARC CI Assessment Platform",
+          "remarks": "GitHub Actions workflow host running Checkov and the OSCAL assembly scripts against the repository on each push.",
+          "uses-components": [
+            {
+              "component-uuid": "f1e2d3c4-2222-4000-a000-000000000001"
+            },
+            {
+              "component-uuid": "f1e2d3c4-2222-4000-a000-000000000002"
+            }
+          ]
+        }
+      ]
+    },
+    "tasks": [
+      {
+        "uuid": "f1e2d3c4-3333-4000-a000-000000000001",
+        "type": "action",
+        "title": "Terraform Configuration Validation",
+        "description": "Run Checkov against the Terraform configuration directory for the target deployment pattern. Validate all resources against CIS, NIST, and custom policies. Convert results to OSCAL Assessment Results.",
+        "associated-activities": [
+          {
+            "activity-uuid": "f1e2d3c4-4444-4000-a000-000000000001",
+            "subjects": [
+              {
+                "type": "component",
+                "description": "All Terraform modules in the deployment pattern",
+                "include-all": {}
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "f1e2d3c4-3333-4000-a000-000000000002",
+        "type": "action",
+        "title": "OSCAL Document Validation",
+        "description": "Validate all OSCAL documents (CDEFs, SSP, SAR, POA&M) against the OSCAL 1.1.2 JSON schema to ensure structural compliance.",
+        "associated-activities": [
+          {
+            "activity-uuid": "f1e2d3c4-4444-4000-a000-000000000002",
+            "subjects": [
+              {
+                "type": "component",
+                "description": "All OSCAL JSON documents in the repository",
+                "include-all": {}
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,146 @@
+#!/bin/bash
+# cis-rhel-9 exec-validation test instance bootstrap (#351 / fix #363).
+# Self-contained startup script. NOT process-substitution (cloud-init-safe), and
+# it uploads its own log to S3 on exit so any failure is readable WITHOUT SSM
+# (uses the instance role's s3:PutObject on the uploads/cis-rhel9 prefix).
+# Terraform templatefile fills the values; bash variables are brace-free.
+exec >> /var/log/cis-rhel9-bootstrap.log 2>&1
+set -x
+echo "=== cis-rhel9 bootstrap $(date -u) ==="
+MARK_OK=/var/log/cis-rhel9-bootstrap.SUCCESS
+MARK_FAIL=/var/log/cis-rhel9-bootstrap.FAILED
+rm -f "$MARK_OK" "$MARK_FAIL"
+
+retry(){ local n=0; until "$@"; do n=$((n+1)); [ "$n" -ge 5 ] && return 1; echo "retry $n: $*"; sleep $((n*10)); done; }
+
+ARCH=$(uname -m)
+CLI_ARCH=aarch64; SSM_ARCH=arm64
+[ "$ARCH" = "x86_64" ] && CLI_ARCH=x86_64 && SSM_ARCH=amd64
+
+# IMDSv2 instance id (region comes from Terraform).
+TOKEN=$(curl -sS -X PUT http://169.254.169.254/latest/api/token -H 'X-aws-ec2-metadata-token-ttl-seconds: 300')
+IID=$(curl -sS -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id)
+echo "instance=$IID region=${aws_region} arch=$ARCH"
+
+# --- AWS CLI v2 FIRST, RHUI-independent: curl + python3 unzip (no 'unzip' pkg) -
+if ! command -v aws >/dev/null 2>&1; then
+  curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-$CLI_ARCH.zip" -o /tmp/awscliv2.zip
+  python3 -c "import zipfile; zipfile.ZipFile('/tmp/awscliv2.zip').extractall('/tmp')"
+  chmod -R +x /tmp/aws
+  /tmp/aws/install
+fi
+AWS=$(command -v aws || echo /usr/local/bin/aws)
+
+# Bulletproof diagnostics: upload this log to S3 on ANY exit.
+upload_log(){ "$AWS" s3 cp /var/log/cis-rhel9-bootstrap.log "s3://${results_bucket}/${results_prefix}/bootstrap-$IID.log" --region ${aws_region} || true; }
+trap upload_log EXIT
+
+# --- SSM agent: rpm -Uvh from the regional amazon-ssm bucket (no dnf/RHUI) -----
+# Host form MUST be amazon-ssm-<region>.s3.<region>.amazonaws.com — the older
+# s3.<region>.amazonaws.com/amazon-ssm-agent/... path 403s and never installs.
+retry rpm -Uvh --replacepkgs "https://amazon-ssm-${aws_region}.s3.${aws_region}.amazonaws.com/latest/linux_$SSM_ARCH/amazon-ssm-agent.rpm"
+systemctl enable --now amazon-ssm-agent
+echo "ssm_active=$(systemctl is-active amazon-ssm-agent)"
+
+# ssm-user sudo — many cis-rhel-9 controls read root-only state.
+echo 'ssm-user ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/90-cis-rhel9
+chmod 440 /etc/sudoers.d/90-cis-rhel9
+
+# --- 9pm-Central self-off timer (scale own ASG to 0) --------------------------
+timedatectl set-timezone America/Chicago
+cat > /usr/local/bin/cis-rhel9-autooff.sh <<'AUTOOFF'
+#!/bin/bash
+exec >> /var/log/cis-rhel9-autooff.log 2>&1
+echo "auto-off $(date): scaling ${asg_name} -> 0"
+/usr/local/bin/aws autoscaling set-desired-capacity --region ${aws_region} --auto-scaling-group-name ${asg_name} --desired-capacity 0
+AUTOOFF
+chmod 755 /usr/local/bin/cis-rhel9-autooff.sh
+cat > /etc/systemd/system/cis-rhel9-autooff.service <<'SVC'
+[Unit]
+Description=cis-rhel9 9pm-Central auto-off (scale own ASG to 0)
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/cis-rhel9-autooff.sh
+SVC
+cat > /etc/systemd/system/cis-rhel9-autooff.timer <<'TMR'
+[Unit]
+Description=cis-rhel9 auto-off at 21:00 America/Chicago
+[Timer]
+OnCalendar=*-*-* 21:00:00
+Persistent=true
+[Install]
+WantedBy=timers.target
+TMR
+systemctl daemon-reload
+systemctl enable --now cis-rhel9-autooff.timer
+
+# Scan toolchain (Node, @mitre/saf, @mitre/hdf-converters, cinc-auditor, hdf CLI,
+# psql) is BAKED into the golden AMI at build time (#374, packer/scripts/toolchain.sh)
+# — no longer installed here, so the box boots scan-ready instead of pulling
+# npm/omnitruck/github on every launch.
+
+# =============================================================================
+# Runtime hardening that isn't baked: tmpfs /tmp + /dev/shm. The full CIS L1 set
+# (partitions, AIDE, sysctl/PAM/sshd, and the §4.3 host firewall) is baked into
+# the golden AMI via ansible-lockdown — nftables is intentionally NOT re-applied
+# here, to avoid double-configuring the firewall the golden image already owns.
+# =============================================================================
+
+# --- /tmp tmpfs (nodev,nosuid,noexec) + /dev/shm noexec (CIS 1.1.2.1.*/2.2.4) -
+# /tmp via systemd tmp.mount with CIS options (effective next boot; the golden
+# AMI lays this down at build time). /dev/shm remounted noexec now.
+if [ -f /usr/share/systemd/tmp.mount ]; then
+  install -m 0644 /usr/share/systemd/tmp.mount /etc/systemd/system/tmp.mount
+  sed -i 's/^Options=.*/Options=mode=1777,strictatime,nodev,nosuid,noexec/' /etc/systemd/system/tmp.mount
+  systemctl daemon-reload
+  systemctl enable tmp.mount || true
+fi
+grep -q '[[:space:]]/dev/shm[[:space:]]' /etc/fstab || echo 'tmpfs /dev/shm tmpfs defaults,rw,nosuid,nodev,noexec,relatime 0 0' >> /etc/fstab
+mount -o remount,nosuid,nodev,noexec /dev/shm || true
+
+# --- CloudWatch agent CONFIG (agent binary baked in the golden AMI, #374) ------
+# Off-box shipping is the compensating control for on-box audit retention. The
+# config is written at boot because it carries the instance-id log stream; the
+# log group + retention are owned by Terraform.
+cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json <<'CWA'
+{
+  "agent": { "run_as_user": "root" },
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          { "file_path": "/var/log/audit/audit.log", "log_group_name": "${log_group_name}", "log_stream_name": "{instance_id}/audit" },
+          { "file_path": "/var/log/messages", "log_group_name": "${log_group_name}", "log_stream_name": "{instance_id}/messages" },
+          { "file_path": "/var/log/secure", "log_group_name": "${log_group_name}", "log_stream_name": "{instance_id}/secure" }
+        ]
+      }
+    }
+  }
+}
+CWA
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json || true
+
+# Best-effort flush of the agent buffer at shutdown (box scales to 0). Full
+# guarantee is a golden-AMI/shutdown-hook concern (Phase 1b).
+cat > /etc/systemd/system/cwagent-drain.service <<'DRAIN'
+[Unit]
+Description=Flush CloudWatch agent buffer before shutdown (#368)
+DefaultDependencies=no
+Before=shutdown.target
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/true
+ExecStop=/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a stop
+DRAIN
+systemctl enable cwagent-drain.service || true
+
+echo "export CIS_RHEL9_RESULTS=s3://${results_bucket}/${results_prefix}/" > /etc/profile.d/cis-rhel9.sh
+
+echo "versions: node=$(node --version 2>&1) saf=$(saf --version 2>&1) cinc=$(cinc-auditor version 2>&1 | head -1) hdf=$(hdf version 2>&1 | head -1)"
+if command -v cinc-auditor >/dev/null 2>&1 && command -v saf >/dev/null 2>&1 && command -v hdf >/dev/null 2>&1; then
+  echo "bootstrap OK $(date -u)" > "$MARK_OK"
+else
+  echo "bootstrap FAILED $(date -u) (baked toolchain missing — is this the golden AMI? SSM in or read this log in S3)" > "$MARK_FAIL"
+fi
+echo "=== cis-rhel9 bootstrap done $(date -u) ==="

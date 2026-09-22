@@ -1,0 +1,83 @@
+{
+  "component-definition": {
+    "uuid": "b1c2d3e4-1111-4000-a000-000000000001",
+    "metadata": {
+      "title": "SPARC EC2 Instance Component Definition",
+      "last-modified": "2026-03-20T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "b1c2d3e4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "b1c2d3e4-2222-4000-a000-000000000001",
+        "type": "service",
+        "title": "AWS EC2 Instance with Docker",
+        "description": "EC2 instance running Amazon Linux 2023 with Docker and docker-compose, bootstrapped via user-data script. NGINX reverse proxy and Rails/Puma application run as Docker containers via docker-compose. Instance uses IMDSv2, encrypted EBS root volume, SSM Session Manager for access, and CloudWatch agent for monitoring. Deployed via Terraform (AWS/EC2/modules/ec2_instance/). <!-- UPDATE: Insert instance ID, AMI ID, instance profile ARN, and security group for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["b1c2d3e4-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "b1c2d3e4-3333-4000-a000-000000000001",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for EC2 instance with Docker",
+            "implemented-requirements": [
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000001",
+                "control-id": "cm-2",
+                "description": "Baseline Configuration: The EC2 instance is bootstrapped via a user-data script that installs Docker, docker-compose, and the CloudWatch agent, then pulls container images and starts services via docker-compose. The docker-compose.yml defines the immutable application baseline: NGINX reverse proxy (port 8080) and Rails/Puma application server (port 3000) with environment variables, secrets injection, volume mounts, and health checks. Changes require updating the user-data template and redeploying the instance. Reference: DISA SRG-APP-000133.",
+                "remarks": "Terraform resources: aws_instance.main with user_data, docker-compose.yml template. User-data script is version-controlled in Terraform and executed on instance launch."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000002",
+                "control-id": "cm-7",
+                "description": "Least Functionality: Amazon Linux 2023 is a minimal, security-hardened OS with only essential packages. IMDSv2 is enforced (http_tokens = required, http_put_response_hop_limit = 1), preventing SSRF-based credential theft. Detailed monitoring is enabled at 1-minute intervals for granular instance metrics. No unnecessary services are installed — the user-data script installs only Docker, docker-compose, and the CloudWatch agent. Reference: DISA SRG-APP-000141, CIS AWS EC2 4.1.",
+                "remarks": "Terraform resources: aws_instance.main with metadata_options (http_tokens=required), monitoring=true. AL2023 provides automatic security updates via dnf."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000003",
+                "control-id": "si-2",
+                "description": "Flaw Remediation: SSM Patch Manager provides automated OS patching for the EC2 instance during configurable maintenance windows. Amazon Linux 2023 security updates are applied via dnf automatic updates. Docker container images are rebuilt and pulled on deployment, incorporating the latest base image security patches. The CloudWatch agent is updated via SSM. Reference: DISA SRG-APP-000456.",
+                "remarks": "SSM Patch Manager requires the AmazonSSMManagedInstanceCore policy on the instance profile. Docker images should use pinned but regularly updated base image tags."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000004",
+                "control-id": "ac-17",
+                "description": "Remote Access: Administrative access to the EC2 instance is provided exclusively via SSM Session Manager — no SSH keys are provisioned, no SSH port (22) is open in the security group, and no public IP is assigned to the instance. SSM Session Manager provides encrypted, audited, IAM-authenticated shell access with session logging to CloudWatch Logs. This eliminates SSH key management and reduces the network attack surface. Reference: DISA SRG-NET-000015, CIS AWS EC2 5.2.",
+                "remarks": "Terraform resources: Instance profile includes AmazonSSMManagedInstanceCore policy. Security group has no port 22 ingress rule. associate_public_ip_address = false."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000005",
+                "control-id": "sc-28",
+                "description": "Protection of Information at Rest: The EC2 root EBS volume is encrypted (encrypted = true) using AWS KMS, protecting all OS files, Docker images, container data, and logs at rest. Application secrets (DATABASE_URL, REDIS_URL, SECRET_KEY_BASE, OIDC credentials) are retrieved at runtime from AWS Secrets Manager via the instance profile — no credentials are stored on disk or in user-data. Reference: DISA SRG-APP-000231, CIS AWS EC2 2.2.1.",
+                "remarks": "Terraform resources: aws_instance.main root_block_device with encrypted=true. Secrets are fetched via AWS CLI in docker-compose environment using Secrets Manager ARNs."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000006",
+                "control-id": "au-2",
+                "description": "Event Logging: The CloudWatch agent is installed and configured via user-data to collect OS-level metrics (CPU, memory, disk, network) and application logs (Docker container stdout/stderr, NGINX access/error logs, Rails application logs). Logs are streamed to dedicated CloudWatch Log Groups with configurable retention. Combined with SSM Session Manager audit logs, this provides comprehensive host and application-level logging. Reference: DISA SRG-APP-000089, CIS AWS 3.1.",
+                "remarks": "CloudWatch agent configuration is deployed via user-data. Log groups: /ec2/{project}-{env}/os-metrics, /ec2/{project}-{env}/nginx, /ec2/{project}-{env}/rails."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+# Azure Container Apps (ACK) — dev config example (#11). Copy to terraform.tfvars.
+# Sensitive inputs (tenant_id, SPARC app secrets) come from org-level secrets at
+# deploy via -var, NOT this file.
+
+environment = "dev"
+location    = "eastus"
+
+# Images (repo:tag within the ACR this stack creates; push before apply).
+sparc_image = "sparc:latest"
+nginx_image = "nginx:latest"
+ingress_port = 80
+
+acr_sku = "Standard"
+
+# Container sizing / scaling (dev)
+container_cpu             = 0.5
+container_memory          = "1Gi"
+min_replicas             = 1
+max_replicas             = 3
+scale_concurrent_requests = 50
+aca_zone_redundant       = false
+
+# Data tier (dev)
+db_sku_name              = "B_Standard_B1ms"
+db_high_availability     = false
+db_geo_redundant_backup  = false
+redis_sku                = "Basic"
+redis_capacity           = 0
+storage_replication_type = "LRS"
+
+alert_emails = ["sparc.admin@example.com"]
+# tenant_id supplied at deploy: -var="tenant_id=..."

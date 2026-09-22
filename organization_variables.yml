@@ -1,0 +1,92 @@
+# ===========================================================================
+# Organization Variables for OSCAL Document Assembly
+# ===========================================================================
+# Authoritative identifiers for all generated OSCAL documents.
+# Fill in your organization's details. When SPARC API is available,
+# the pipeline fetches fresh values and uses this file as fallback.
+#
+# UUIDs should match records in SPARC GRC. Generate new UUIDs:
+#   python3 -c "import uuid; print(uuid.uuid4())"
+# ===========================================================================
+
+# Project namespace UUID for deterministic ID generation.
+# DO NOT CHANGE after initial setup — all derived UUIDs depend on it.
+namespace_uuid: "a1b2c3d4-0000-4000-a000-000000000000"
+
+# ---------------------------------------------------------------------------
+# Organization
+# ---------------------------------------------------------------------------
+organization:
+  uuid: ""
+  name: ""
+  short_name: ""
+  address: ""
+  email: ""
+  website: ""
+
+# ---------------------------------------------------------------------------
+# Personnel (parties in OSCAL)
+# ---------------------------------------------------------------------------
+# Add/remove parties as needed. Each must have a unique uuid.
+# role_id values: system-owner, authorizing-official, system-admin,
+#   isso, security-assessor, compliance-analyst
+parties:
+  - uuid: ""
+    name: ""
+    title: "System Owner"
+    role_id: "system-owner"
+    email: ""
+
+  - uuid: ""
+    name: ""
+    title: "Authorizing Official"
+    role_id: "authorizing-official"
+    email: ""
+
+  - uuid: ""
+    name: ""
+    title: "System Administrator"
+    role_id: "system-admin"
+    email: ""
+
+  - uuid: ""
+    name: ""
+    title: "Information System Security Officer"
+    role_id: "isso"
+    email: ""
+
+# ---------------------------------------------------------------------------
+# System
+# ---------------------------------------------------------------------------
+system:
+  uuid: ""
+  name: "SPARC"
+  description: "Systemized Policy and Regulatory Controls"
+  security_sensitivity_level: "high"
+  status: "operational"
+  information_types:
+    - title: "Compliance Data"
+      description: >-
+        System Assessment Plans (SAP), System Assessment Reports (SAR),
+        Plans of Action and Milestones (POAM), resolved NIST profiles,
+        and validation data.
+      confidentiality: "high"
+      integrity: "high"
+      availability: "high"
+
+# ---------------------------------------------------------------------------
+# Baseline
+# ---------------------------------------------------------------------------
+baseline:
+  uuid: ""
+  name: "NIST SP 800-53 Rev 5 HIGH Impact Baseline"
+  catalog_version: "5.1.1"
+  profile_path: "docs/FedRAMP_20x/NIST_SP-800-53_rev5_HIGH-baseline-resolved-profile_catalog.json"
+
+# ---------------------------------------------------------------------------
+# SPARC API (for fetching authoritative identifiers)
+# ---------------------------------------------------------------------------
+sparc_api:
+  enabled: false
+  base_url: ""
+  # token sourced from environment: SPARC_API_TOKEN

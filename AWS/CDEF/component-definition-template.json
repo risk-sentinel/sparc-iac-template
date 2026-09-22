@@ -1,0 +1,53 @@
+{
+  "component-definition": {
+    "uuid": "REPLACE-WITH-GENERATED-UUID",
+    "metadata": {
+      "title": "SPARC <Component Name> Component Definition",
+      "last-modified": "YYYY-MM-DDTHH:MM:SSZ",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "REPLACE-WITH-GENERATED-UUID",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "REPLACE-WITH-GENERATED-UUID",
+        "type": "service",
+        "title": "<Component Name (e.g., AWS EC2 Instances)>",
+        "description": "<What this component does and where it is deployed. Reference the Terraform module path. Include <!-- UPDATE --> markers for deployment-specific values like ARNs, IDs, etc.>",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["REPLACE-WITH-PARTY-UUID"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "REPLACE-WITH-GENERATED-UUID",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for <component>",
+            "implemented-requirements": [
+              {
+                "uuid": "REPLACE-WITH-GENERATED-UUID",
+                "control-id": "<control-id, e.g., sc-7>",
+                "description": "<Control Name>: <How this component satisfies the control. Be specific about configuration details. Include cross-references: Reference: DISA SRG-xxx-nnnnnn, CIS AWS x.x.x.>",
+                "remarks": "<Terraform resources that implement this control, e.g.: Terraform resources: aws_instance.main, aws_security_group.instance>"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "component-definition": {
+    "uuid": "aa510000-0000-4000-a000-000000000010",
+    "metadata": {
+      "title": "SPARC Azure App Service Component Definition",
+      "last-modified": "2026-07-26T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "aa510000-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "aa510000-2222-4000-a000-000000000010",
+        "type": "service",
+        "title": "Azure App Service (Linux container) running SPARC",
+        "description": "Managed PaaS host for the SPARC container. Terminates TLS (HTTPS-only, TLS 1.2 minimum), FTPS disabled, HTTP/2 enabled, system-assigned managed identity, Regional VNet Integration for private outbound to the data tier, optional staging slot for blue/green swaps. Secrets are Key Vault references resolved via the managed identity. Deployed via Terraform (Azure/AAS/modules/app_service/). <!-- UPDATE: insert the Web App resource ID, default hostname, and managed identity principal ID for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["aa510000-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "aa510000-3333-4000-a000-000000000010",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for Azure App Service",
+            "implemented-requirements": [
+              {
+                "uuid": "aa510000-4444-4000-a000-000000000008",
+                "control-id": "sc-8",
+                "description": "Transmission Confidentiality and Integrity: The Web App enforces HTTPS-only (https_only=true) with a minimum TLS version of 1.2, so all client traffic is encrypted in transit. FTPS is disabled. Reference: DISA SRG-APP-000439, CIS Azure.",
+                "remarks": "Terraform: azurerm_linux_web_app.main with https_only=true, site_config.minimum_tls_version=\"1.2\", ftps_state=\"Disabled\"."
+              },
+              {
+                "uuid": "aa510000-4444-4000-a000-000000000028",
+                "control-id": "sc-28",
+                "description": "Protection of Information at Rest: Application secrets are not stored in app configuration or Terraform state. Sensitive values (DB password, Redis URL, Blob key) are stored in Key Vault and injected as Key Vault references (@Microsoft.KeyVault) resolved at runtime via the app's managed identity. Reference: DISA SRG-APP-000429.",
+                "remarks": "Terraform: app_settings use @Microsoft.KeyVault(VaultName=...;SecretName=...); azurerm_key_vault_secret for redis-url/blob-access-key; DB secret created by the database module."
+              },
+              {
+                "uuid": "aa510000-4444-4000-a000-000000000002",
+                "control-id": "ia-2",
+                "description": "Identification and Authentication: The Web App uses a system-assigned managed identity for Azure resource access (Key Vault secret retrieval) rather than stored credentials. End-user authentication is performed by the SPARC application (OIDC), so App Service built-in authentication is intentionally not enabled. Reference: DISA SRG-APP-000148.",
+                "remarks": "Terraform: identity { type = \"SystemAssigned\" } + azurerm_role_assignment granting the principal Key Vault Secrets User."
+              },
+              {
+                "uuid": "aa510000-4444-4000-a000-000000000007",
+                "control-id": "sc-7",
+                "description": "Boundary Protection: Outbound access to the private data tier flows through Regional VNet Integration (vnet_route_all_enabled=true) into a delegated subnet; the database, cache, blob, and vault are private (VNet integration / private endpoints, public network access disabled). The Web App is the public inbound tier by design. Reference: DISA SRG-NET-000364.",
+                "remarks": "Terraform: virtual_network_subnet_id (integration subnet), vnet_route_all_enabled=true; data tier via Azure/AAS/modules/private_endpoints + delegated DB subnet."
+              },
+              {
+                "uuid": "aa510000-4444-4000-a000-000000000003",
+                "control-id": "au-2",
+                "description": "Event Logging: HTTP, console, audit, and application logs plus AllMetrics are streamed to Log Analytics via a diagnostic setting; detailed error messages and failed-request tracing are enabled. Reference: DISA SRG-APP-000089, CIS Azure.",
+                "remarks": "Terraform: azurerm_monitor_diagnostic_setting.app (in the monitoring module) with AppServiceHTTPLogs/ConsoleLogs/AuditLogs/AppLogs; logs { detailed_error_messages=true, failed_request_tracing=true }."
+              },
+              {
+                "uuid": "aa510000-4444-4000-a000-000000000266",
+                "control-id": "si-10",
+                "description": "Information Input Validation / availability: App Service probes a configurable health check path and removes unhealthy instances from rotation. Reference: DISA SRG-APP-000266.",
+                "remarks": "Terraform: site_config.health_check_path (default /up)."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

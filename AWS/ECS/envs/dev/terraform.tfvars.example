@@ -1,0 +1,74 @@
+# ============================================================================
+# SPARC ECS Fargate — Dev Environment
+# ============================================================================
+# Copy to terraform.tfvars and fill in required values:
+#   cp envs/dev/terraform.tfvars.example terraform.tfvars
+# ============================================================================
+
+# ── General ─────────────────────────────────────────────────────────────────
+environment  = "dev"
+aws_region   = "us-east-1"
+project_name = "sparc"
+
+# ── SPARC App Image ─────────────────────────────────────────────────────────
+# With create_ecr = true, leave sparc_image empty — it auto-derives as:
+#   {ecr_repository_url}:{sparc_image_tag}
+# Just set the tag:
+sparc_image_tag = "latest"
+
+# Or override with a full URL from any registry:
+# sparc_image = "123456789012.dkr.ecr.us-east-1.amazonaws.com/sparc:latest"
+
+# ── ECR ─────────────────────────────────────────────────────────────────────
+create_ecr = true
+
+# ── TLS Certificate ─────────────────────────────────────────────────────────
+# Option 1: Auto-provision via ACM + Route 53 DNS validation
+# create_certificate = true
+
+# Option 2: Provide an existing certificate ARN
+certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+# ── Route 53 DNS (optional) ────────────────────────────────────────────────
+# hosted_zone_id = "Z0123456789ABCDEFGHIJ"
+# domain_name    = "dev.sparc.example.com"
+
+# ── ECS Sizing ──────────────────────────────────────────────────────────────
+task_cpu      = 256
+task_memory   = 512
+desired_count = 1
+
+# ── RDS ─────────────────────────────────────────────────────────────────────
+db_instance_class      = "db.t3.micro"
+db_allocated_storage   = 20
+db_skip_final_snapshot = true
+
+# ── Redis ───────────────────────────────────────────────────────────────────
+redis_node_type = "cache.t3.micro"
+
+# ── SPARC Application ──────────────────────────────────────────────────────
+# sparc_app_url is auto-derived from domain_name or ALB DNS
+sparc_app_name      = "SPARC"
+sparc_contact_email = "admin@example.com"
+sparc_org_name      = "My Organization"
+
+# ── Authentication ──────────────────────────────────────────────────────────
+sparc_enable_local_login = "true"
+
+# ── OIDC (uncomment to enable) ─────────────────────────────────────────────
+# sparc_enable_oidc         = "true"
+# sparc_oidc_issuer_url     = "https://your-idp.okta.com"
+# sparc_oidc_client_id      = "your-client-id"
+# sparc_oidc_client_secret  = "your-client-secret"
+# sparc_oidc_provider_title = "Corporate Login (Okta)"
+
+# ── Monitoring ──────────────────────────────────────────────────────────────
+# alarm_emails = ["dev-alerts@example.com"]
+
+# ── SMTP (uncomment to enable) ─────────────────────────────────────────────
+# sparc_enable_smtp      = "true"
+# sparc_smtp_address     = "smtp.sendgrid.net"
+# sparc_smtp_port        = "587"
+# sparc_smtp_username    = "apikey"
+# sparc_smtp_password    = "CHANGE_ME"
+# sparc_smtp_from_address = "no-reply@sparc.example.com"

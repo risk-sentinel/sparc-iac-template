@@ -1,0 +1,28 @@
+# Azure App Service (AAS) — prod config example (#10). Copy to terraform.tfvars.
+# Sensitive inputs (tenant_id, SPARC app secrets) come from org-level secrets at
+# deploy via -var, NOT this file.
+
+environment = "prod"
+location    = "eastus"
+
+app_image           = "risksentinel/sparc:v1.13.1"
+docker_registry_url = "https://index.docker.io"
+app_port            = 3000
+health_check_path   = "/up"
+
+# Premium v3 for deployment slots + zone redundancy in prod.
+app_service_sku            = "P1v3"
+app_service_zone_redundant = true
+enable_staging_slot        = true
+
+# Data tier (prod sizing)
+db_sku_name              = "GP_Standard_D2s_v3"
+db_storage_mb            = 131072
+db_high_availability     = true
+db_geo_redundant_backup  = true
+redis_sku                = "Standard"
+redis_capacity           = 1
+storage_replication_type = "GRS"
+
+alert_emails = ["sparc.admin@example.com"]
+# tenant_id supplied at deploy: -var="tenant_id=..."

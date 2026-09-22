@@ -1,0 +1,30 @@
+# Azure Container Apps (ACK) — prod config example (#11). Copy to terraform.tfvars.
+# Sensitive inputs (tenant_id, SPARC app secrets) come from org-level secrets at
+# deploy via -var, NOT this file.
+
+environment = "prod"
+location    = "eastus"
+
+sparc_image = "sparc:v1.13.1"
+nginx_image = "nginx:stable"
+ingress_port = 80
+
+# Premium ACR enables private endpoint / geo-replication / content-trust.
+acr_sku = "Premium"
+
+container_cpu             = 1.0
+container_memory          = "2Gi"
+min_replicas             = 2
+max_replicas             = 10
+scale_concurrent_requests = 80
+aca_zone_redundant       = true
+
+db_sku_name              = "GP_Standard_D2s_v3"
+db_high_availability     = true
+db_geo_redundant_backup  = true
+redis_sku                = "Standard"
+redis_capacity           = 1
+storage_replication_type = "GRS"
+
+alert_emails = ["sparc.admin@example.com"]
+# tenant_id supplied at deploy: -var="tenant_id=..."

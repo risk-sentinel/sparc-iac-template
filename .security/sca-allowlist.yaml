@@ -1,0 +1,16 @@
+# SCA allow-list — deferrals for the Grype/Trivy fs gate in
+# .github/workflows/sbom-and-sca.yml (#246). Consumed by container-build-sign's
+# reusable sca-scan.yml reconciler.
+#
+# Schema (enforced by sca-scan.yml):
+#   cves:
+#     - id:       # CVE / GHSA / vendor id as reported by Grype or Trivy
+#       reason:   # WHY this CVE is deferred. Required.
+#       expires:  # YYYY-MM-DD. REQUIRED. Missing/past dates do NOT suppress
+#                 # the finding (intentional friction so allow-list debt is
+#                 # reviewable). Suppressing an id hides it from BOTH scanners.
+#
+# Start empty; add a justified, time-boxed entry only when a real CRITICAL
+# finding can't be fixed immediately. Reference: risk-sentinel/container-build-sign
+# docs/dev/sbom_sca_pipeline.md.
+cves: []

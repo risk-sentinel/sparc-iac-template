@@ -1,0 +1,71 @@
+{
+  "component-definition": {
+    "uuid": "b1c2d3e4-1111-4000-a000-000000000005",
+    "metadata": {
+      "title": "SPARC EC2 IAM Component Definition",
+      "last-modified": "2026-03-20T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "b1c2d3e4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "b1c2d3e4-2222-4000-a000-000000000005",
+        "type": "service",
+        "title": "AWS IAM Instance Profile (EC2)",
+        "description": "IAM instance profile with scoped policies for SSM Session Manager access, CloudWatch agent metrics and logs, Secrets Manager credential retrieval, and S3 bucket access for ActiveStorage uploads. No SSH keys or static credentials are used. Deployed via Terraform (AWS/EC2/modules/iam/). <!-- UPDATE: Insert instance profile ARN, role ARN, and policy ARNs for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["b1c2d3e4-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "b1c2d3e4-3333-4000-a000-000000000005",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for EC2 IAM",
+            "implemented-requirements": [
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000040",
+                "control-id": "ac-2",
+                "description": "Account Management: A single IAM instance profile ({project}-{env}-ec2-instance-profile) is provisioned with an attached IAM role ({project}-{env}-ec2-role). The role uses ec2.amazonaws.com as the trusted principal. Four scoped policies are attached: AmazonSSMManagedInstanceCore (SSM Session Manager), CloudWatch agent (metrics and logs write), Secrets Manager (read DB and app secrets), and S3 (ActiveStorage uploads). No human user accounts are provisioned on the instance. Reference: DISA SRG-APP-000023, CIS AWS 1.16.",
+                "remarks": "Terraform resources: aws_iam_instance_profile.ec2, aws_iam_role.ec2. The instance profile replaces SSH key-based access with SSM Session Manager."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000041",
+                "control-id": "ac-3",
+                "description": "Access Enforcement: IAM policies are scoped per function. The SSM policy enables Session Manager access and patch management. The CloudWatch policy grants only logs:PutLogEvents, logs:CreateLogStream, and cloudwatch:PutMetricData. The Secrets Manager policy grants only secretsmanager:GetSecretValue on the specific DB credentials and app secrets ARNs. The S3 policy grants only s3:GetObject, s3:PutObject, s3:DeleteObject, s3:ListBucket on the specific uploads bucket. No policy grants broad or administrative permissions. Reference: DISA SRG-APP-000033.",
+                "remarks": "Each policy is defined as a separate aws_iam_role_policy with resource constraints on specific ARNs."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000042",
+                "control-id": "ac-6",
+                "description": "Least Privilege: The EC2 instance role follows strict least-privilege principles. No SSH keys are provisioned — administrative access uses SSM Session Manager exclusively. No static AWS credentials (access keys) are used — all AWS API authentication uses the instance role via STS temporary credentials. Each policy attachment is scoped to the minimum actions and specific resource ARNs required for its function. The instance cannot modify its own IAM policies, create new resources, or access resources outside its explicit scope. Reference: DISA SRG-APP-000062, CIS AWS 1.17.",
+                "remarks": "Review instance role policies when adding new application-level AWS integrations. Avoid attaching managed policies with broad permissions."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000043",
+                "control-id": "ia-2",
+                "description": "Identification and Authentication: The EC2 instance authenticates to AWS services using the IAM instance role via AWS STS, providing temporary credentials that are automatically rotated. IMDSv2 is enforced (http_tokens = required), preventing SSRF-based credential theft from the instance metadata service. SSM Session Manager provides IAM-authenticated administrative access, eliminating password and SSH key-based authentication. No long-lived access keys or passwords are used for AWS API authentication. Reference: DISA SRG-APP-000148, CIS AWS 1.4.",
+                "remarks": "IMDSv2 enforcement ensures that only authenticated HTTP PUT requests with a session token can access instance metadata credentials."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
