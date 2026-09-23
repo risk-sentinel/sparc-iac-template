@@ -1,0 +1,277 @@
+{
+  "component-definition": {
+    "uuid": "ad5abbd4-5df0-4bc8-b33b-45e685d9834e",
+    "metadata": {
+      "title": "Organizational Policy Control Templates",
+      "last-modified": "2026-04-16T19:34:02Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "remarks": "Template component definition for organizational policy controls. These controls require documentation from the authorizing organization, not technical implementation. Each implemented-requirement contains a TEMPLATE marker that organizations must replace with their specific policies and procedures.",
+      "roles": [
+        {
+          "id": "organization",
+          "title": "Authorizing Organization"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "eb7b6d65-dd89-51ac-bd38-23da0f7af827",
+          "type": "organization",
+          "name": "<!-- TEMPLATE: Your Organization Name -->"
+        }
+      ],
+      "revisions": [
+        {
+          "title": "Organizational Policy Control Templates (superseded)",
+          "version": "1.0.0",
+          "oscal-version": "1.1.2",
+          "props": [
+            {
+              "name": "previous-uuid",
+              "ns": "https://risk-sentinel.io/ns/oscal",
+              "value": "9d84ec08-0569-52a7-aa63-bb43f7cd53e3"
+            }
+          ],
+          "last-modified": "2026-03-26T20:33:00Z"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "404a99a5-68ec-582f-b656-3374e7056a73",
+        "type": "policy",
+        "title": "Organizational Security Policies and Procedures",
+        "description": "Template for organizational security policies and procedures covering awareness/training (AT), planning (PL), program management (PM), personnel security (PS), risk assessment (RA), and system acquisition (SA) control families. Organizations must customize these templates with their specific policies.",
+        "control-implementations": [
+          {
+            "uuid": "2681c460-c859-5f73-be4d-41b272ca112e",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 organizational policy controls (templates)",
+            "implemented-requirements": [
+              {
+                "uuid": "b1d2d2a1-34f3-5267-97c0-716c4bda4ce5",
+                "control-id": "at-01",
+                "description": "Awareness and Training Policy and Procedures. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of AT-01. -->"
+              },
+              {
+                "uuid": "c292a6f5-34b8-5f13-a44c-114dba7b0407",
+                "control-id": "at-02",
+                "description": "Awareness Training. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of AT-02. -->"
+              },
+              {
+                "uuid": "88949fb8-dfe4-5977-a8d5-fb754d8478d0",
+                "control-id": "at-2.2",
+                "description": "Insider Threat. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of AT-02(02). -->"
+              },
+              {
+                "uuid": "9ab6dd9f-8b7a-5a7a-ae58-d11a039f6e12",
+                "control-id": "at-03",
+                "description": "Role-Based Training. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of AT-03. -->"
+              },
+              {
+                "uuid": "879fc082-d00c-527f-b497-e24293ccf82d",
+                "control-id": "at-04",
+                "description": "Training Records. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of AT-04. -->"
+              },
+              {
+                "uuid": "7036e0d0-8b19-541b-9b61-d8a3af44a3b4",
+                "control-id": "pl-01",
+                "description": "Planning Policy and Procedures. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PL-01. -->"
+              },
+              {
+                "uuid": "29ea6c0e-2d52-5520-9088-e0c71c2313ed",
+                "control-id": "pl-02",
+                "description": "System Security and Privacy Plans. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PL-02. -->"
+              },
+              {
+                "uuid": "da9375ba-2314-5696-9e93-1c09592d8e15",
+                "control-id": "pl-04",
+                "description": "Rules of Behavior. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PL-04. -->"
+              },
+              {
+                "uuid": "fcd770be-d808-54b6-acaf-e41b541aadb5",
+                "control-id": "pl-4.1",
+                "description": "Social Media and External Site/Application Usage Restrictions. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PL-04(01). -->"
+              },
+              {
+                "uuid": "265acc6b-9e1f-5d8b-9b43-bbf3f2b16ee1",
+                "control-id": "pl-08",
+                "description": "Security and Privacy Architectures. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PL-08. -->"
+              },
+              {
+                "uuid": "523255e9-9773-564c-a0ce-1190d08f1f81",
+                "control-id": "pl-10",
+                "description": "Baseline Selection. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PL-10. -->"
+              },
+              {
+                "uuid": "fa86faab-c8f5-56a0-a4a2-9d149196a3d5",
+                "control-id": "pl-11",
+                "description": "Baseline Tailoring. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PL-11. -->"
+              },
+              {
+                "uuid": "62d2ab7f-3246-5dcc-a44d-cee7c5776e8f",
+                "control-id": "pm-01",
+                "description": "Information Security Program Plan. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PM-01. -->"
+              },
+              {
+                "uuid": "ee2beb13-a9bd-563a-97ba-8fc85943c65a",
+                "control-id": "pm-02",
+                "description": "Information Security Program Leadership Role. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PM-02. -->"
+              },
+              {
+                "uuid": "efce14b2-79fc-5741-ae61-9bef96063d63",
+                "control-id": "pm-03",
+                "description": "Information Security and Privacy Resources. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PM-03. -->"
+              },
+              {
+                "uuid": "56667d5b-2b8c-5ef7-aba9-61b39cc3d152",
+                "control-id": "pm-04",
+                "description": "Plan of Action and Milestones Process. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PM-04. -->"
+              },
+              {
+                "uuid": "46648a75-63f6-5f6a-962d-f11af80749d6",
+                "control-id": "pm-05",
+                "description": "System Inventory. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PM-05. -->"
+              },
+              {
+                "uuid": "60b756b1-0da5-55eb-9c31-617aea2fd27f",
+                "control-id": "pm-06",
+                "description": "Measures of Performance. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PM-06. -->"
+              },
+              {
+                "uuid": "36a38957-8e28-52b8-b285-fdabdcac2cf5",
+                "control-id": "pm-07",
+                "description": "Enterprise Architecture. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PM-07. -->"
+              },
+              {
+                "uuid": "fb06c1bf-3e5f-524f-80d7-c26b69444418",
+                "control-id": "pm-08",
+                "description": "Critical Infrastructure Plan. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PM-08. -->"
+              },
+              {
+                "uuid": "dd9cf4a4-7e9a-5cab-bfbe-91ec5a2de8d7",
+                "control-id": "pm-09",
+                "description": "Risk Management Strategy. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PM-09. -->"
+              },
+              {
+                "uuid": "f3ceed3d-75b8-503d-8df6-50c87cc32a29",
+                "control-id": "pm-10",
+                "description": "Authorization Process. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PM-10. -->"
+              },
+              {
+                "uuid": "f7b687fe-c7aa-5c31-acf5-1e3923c96569",
+                "control-id": "pm-11",
+                "description": "Mission and Business Process Definition. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PM-11. -->"
+              },
+              {
+                "uuid": "510de9b9-dc3e-549b-be6f-c6214367e74d",
+                "control-id": "pm-14",
+                "description": "Testing, Training, and Monitoring. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PM-14. -->"
+              },
+              {
+                "uuid": "4af5cfc3-8848-55ac-9d7b-3324e8dbecc2",
+                "control-id": "pm-15",
+                "description": "Security and Privacy Groups and Associations. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PM-15. -->"
+              },
+              {
+                "uuid": "e72cfbe6-2311-5ae2-b29d-58b3760b3c29",
+                "control-id": "pm-16",
+                "description": "Threat Awareness Program. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PM-16. -->"
+              },
+              {
+                "uuid": "dcb16cf1-2901-5a64-8785-0b325d343f65",
+                "control-id": "ps-01",
+                "description": "Personnel Security Policy and Procedures. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PS-01. -->"
+              },
+              {
+                "uuid": "32fbe0b4-13e9-521d-b0cf-a58bf666c09d",
+                "control-id": "ps-02",
+                "description": "Position Risk Designation. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PS-02. -->"
+              },
+              {
+                "uuid": "13df97ad-c6b5-56b7-9f3f-cef7a0634be7",
+                "control-id": "ps-03",
+                "description": "Personnel Screening. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PS-03. -->"
+              },
+              {
+                "uuid": "344448e6-81e2-5601-b89c-70e8a8162126",
+                "control-id": "ps-3.3",
+                "description": "Information Requiring Special Protective Measures. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PS-03(03). -->"
+              },
+              {
+                "uuid": "4ca1c26f-14d2-5211-879f-694afefd7820",
+                "control-id": "ps-04",
+                "description": "Personnel Termination. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PS-04. -->"
+              },
+              {
+                "uuid": "5b225817-3d45-574c-bbe2-8cf5206c6507",
+                "control-id": "ps-4.2",
+                "description": "Automated Actions. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PS-04(02). -->"
+              },
+              {
+                "uuid": "cbc53805-2327-52a6-bcb1-cc8a2205a122",
+                "control-id": "ps-05",
+                "description": "Personnel Transfer. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PS-05. -->"
+              },
+              {
+                "uuid": "13c69395-e995-5112-b658-42aa54c3cbab",
+                "control-id": "ps-06",
+                "description": "Access Agreements. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PS-06. -->"
+              },
+              {
+                "uuid": "433bc877-0d70-5cc4-b6f5-0094ea6acf9e",
+                "control-id": "ps-07",
+                "description": "External Personnel Security. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PS-07. -->"
+              },
+              {
+                "uuid": "7e5a296d-5606-54ea-8dcc-0731c55a7329",
+                "control-id": "ps-08",
+                "description": "Personnel Sanctions. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of PS-08. -->"
+              },
+              {
+                "uuid": "5dbf7d1c-9115-54cf-8a87-aa739ea28b38",
+                "control-id": "ra-01",
+                "description": "Risk Assessment Policy and Procedures. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of RA-01. -->"
+              },
+              {
+                "uuid": "7ae5d8e4-795a-54c9-83de-e8afd5543930",
+                "control-id": "ra-02",
+                "description": "Security Categorization. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of RA-02. -->"
+              },
+              {
+                "uuid": "39fce459-aafa-5a76-9c9c-1120110fbc88",
+                "control-id": "ra-03",
+                "description": "Risk Assessment. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of RA-03. -->"
+              },
+              {
+                "uuid": "9a6d1409-a15f-5459-9bda-559bbecfc211",
+                "control-id": "ra-3.1",
+                "description": "Supply Chain Risk Assessment. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of RA-03(01). -->"
+              },
+              {
+                "uuid": "8d7493e5-f1ab-5577-bc2b-e92af9e4ff7d",
+                "control-id": "sa-01",
+                "description": "System and Services Acquisition Policy and Procedures. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of SA-01. -->"
+              },
+              {
+                "uuid": "fd7ca8d6-8cc4-58f7-815a-2912f8eff079",
+                "control-id": "sa-02",
+                "description": "Allocation of Resources. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of SA-02. -->"
+              },
+              {
+                "uuid": "d49aab94-9552-5755-b718-1e300de97bc6",
+                "control-id": "sa-03",
+                "description": "System Development Life Cycle. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of SA-03. -->"
+              },
+              {
+                "uuid": "0c953729-ecb2-5cd2-85c6-da7f73b17bff",
+                "control-id": "sa-05",
+                "description": "System Documentation. This is an organizational policy control that requires documentation from the authorizing organization. Template provided \u2014 organizations must fill in with their specific policies, procedures, and evidence. <!-- TEMPLATE: Replace this description with your organization-specific implementation of SA-05. -->"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

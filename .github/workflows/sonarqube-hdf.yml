@@ -1,0 +1,218 @@
+name: SonarQube → HDF (evidence)
+
+# Reusable workflow (#87). Fetches a SonarQube/SonarCloud project's findings and
+# converts them to OASIS Heimdall Data Format (OHDF), then bakes the HDF into the
+# org security-artifacts bucket so SonarQube findings (the full value — code
+# quality + security; `hdf fetch sonarqube` pulls ALL issues, no type filter)
+# join the same unified compliance evidence stream Heimdall aggregates
+# (alongside InSpec/cinc, checkov, SCA).
+#
+# SonarCloud analysis itself runs via the SonarCloud GitHub App (automatic
+# analysis) — this workflow only FETCHES the results from the API post-analysis.
+#
+# Two producers behind the `use_saf` toggle:
+#   - hdf-cli (Go, mitre/hdf-libs) — `hdf fetch sonarqube`. STRATEGIC, default.
+#   - SAF CLI (npm @mitre/saf)     — `saf convert sonarqube2hdf`. Bridge/fallback.
+# Both pinned. Long-term we converge on hdf-cli and retire the SAF path; the
+# toggle (driven org-wide by a single Actions variable in the callers, for
+# cross-repo parity) keeps us conditionally ready for either.
+#
+# The S3 emit mirrors sca-emit-images.yml: it's gated on the emit IAM role being
+# present + assumable, so convert+validate works without AWS and the upload
+# activates once sparc-iac provisions the role with s3:PutObject on
+# sonarqube/<repo>/* (no continue-on-error masking of the conversion itself).
+
+on:
+  workflow_call:
+    inputs:
+      sonar_host_url:
+        description: 'SonarQube/SonarCloud base URL.'
+        type: string
+        default: 'https://sonarcloud.io'
+      sonar_project_key:
+        description: 'Project key, e.g. risk-sentinel_container-build-sign.'
+        type: string
+        required: true
+      sonar_organization:
+        description: 'SonarCloud organization (omit/empty for self-hosted SonarQube).'
+        type: string
+        default: ''
+      repo_slug:
+        description: 'Short repo name for the S3 prefix: <boundary>/{<date>,latest}/<repo_slug>/sonarqube/ (canonical #537 layout).'
+        type: string
+        required: true
+      evidence_boundary:
+        description: 'Authorization-boundary segment of the canonical evidence layout (#537): <boundary>/<date|latest>/<repo>/<source>/. Matches the EVIDENCE_BOUNDARY org variable and the emit role scope.'
+        type: string
+        default: 'sparc'
+      use_saf:
+        description: 'Use the SAF CLI bridge (saf convert sonarqube2hdf) instead of the strategic Go hdf-cli. Default false = hdf-cli. Callers wire this from an org Actions variable for cross-repo parity.'
+        type: boolean
+        default: false
+      upload:
+        description: 'Upload the HDF to the security-artifacts bucket (needs the emit IAM role). false = convert + validate only.'
+        type: boolean
+        default: true
+    secrets:
+      SONAR_TOKEN:
+        description: 'Read-scoped SonarQube/SonarCloud token. Required (hdf-cli reads it as SONARQUBE_TOKEN; saf via --auth).'
+        required: true
+      S3_EMIT_ROLE_ARN:
+        description: 'IAM role (GitHub OIDC) with s3:PutObject on sonarqube/<repo>/* in the security bucket. Optional — upload is skipped when unset/unassumable.'
+        required: false
+      AWS_REGION:
+        description: 'AWS region for the S3 emit. Optional; defaults to us-east-1.'
+        required: false
+      COMPLIANCE_S3_BUCKET:
+        description: 'Destination bucket for the OHDF evidence. Optional — upload is skipped when unset, so a fork with no evidence store still converts and validates.'
+        required: false
+
+# Pinned producers — bump deliberately (keep in sync with the images that bake
+# these tools: ci-runner/sparc-auditor). hdf-cli is the strategic primary.
+env:
+  HDF_CLI_VERSION: v3.3.2
+  SAF_VERSION: '1.6.0'
+
+jobs:
+  emit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write          # AWS OIDC for the S3 emit (no-op when upload off)
+    steps:
+      - name: Select producer
+        id: prod
+        env:
+          USE_SAF: ${{ inputs.use_saf }}
+        run: |
+          set -euo pipefail
+          if [ "$USE_SAF" = "true" ]; then
+            echo "tool=saf" >> "$GITHUB_OUTPUT"
+            echo "Producer: SAF CLI bridge (saf convert sonarqube2hdf)."
+          else
+            echo "tool=hdf-cli" >> "$GITHUB_OUTPUT"
+            echo "Producer: strategic Go hdf-cli (hdf fetch sonarqube)."
+          fi
+
+      # Always installed: it's the producer on the hdf-cli path AND the schema
+      # validator for BOTH producers' output (`hdf validate`).
+      - name: Install hdf-cli (pinned, checksum-verified)
+        env:
+          VER: ${{ env.HDF_CLI_VERSION }}
+        run: |
+          set -euo pipefail
+          base="https://github.com/mitre/hdf-libs/releases/download/${VER}"
+          tar="hdf_${VER#v}_linux_amd64.tar.gz"
+          curl -sSfL "$base/${tar}" -o "${tar}"
+          curl -sSfL "$base/checksums.txt" -o checksums.txt
+          grep " ${tar}$" checksums.txt | sha256sum -c -
+          tar -xzf "${tar}" hdf
+          install -m 0755 hdf /usr/local/bin/hdf
+          hdf version
+
+      - name: Convert SonarQube results → OHDF
+        env:
+          SONARQUBE_TOKEN: ${{ secrets.SONAR_TOKEN }}   # hdf-cli auth
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}        # saf --auth
+          TOOL: ${{ steps.prod.outputs.tool }}
+          URL: ${{ inputs.sonar_host_url }}
+          KEY: ${{ inputs.sonar_project_key }}
+          ORG: ${{ inputs.sonar_organization }}
+          SAF_VER: ${{ env.SAF_VERSION }}
+        run: |
+          set -euo pipefail
+          out=sonarqube-hdf.json
+          if [ "$TOOL" = "hdf-cli" ]; then
+            args=(fetch sonarqube "$out" --url "$URL" --project-key "$KEY" --format hdf)
+            [ -n "$ORG" ] && args+=(--organization "$ORG")
+            hdf "${args[@]}"
+          else
+            # Bridge: npm @mitre/saf, pinned. Uses the runner's Node (>=20).
+            # saf's sonarqube2hdf takes no --organization flag; the token scopes
+            # the SonarCloud org. (hdf-cli is the org-aware strategic path.)
+            npx --yes "@mitre/saf@${SAF_VER}" convert sonarqube2hdf \
+              -n "$KEY" -u "$URL" --auth "$SONAR_TOKEN" -o "$out"
+          fi
+
+      - name: Validate OHDF output
+        run: |
+          set -euo pipefail
+          test -s sonarqube-hdf.json
+          # Authoritative HDF JSON-schema validation (auto-detects type=results).
+          # The hdf-cli `fetch` already validates on the hdf-cli path; running it
+          # explicitly here is the single source of truth and also covers the SAF
+          # bridge's output. A clean project (zero open issues) is valid evidence,
+          # which schema validation correctly accepts.
+          hdf validate sonarqube-hdf.json -q
+          echo "OHDF schema-valid."
+
+      - name: Upload HDF artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sonarqube-hdf-${{ inputs.repo_slug }}
+          path: sonarqube-hdf.json
+          if-no-files-found: error
+
+      # ── S3 emit (gated on the bucket AND the role being present) ───────
+      # The bucket was a hardcoded literal in this file's env block. That is
+      # correct exactly once: the public template ships a sanitized copy, where
+      # the literal becomes the `your-security-artifacts-bucket` placeholder and
+      # every upload fails `NoSuchBucket` (#741). Every sibling emit lane already
+      # takes it from COMPLIANCE_S3_BUCKET; this one did not, which is why it was
+      # the only lane that failed rather than skipping when unconfigured.
+      # Emission is all-or-nothing. Either the caller supplied BOTH a bucket and a
+      # role — in which case it has asked to emit and any failure must surface —
+      # or it supplied neither and we skip. The half-configured middle is what
+      # produced green runs that filed nothing (#719).
+      - name: Resolve emit configuration
+        id: cfg
+        env:
+          BUCKET: ${{ secrets.COMPLIANCE_S3_BUCKET }}
+          ROLE: ${{ secrets.S3_EMIT_ROLE_ARN }}
+        run: |
+          set -euo pipefail
+          if [ -n "${BUCKET:-}" ] && [ -n "${ROLE:-}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          elif [ -z "${BUCKET:-}" ] && [ -z "${ROLE:-}" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No emit bucket or role supplied — OHDF will be converted and validated, then not uploaded."
+          else
+            # One without the other is a wiring mistake, not an opt-out.
+            echo "::error::Partially configured emit: $( [ -z "${BUCKET:-}" ] && echo COMPLIANCE_S3_BUCKET || echo S3_EMIT_ROLE_ARN ) is unset while the other is set."
+            echo "::error::Supply both to emit, or neither to skip."
+            exit 1
+          fi
+
+      # No continue-on-error. The role is known to be present by the step above, so
+      # a failure here is a real fault — an untrusted OIDC subject, a changed trust
+      # policy — and masking it is how a producer emits nothing for months while
+      # every run reports success.
+      - name: Configure AWS credentials (OIDC)
+        id: aws
+        if: ${{ inputs.upload && steps.cfg.outputs.configured == 'true' }}
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ secrets.S3_EMIT_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
+      - name: Emit OHDF to security-artifacts bucket
+        if: ${{ inputs.upload && steps.cfg.outputs.configured == 'true' }}
+        env:
+          REPO_SLUG: ${{ inputs.repo_slug }}
+          BOUNDARY: ${{ inputs.evidence_boundary }}
+          BUCKET: ${{ secrets.COMPLIANCE_S3_BUCKET }}
+        run: |
+          set -euo pipefail
+          DATE="$(date -u +%Y-%m-%d)"
+          # Canonical evidence layout (#537): <boundary>/<date|latest>/<repo>/<source>/.
+          # The emit role is scoped to <boundary>/*/<repo>/* and holds NO grant on the
+          # legacy sonarqube/<repo>/ prefix, so this path and the role ARN move together.
+          for dest in "${BOUNDARY}/${DATE}/${REPO_SLUG}/sonarqube" "${BOUNDARY}/latest/${REPO_SLUG}/sonarqube"; do
+            aws s3 cp sonarqube-hdf.json "s3://${BUCKET}/${dest}/" --no-progress --sse aws:kms
+          done
+          echo "Emitted to s3://${BUCKET}/${BOUNDARY}/{${DATE},latest}/${REPO_SLUG}/sonarqube/"
+
+      - name: Note when S3 emit skipped
+        if: ${{ !inputs.upload || steps.cfg.outputs.configured != 'true' }}
+        run: |
+          echo "::notice::OHDF converted + validated; S3 emit skipped (upload=${{ inputs.upload }}, configured=${{ steps.cfg.outputs.configured }}). The artifact is the deliverable. A fork with no evidence store is expected to land here."

@@ -1,0 +1,148 @@
+# Validate — template copy.
+#
+# Differs from the upstream private workflow in two ways, both required for this
+# to work in a public repository:
+#
+#   1. The Terraform legs run on the hosted runner with hashicorp/setup-terraform
+#      instead of inside risksentinel/sparc-ci-runner, an image built by an
+#      internal repository and gated behind DOCKERHUB_* credentials.
+#   2. The sample-sanitization job is dropped. It verifies sample/ using
+#      scripts/public_export/verify.py, and BOTH of those are excluded from the
+#      export — upstream it guards on `[ ! -d sample ]` and exits 0, so shipping
+#      it would mean carrying a job that can never do anything.
+#
+name: Validate
+
+on:
+  push:
+
+jobs:
+  # Detect whether this push changed anything Terraform-relevant. Docs / OSCAL /
+  # planning-only pushes skip the heavy Terraform matrix (#446). Diffed against
+  # the merge-base with main; FAIL-SAFE (run everything) if a base can't be
+  # determined (e.g. push to main, first push, force-push).
+  detect-changes:
+    name: Detect changed surfaces
+    runs-on: ubuntu-latest
+    outputs:
+      terraform: ${{ steps.detect.outputs.terraform }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --quiet origin main || true
+          BASE="$(git merge-base FETCH_HEAD HEAD 2>/dev/null || true)"
+          if [ -z "$BASE" ] || [ "$BASE" = "$(git rev-parse HEAD)" ]; then
+            echo "No merge-base with main → fail-safe: run all Terraform legs."
+            echo "terraform=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          CHANGED="$(git diff --name-only "$BASE" HEAD)"
+          echo "Changed vs main ($BASE):"; printf '%s\n' "$CHANGED"
+          # Terraform-relevant = any .tf/.tfvars/.hcl, OR a workflow change (which
+          # could alter how the Terraform legs run, so re-validate them).
+          if printf '%s\n' "$CHANGED" | grep -qE '(\.tf|\.tfvars|\.hcl)$|^AWS/ECS/envs/.*\.json$|^\.github/workflows/'; then
+            echo "Terraform-relevant change → running the Terraform legs."
+            echo "terraform=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Docs/OSCAL/planning-only → skipping the Terraform legs (companion reports the required checks)."
+            echo "terraform=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  terraform:
+    name: "Terraform (${{ matrix.pattern }})"
+    needs: detect-changes
+    # Skip on dependabot (no secrets) AND on docs/OSCAL-only pushes (#446). The
+    # "Terraform (*)" checks are REQUIRED on main, so we skip via a JOB-level `if`
+    # (not a branch/path filter) and the companion jobs below report the same
+    # check names as satisfied — a workflow/path filter would leave them pending
+    # forever and block the PR.
+    if: github.actor != 'dependabot[bot]' && needs.detect-changes.outputs.terraform == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      # Cache the providers across runs (#446) — keyed on the lockfiles below.
+      TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
+    strategy:
+      # Independent per-pattern dirs — one leg's failure/flake must not cancel
+      # the others' results (#570). Mirrors this file's other matrix (Checkov
+      # Config) which already sets this. Not continue-on-error: a real failure
+      # still fails the run.
+      fail-fast: false
+      matrix:
+        include:
+          - pattern: ecs
+            dir: AWS/ECS
+          - pattern: ec2
+            dir: AWS/EC2
+          - pattern: azure-vm
+            dir: Azure/VM
+          - pattern: bootstrap
+            dir: bootstrap
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # Terraform comes from the official setup action rather than a prebuilt
+      # image. Upstream runs these legs inside risksentinel/sparc-ci-runner,
+      # which is built by an INTERNAL repository — a fork can neither inspect nor
+      # rebuild it, and pulling it needs DOCKERHUB_* credentials a fork does not
+      # have. Depending on it would mean this template could not validate its own
+      # Terraform outside the organisation that publishes it.
+      #
+      # Version pinned deliberately: these legs are a gate, and an unpinned
+      # resolve makes the verdict depend on release timing. The shipped modules
+      # declare required_version >= 1.5, so raise this only with intent.
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with:
+          terraform_version: '1.15.4'
+          terraform_wrapper: false
+
+      - name: Cache Terraform providers
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/.terraform.d/plugin-cache
+          key: tf-plugins-${{ runner.os }}-${{ hashFiles('**/.terraform.lock.hcl') }}
+          restore-keys: |
+            tf-plugins-${{ runner.os }}-
+
+      - name: Prepare plugin cache dir
+        run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
+
+      - name: Terraform Init
+        working-directory: ${{ matrix.dir }}
+        run: terraform init -backend=false
+
+      - name: Terraform Format Check
+        working-directory: ${{ matrix.dir }}
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        working-directory: ${{ matrix.dir }}
+        run: terraform validate
+
+  # Companion (merged, #468) — emits the required "Terraform (*)" check names as
+  # trivial successes whenever the REAL `terraform` job is skipped: either a
+  # dependabot bump (runs without repository secrets) OR a docs/OSCAL-only
+  # change (nothing Terraform-relevant). The condition
+  # is the exact complement of the real job's, so exactly one of {real, companion}
+  # runs per pattern → the required checks are always satisfied. Merged from the
+  # two prior companions → one skipped literal entry on skip-path PRs instead of
+  # two. Real validation runs on the branch after a human-reviewed merge. (#424, #446)
+  terraform-skip-companion:
+    name: "Terraform (${{ matrix.pattern }})"
+    needs: detect-changes
+    if: github.actor == 'dependabot[bot]' || needs.detect-changes.outputs.terraform != 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pattern: [ecs, ec2, azure-vm, config, bootstrap]
+    steps:
+      - name: Skip terraform validate (dependabot bump or docs/OSCAL-only change)
+        run: echo "terraform validate (${{ matrix.pattern }}) skipped — dependabot bump or no Terraform-relevant files changed (#446); real validation runs on the branch after merge."

@@ -1,0 +1,378 @@
+# =============================================================================
+# Inventory → CDEF component mapping (#632)
+#
+# OSCAL models this as N:1. Many `system-implementation/inventory-items` — the
+# things actually deployed — reference ONE component via
+# `implemented-components[].component-uuid`. The component describes the class
+# (capability, ports, protocols); the inventory item describes the instance.
+#
+# That relationship is what keeps CDEF count down. Sixteen evidence-emit roles
+# with byte-identical capability are sixteen inventory items against ONE
+# component, not sixteen CDEFs. Ports, protocols and capabilities stay in the
+# CDEF; instance facts (ARN, revision, engine version) stay on the inventory item.
+#
+# Matching is first-match-wins, top to bottom. `type` matches the Terraform
+# resource type; the optional `name_pattern` is a regex against the resource
+# name, letting one resource type fan out to several components by capability.
+#
+# `component` names the CDEF file under AWS/CDEF/<pattern>/ —
+# component-definition-<component>.json — and assemble_ssp.py resolves it to
+# that component's UUID at build time. A name that resolves to no component is a
+# hard error, not a silent skip: an unmapped resource must be visible, because a
+# silently-dropped resource is an inventory that looks complete and is not.
+# =============================================================================
+
+# Resource types deliberately excluded from inventory (128 of 327).
+#
+# Each is CONFIGURATION OF an already-inventoried parent rather than a deployed
+# thing in its own right. The split is deliberate and follows the OSCAL model:
+#
+#   capability  -> lives in the parent resource's CDEF
+#   instance    -> lives in the parent's inventory-item
+#
+# So `aws_s3_bucket_versioning` is not inventoried; the S3 CDEF describes the
+# versioning capability, and the bucket's inventory-item is the deployed thing.
+# Inventorying both would double-count: one asset appearing as seven.
+#
+# Verified 2026-08-17 — every excluded family's capability IS described in its
+# parent CDEF: s3 covers versioning, encryption, public-access-block,
+# object-lock/WORM, access logging and bucket policy; iam covers inline policies
+# and attachments; secrets covers rotation; ses-email covers DKIM, MAIL FROM and
+# domain verification; alb covers listener certificates and WAF association.
+# Re-run that check before excluding a new family — an exclusion whose capability
+# is described nowhere is lost evidence, not deduplication.
+exclude_types:
+  - aws_iam_role_policy            # 54 — capability detail of its role
+  - aws_iam_role_policy_attachment # 15 — same
+  - aws_iam_policy_document        # data source, never managed anyway
+  - random_password                # generated material, never inventoried
+  - random_id
+  - random_string
+  - aws_secretsmanager_secret_version # the secret is the thing; versions churn
+  - null_resource
+  - terraform_data
+  - archive_file
+  # Sub-resource configuration (#632): these configure an already-inventoried
+  # parent rather than being deployed things in their own right. An assessor
+  # wants the bucket, not its six configuration sub-resources; the parent's item
+  # carries the identity and the CDEF carries the control narrative.
+  - aws_s3_bucket_policy
+  - aws_s3_bucket_versioning
+  - aws_s3_bucket_public_access_block
+  - aws_s3_bucket_server_side_encryption_configuration
+  - aws_s3_bucket_lifecycle_configuration
+  - aws_s3_bucket_logging
+  - aws_s3_bucket_cors_configuration
+  - aws_s3_bucket_object_lock_configuration
+  - aws_sns_topic_policy
+  - aws_lambda_permission
+  - aws_lambda_function_event_invoke_config
+  - aws_lb_listener_certificate
+  - aws_cloudwatch_event_target
+  - aws_secretsmanager_secret_rotation
+  - aws_iam_instance_profile
+  - aws_iam_user_policy
+  - aws_wafv2_web_acl_association
+  - aws_wafv2_web_acl_logging_configuration
+  - aws_guardduty_detector_feature
+  - aws_ses_domain_dkim
+  - aws_ses_domain_identity_verification
+  - aws_ses_domain_mail_from
+  - aws_default_security_group
+  # #597 — the recorder's enablement flag, not a separate asset. It shares the
+  # recorder's identity (both resolve to id `example-recorder`), so
+  # inventorying it would report one recorder as two. Its capability is in the
+  # config CDEF, which describes the recorder as actively recording.
+  - aws_config_configuration_recorder_status
+
+mappings:
+  # --- IAM: one type, many capability classes -------------------------------
+  # The 16 canonical evidence-emit roles are the case that motivates the whole
+  # N:1 model: identical trust shape, identical policy (PutObject on own prefix
+  # + ViaService KMS), differing only in which repository may assume them.
+  - type: aws_iam_role
+    name_pattern: '-sca-emit$'
+    component: iam
+    class: legacy-source-prefix-emit-role
+    remarks: >-
+      Pre-canonical emit identity retaining source-first prefixes. Retired per
+      #537 Phase 3 once its prefixes go quiet.
+      -dast-emit was removed from this pattern in #669: sparc-dast always wrote
+      the canonical layout and is now generated by the same for_each as every
+      other repo, so matching it here described it as legacy when it is not.
+
+  - type: aws_iam_role
+    name_pattern: '-(emit)$'
+    component: iam#evidence-emit-role
+    class: evidence-emit-role
+    remarks: >-
+      Canonical evidence-emit identity. Write-only on its own
+      <boundary>/*/<repo>/* prefix with a ViaService-scoped KMS grant. Sixteen
+      instances share this component because the capability is identical; only
+      the trusted repository differs.
+
+  - type: aws_iam_role
+    name_pattern: '-evidence-reader$'
+    component: iam#evidence-reader-role
+    class: evidence-reader-role
+    remarks: >-
+      Evidence-store read identity — prefix-scoped ListBucket, GetObject and
+      kms:Decrypt across the evidence key space, pinned to refs/heads/main.
+
+  - type: aws_iam_role
+    name_pattern: '-lambda$'
+    component: iam
+    class: lambda-execution-role
+  - type: aws_iam_role
+    name_pattern: '-instance$'
+    component: iam
+    class: ec2-instance-role
+  - type: aws_iam_role
+    name_pattern: 'ci-(trust|execute)$'
+    component: iam#ci-chain-role
+    class: ci-chain-role
+  - type: aws_iam_role
+    name_pattern: 'scanner|discovery|orchestrator'
+    component: iam
+    class: assessment-scanner-role
+  - type: aws_iam_role
+    name_pattern: 'ecs-(execution|task)-role$'
+    component: ecs-fargate
+    class: ecs-task-role
+  - type: aws_iam_role
+    name_pattern: 'view-only$|adt$'
+    component: iam
+    class: operator-role
+  - type: aws_iam_role
+    component: iam
+    class: service-role
+
+  # --- compute / app tier ---------------------------------------------------
+  - type: aws_ecs_service
+    component: ecs-fargate
+    class: ecs-service
+  - type: aws_ecs_task_definition
+    component: ecs-fargate
+    class: ecs-task-definition
+  - type: aws_ecs_cluster
+    component: ecs-fargate
+    class: ecs-cluster
+  - type: aws_instance
+    component: cis-rhel9-runner
+    class: ec2-instance
+  - type: aws_launch_template
+    component: cis-rhel9-runner
+    class: launch-template
+
+  # --- edge / network -------------------------------------------------------
+  - type: aws_lb
+    component: alb
+    class: load-balancer
+  - type: aws_lb_target_group
+    component: alb
+    class: target-group
+  - type: aws_lb_listener
+    component: alb
+    class: listener
+  - type: aws_wafv2_web_acl
+    component: alb
+    class: waf-acl
+  - type: aws_vpc
+    component: vpc-networking
+    class: vpc
+  - type: aws_subnet
+    component: vpc-networking
+    class: subnet
+  - type: aws_security_group
+    component: vpc-networking
+    class: security-group
+  - type: aws_security_group_rule
+    component: vpc-networking
+    class: security-group-rule
+  - type: aws_nat_gateway
+    component: vpc-networking
+    class: nat-gateway
+  - type: aws_eip
+    component: vpc-networking
+    class: elastic-ip
+  - type: aws_internet_gateway
+    component: vpc-networking
+    class: internet-gateway
+  - type: aws_route_table
+    component: vpc-networking
+    class: route-table
+  - type: aws_route_table_association
+    component: vpc-networking
+    class: route-table-association
+  - type: aws_vpc_endpoint
+    component: vpc-networking
+    class: vpc-endpoint
+  - type: aws_flow_log
+    component: vpc-networking
+    class: flow-log
+
+  # --- data tier ------------------------------------------------------------
+  - type: aws_db_instance
+    component: rds
+    class: rds-instance
+  - type: aws_db_subnet_group
+    component: rds
+    class: rds-subnet-group
+  - type: aws_db_parameter_group
+    component: rds
+    class: rds-parameter-group
+  - type: aws_elasticache_cluster
+    component: rds
+    class: elasticache-cluster
+  - type: aws_elasticache_replication_group
+    component: rds
+    class: elasticache-replication-group
+  - type: aws_elasticache_subnet_group
+    component: rds
+    class: elasticache-subnet-group
+
+  # --- storage / registry ---------------------------------------------------
+  - type: aws_s3_bucket
+    component: s3
+    class: s3-bucket
+  - type: aws_ecr_repository
+    component: ecr
+    class: ecr-repository
+  - type: aws_ecr_lifecycle_policy
+    component: ecr
+    class: ecr-lifecycle-policy
+
+  # --- crypto / secrets -----------------------------------------------------
+  - type: aws_kms_key
+    component: kms
+    class: kms-key
+  - type: aws_kms_alias
+    component: kms
+    class: kms-alias
+  - type: aws_secretsmanager_secret
+    component: secrets
+    class: secret
+
+  # --- observability --------------------------------------------------------
+  - type: aws_cloudwatch_log_group
+    component: cloudwatch
+    class: log-group
+  - type: aws_cloudwatch_metric_alarm
+    component: cloudwatch
+    class: metric-alarm
+  - type: aws_cloudwatch_log_metric_filter
+    component: cloudwatch
+    class: log-metric-filter
+  - type: aws_cloudtrail
+    component: cloudwatch
+    class: cloudtrail
+  - type: aws_sns_topic
+    component: sns
+    class: sns-topic
+  - type: aws_sns_topic_subscription
+    component: sns
+    class: sns-subscription
+  - type: aws_config_config_rule
+    component: config
+    class: config-rule
+  - type: aws_config_configuration_recorder
+    component: config
+    class: config-recorder
+  # #597 — both arrived in this state when AWS Config was consolidated out of
+  # its own root. Kept as inventory items rather than excluded as recorder
+  # configuration: each is a distinct AWS entity with its own identity and its
+  # own API (DescribeDeliveryChannels / DescribeConformancePacks), and the
+  # delivery channel is the AU-9 evidence path an assessor follows to find where
+  # configuration history actually lands.
+  - type: aws_config_delivery_channel
+    component: config
+    class: config-delivery-channel
+    remarks: >-
+      Delivery path for configuration snapshots and history — writes to the WORM
+      audit-logs bucket under config-history/ at the AWS 24-hour floor.
+  - type: aws_config_conformance_pack
+    component: config
+    class: config-conformance-pack
+    remarks: >-
+      NIST 800-53 Rev 5 conformance pack scoped to deployed services, carrying 69
+      managed rules. The deployed rule set is verified against the committed
+      template during migration (scripts/migrate_aws_config_state.sh verify).
+  - type: aws_guardduty_detector
+    component: guardduty
+    class: guardduty-detector
+  - type: aws_inspector2_enabler
+    component: ecr
+    class: inspector-enabler
+
+  # --- serverless / scheduling ----------------------------------------------
+  - type: aws_lambda_function
+    component: cloudwatch
+    class: lambda-function
+  - type: aws_scheduler_schedule
+    component: cloudwatch
+    class: eventbridge-schedule
+  - type: aws_cloudwatch_event_rule
+    component: cloudwatch
+    class: eventbridge-rule
+
+  # --- DNS / certs / mail ---------------------------------------------------
+  - type: aws_route53_record
+    component: route53
+    class: dns-record
+  - type: aws_route53_zone
+    component: route53
+    class: dns-zone
+  - type: aws_acm_certificate
+    component: acm
+    class: certificate
+  - type: aws_acm_certificate_validation
+    component: acm
+    class: certificate-validation
+  - type: aws_ses_domain_identity
+    component: ses-email
+    class: ses-domain-identity
+  - type: aws_ses_receipt_rule
+    component: ses-email
+    class: ses-receipt-rule
+  - type: aws_ses_email_identity
+    component: ses-email
+    class: ses-email-identity
+
+  # --- added after coverage check (#632): deployed things the first pass missed
+  - type: aws_autoscaling_group
+    component: cis-rhel9-runner
+    class: autoscaling-group
+  - type: aws_sqs_queue
+    component: cloudwatch
+    class: sqs-queue
+  - type: aws_cloudwatch_dashboard
+    component: cloudwatch
+    class: dashboard
+  - type: aws_cloudwatch_log_subscription_filter
+    component: cloudwatch
+    class: log-subscription-filter
+  - type: aws_lb_listener_rule
+    component: alb
+    class: listener-rule
+  - type: aws_vpc_security_group_egress_rule
+    component: vpc-networking
+    class: security-group-rule
+  - type: aws_vpc_security_group_ingress_rule
+    component: vpc-networking
+    class: security-group-rule
+  - type: aws_ecr_registry_scanning_configuration
+    component: ecr
+    class: registry-scanning-configuration
+  - type: aws_ssm_document
+    component: cis-rhel9-runner
+    class: ssm-document
+  - type: aws_serverlessapplicationrepository_cloudformation_stack
+    component: cloudwatch
+    class: serverless-app-stack
+  # IAM users are a distinct identity class from roles — SES SMTP auth needs one.
+  - type: aws_iam_user
+    component: iam
+    class: iam-user
+  - type: aws_iam_access_key
+    component: iam
+    class: iam-access-key

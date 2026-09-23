@@ -1,0 +1,77 @@
+{
+  "component-definition": {
+    "uuid": "b1a57104-0000-4000-a000-000000000009",
+    "metadata": {
+      "title": "SPARC Azure Bastion Component Definition",
+      "last-modified": "2026-07-26T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "b1a57104-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "b1a57104-2222-4000-a000-000000000009",
+        "type": "service",
+        "title": "Azure Bastion (Standard SKU)",
+        "description": "Managed, browser- and native-client jump host providing SSH/RDP access to the private SPARC VM over TLS without any public IP or SSH key on the VM itself. Deployed via Terraform (Azure/VM/modules/bastion/), opt-in via enable_bastion. Uses a dedicated AzureBastionSubnet and a single Standard zonal public IP; sessions are audited to Log Analytics. Serial Console access is available as a complementary path (subscription/portal-enabled) via the VM's boot diagnostics. <!-- UPDATE: Insert the Bastion host resource ID, public IP, and Log Analytics workspace ID for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["b1a57104-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "b1a57104-3333-4000-a000-000000000009",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for Azure Bastion",
+            "implemented-requirements": [
+              {
+                "uuid": "b1a57104-4444-4000-a000-000000000017",
+                "control-id": "ac-17",
+                "description": "Remote Access: Azure Bastion is the managed remote-access path to the SPARC VM. The VM has no public IP and no inbound SSH from the internet; operators connect through the Bastion over TLS (443) from the Azure portal or the native client (az network bastion ssh/tunnel). This centralizes and controls all remote administrative access. Reference: DISA SRG-APP, CIS Azure. <!-- UPDATE: confirm no public IP on the VM NIC. -->",
+                "remarks": "Terraform: azurerm_bastion_host.main (sku Standard, tunneling_enabled) + azurerm_public_ip.bastion in Azure/VM/modules/bastion/. VM remains on the private subnet with no public IP (vm/networking modules)."
+              },
+              {
+                "uuid": "b1a57104-4444-4000-a000-000000000117",
+                "control-id": "ac-17.1",
+                "description": "Remote Access | Monitoring and Control: All Bastion sessions are recorded to Log Analytics via a diagnostic setting emitting the BastionAuditLogs category, providing automated monitoring of remote-access sessions (who connected, when, and to which target). Reference: DISA SRG-APP-000516.",
+                "remarks": "Terraform: azurerm_monitor_diagnostic_setting.bastion with enabled_log category BastionAuditLogs, targeting the Log Analytics workspace from the monitoring module."
+              },
+              {
+                "uuid": "b1a57104-4444-4000-a000-000000000002",
+                "control-id": "au-2",
+                "description": "Event Logging: Bastion session and management events are captured as auditable events (BastionAuditLogs) and retained in the Log Analytics workspace alongside the VM, NSG-flow, and platform logs, supporting after-the-fact investigation of remote-access activity. Reference: DISA SRG-APP-000089.",
+                "remarks": "Terraform: azurerm_monitor_diagnostic_setting.bastion (BastionAuditLogs + AllMetrics)."
+              },
+              {
+                "uuid": "b1a57104-4444-4000-a000-000000000007",
+                "control-id": "cm-7",
+                "description": "Least Functionality: The Bastion host disables file copy (file_copy_enabled=false) and shareable links (shareable_link_enabled=false), restricting the session feature set to interactive SSH/RDP and clipboard. Native-client tunneling is enabled for administrative access without broadening the VM's network exposure. Reference: CIS Azure, DISA SRG-APP-000141.",
+                "remarks": "Terraform: azurerm_bastion_host.main with file_copy_enabled=false, shareable_link_enabled=false, copy_paste_enabled=true, tunneling_enabled=true."
+              },
+              {
+                "uuid": "b1a57104-4444-4000-a000-000000000070",
+                "control-id": "sc-7",
+                "description": "Boundary Protection: Bastion runs in a dedicated AzureBastionSubnet (minimum /26) and is the sole administrative entry point to the private VM subnet. The single Standard, zone-redundant public IP is the only public endpoint in the access path; the VM subnet has no direct internet inbound. Reference: DISA SRG-NET-000364, CIS Azure.",
+                "remarks": "Terraform: azurerm_subnet.bastion (name AzureBastionSubnet) in the networking module + azurerm_public_ip.bastion (Standard, zones 1/2/3)."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

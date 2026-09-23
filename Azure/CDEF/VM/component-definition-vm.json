@@ -1,0 +1,77 @@
+{
+  "component-definition": {
+    "uuid": "c1d2e3f4-1111-4000-a000-000000000002",
+    "metadata": {
+      "title": "SPARC Azure VM Component Definition",
+      "last-modified": "2026-03-20T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "c1d2e3f4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "c1d2e3f4-2222-4000-a000-000000000002",
+        "type": "service",
+        "title": "Azure Linux Virtual Machine",
+        "description": "Linux VM (Ubuntu 22.04 LTS) with user-assigned managed identity, Docker and docker-compose bootstrapped via custom_data (user-data.sh), no public IP, Premium_LRS OS disk with encryption, and automatic OS patching. Deployed via Terraform (Azure/VM/modules/vm/). <!-- UPDATE: Insert VM resource ID, NIC ID, managed identity principal ID, and resource group for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["c1d2e3f4-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "c1d2e3f4-3333-4000-a000-000000000002",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for Azure Linux VM",
+            "implemented-requirements": [
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000010",
+                "control-id": "cm-2",
+                "description": "Baseline Configuration: The VM baseline is established through custom_data (user-data.sh) which bootstraps Docker, docker-compose, and the application stack on first boot. The docker-compose.yml defines the immutable application runtime configuration including container images, environment variables, port mappings, and service dependencies. Changes to the baseline require updating the Terraform configuration and redeploying. The source image is pinned to Canonical Ubuntu 22.04 LTS. Reference: DISA SRG-APP-000133.",
+                "remarks": "Terraform resources: azurerm_linux_virtual_machine.main with custom_data = base64encode(var.user_data). Application baseline defined in docker-compose.yml and user-data.sh."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000011",
+                "control-id": "cm-7",
+                "description": "Least Functionality: The VM uses Ubuntu 22.04 LTS minimal server image (Canonical 0001-com-ubuntu-server-jammy, SKU 22_04-lts) with only Docker and docker-compose installed via user-data. Automatic OS patching is enabled (patch_mode = AutomaticByPlatform), ensuring security updates are applied without manual intervention. No unnecessary services, GUI components, or development tools are installed. SSH access requires an SSH key (no password authentication). Reference: DISA SRG-APP-000141, CIS Azure 7.1.",
+                "remarks": "Terraform resource: azurerm_linux_virtual_machine.main with patch_mode = AutomaticByPlatform, source_image_reference (Canonical Ubuntu 22.04 LTS), admin_ssh_key block."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000012",
+                "control-id": "ac-17",
+                "description": "Remote Access: The VM has no public IP address; the network interface uses private IP addressing only (private_ip_address_allocation = Dynamic). Remote access to the VM is only possible through the Application Gateway or Azure Bastion (not provisioned by default). The VM uses a user-assigned managed identity for authentication to Azure services (Key Vault, Storage, Monitoring), eliminating the need for stored credentials. SSH key pair is auto-generated via tls_private_key (4096-bit RSA) — no local key files or manual key distribution required. Private key is a sensitive Terraform output. Reference: DISA SRG-OS-000033, CIS Azure 7.2.",
+                "remarks": "Terraform resources: azurerm_network_interface.main (no public_ip_address_id), azurerm_linux_virtual_machine.main with identity type = UserAssigned."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000013",
+                "control-id": "sc-28",
+                "description": "Protection of Information at Rest: The OS disk uses Premium_LRS storage with Azure-managed encryption at rest (Azure Storage Service Encryption with platform-managed keys). All data written to the OS disk is automatically encrypted using AES-256. The disk is named explicitly and sized per configuration. Reference: DISA SRG-APP-000231, CIS Azure 7.3.",
+                "remarks": "Terraform resource: azurerm_linux_virtual_machine.main os_disk block with storage_account_type = Premium_LRS. Azure encrypts all managed disks by default."
+              },
+              {
+                "uuid": "c1d2e3f4-4444-4000-a000-000000000014",
+                "control-id": "au-2",
+                "description": "Event Logging: Boot diagnostics are enabled on the VM (boot_diagnostics {} block with managed storage), capturing serial console output and screenshot data for boot-time troubleshooting and audit. VM metrics are streamed to Log Analytics via diagnostic settings (azurerm_monitor_diagnostic_setting.vm) with AllMetrics enabled. A CPU utilization alert triggers at 80% threshold. These provide comprehensive visibility into VM health and performance. Reference: DISA SRG-APP-000089, CIS Azure 7.4.",
+                "remarks": "Terraform resource: azurerm_linux_virtual_machine.main with boot_diagnostics {} (uses managed storage account). Diagnostic settings configured in the monitoring module."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

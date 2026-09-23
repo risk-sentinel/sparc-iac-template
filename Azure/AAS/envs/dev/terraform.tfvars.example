@@ -1,0 +1,29 @@
+# Azure App Service (AAS) — dev config example (#10). Copy to terraform.tfvars.
+# Sensitive inputs (tenant_id, SPARC app secrets) come from org-level secrets at
+# deploy via -var, NOT this file.
+
+environment = "dev"
+location    = "eastus"
+
+# Container image (repository:tag). For a private ACR set docker_registry_url.
+app_image           = "risksentinel/sparc:latest"
+docker_registry_url = "https://index.docker.io"
+app_port            = 3000
+health_check_path   = "/up"
+
+# App Service Plan — B1 is fine for dev (no slot/zone redundancy).
+app_service_sku            = "B1"
+app_service_zone_redundant = false
+enable_staging_slot        = false
+
+# Data tier (dev sizing)
+db_sku_name             = "B_Standard_B1ms"
+db_storage_mb           = 32768
+db_high_availability    = false
+db_geo_redundant_backup = false
+redis_sku               = "Basic"
+redis_capacity          = 0
+storage_replication_type = "LRS"
+
+alert_emails = ["sparc.admin@example.com"]
+# tenant_id supplied at deploy: -var="tenant_id=..."

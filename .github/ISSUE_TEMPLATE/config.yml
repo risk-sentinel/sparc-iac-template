@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: General questions / discussion
+    url: https://github.com/risk-sentinel/sparc-iac-template/discussions
+    about: For open-ended questions or design discussions, prefer Discussions over Issues.
+  - name: Security disclosure
+    url: https://github.com/risk-sentinel/sparc-iac-template/security/policy
+    about: Report security vulnerabilities privately — do NOT open a public issue.

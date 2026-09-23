@@ -1,0 +1,323 @@
+{
+  "component-definition": {
+    "uuid": "a1b2c3d4-1111-4000-a000-000000000005",
+    "metadata": {
+      "title": "SPARC IAM Component Definition",
+      "last-modified": "2026-07-15T00:00:00Z",
+      "version": "2.4.0",
+      "oscal-version": "1.2.1",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "a1b2c3d4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "a1b2c3d4-2222-4000-a000-000000000005",
+        "type": "service",
+        "title": "AWS IAM Roles and Policies",
+        "description": "IAM roles for ECS task execution (image pull from both app and NGINX ECR repos, log write, secret read for DB and app secrets) and task runtime (S3 bucket access for ActiveStorage uploads). Deployed via Terraform (AWS/ECS/modules/iam/). <!-- UPDATE: Insert execution role ARN, task role ARN, Secrets Manager ARNs, and S3 bucket ARN for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": [
+              "a1b2c3d4-0001-4000-a000-000000000001"
+            ]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "a1b2c3d4-3333-4000-a000-000000000005",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for IAM",
+            "implemented-requirements": [
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000040",
+                "control-id": "ac-2",
+                "description": "Account Management: Two distinct IAM roles are provisioned for ECS tasks, separating infrastructure concerns from application concerns. The execution role ({project}-{env}-ecs-execution-role) is used by the ECS agent for platform operations. The task role ({project}-{env}-ecs-task-role) is assumed by the running container for application-level AWS API access. Both use ecs-tasks.amazonaws.com as the trusted principal. Reference: DISA SRG-APP-000023, CIS AWS 1.16.",
+                "remarks": "Terraform resources: aws_iam_role.execution, aws_iam_role.task. Both share the same assume-role trust policy for ecs-tasks.amazonaws.com."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000041",
+                "control-id": "ac-3",
+                "description": "Access Enforcement: IAM policies enforce least-privilege access. The execution role receives AmazonECSTaskExecutionRolePolicy (ECR pull for both app and NGINX repos, CloudWatch write) plus a scoped inline policy granting secretsmanager:GetSecretValue on both the DB credentials and app secrets ARNs. The task role has a scoped S3 policy granting s3:GetObject, s3:PutObject, s3:DeleteObject, s3:ListBucket on the specific SPARC uploads bucket only (for Rails ActiveStorage). No static AWS access keys are used. Reference: DISA SRG-APP-000033.",
+                "remarks": "Execution role secrets policy covers both db_secret_arn and app_secret_arn. Task role S3 policy: aws_iam_role_policy.task_s3 with resource constraint on bucket ARN and bucket/*."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000042",
+                "control-id": "ac-6",
+                "description": "Least Privilege: Each IAM role is scoped to the minimum permissions required for its function. The execution role cannot access application data, S3 uploads, or make business-logic API calls. The task role can only access the specific S3 uploads bucket — it cannot pull images, write logs, or read secrets (those are execution role responsibilities). S3 access uses the IAM task role instead of static AWS_ACCESS_KEY_ID credentials. This separation prevents privilege escalation between infrastructure and application layers. Reference: DISA SRG-APP-000062, CIS AWS 1.17.",
+                "remarks": "S3 access via IAM role eliminates static credentials. Review and audit task role policies when adding application-level AWS integrations."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000043",
+                "control-id": "ac-6.1",
+                "description": "Least Privilege | Authorize Access to Security Functions: The execution role's Secrets Manager policy grants only secretsmanager:GetSecretValue (read-only) on exactly two secret resources (DB credentials and app secrets). It cannot create, update, delete, or list secrets. The task role's S3 policy grants only object-level operations (Get, Put, Delete, List) on the specific uploads bucket. Neither role can access secrets or buckets outside its explicit resource scope. Reference: DISA SRG-APP-000340.",
+                "remarks": "Terraform resources: aws_iam_role_policy.execution_secrets (two ARNs), aws_iam_role_policy.task_s3 (one bucket ARN + bucket/*)."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000044",
+                "control-id": "ia-2",
+                "description": "Identification and Authentication: ECS tasks authenticate to AWS services using IAM roles (not static credentials). Role assumption is handled automatically by the ECS agent via the AWS STS service, providing temporary credentials that are rotated automatically. No long-lived access keys or passwords are used for AWS API authentication. Reference: DISA SRG-APP-000148, CIS AWS 1.4.",
+                "remarks": "IAM roles use sts:AssumeRole with ecs-tasks.amazonaws.com as the trusted service principal."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000045",
+                "control-id": "au-2",
+                "description": "Event Logging: All IAM role assumptions and API calls made by ECS tasks are logged in AWS CloudTrail. The execution role's CloudWatch Logs write permissions enable container-level audit logging. IAM policy changes are tracked via CloudTrail and can be alerted on via CloudWatch Events. Reference: DISA SRG-APP-000089.",
+                "remarks": "Ensure CloudTrail is enabled in the account for comprehensive IAM audit logging."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000046",
+                "control-id": "ac-2",
+                "description": "Account Management — sparc-validate DB Scanner Role Separation: A distinct IAM role ({project}-{env}-sparc-validate-db-scanner) is provisioned specifically for compliance database scans by sparc-validate. It is separate from the sparc-validate-scanner role (which reads AWS-wide metadata) so the audit story is clear: the identity that can authenticate to the database is a distinct principal from the identity that reads AWS control-plane metadata. Trust policy is scoped to repo:{github_org}/sparc-validate:* via GitHub OIDC. Reference: NIST SP 800-53 AC-2, DISA SRG-APP-000023.",
+                "remarks": "Terraform resources: aws_iam_role.sparc_validate_db_scanner, aws_iam_role_policy.sparc_validate_db_scanner. Gated on var.enable_db_scanner_role (default false); opt-in per environment."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000047",
+                "control-id": "ac-6",
+                "description": "Least Privilege — DB Scanner Role: The sparc-validate-db-scanner role holds two tightly-scoped permission sets: (1) rds-db:connect, scoped by resource ARN to the single inspec_scanner dbuser on the Aurora cluster (arn:aws:rds-db:<region>:<account>:dbuser:<db_resource_id>/inspec_scanner); and (2) read-only ec2:DescribeInstances + ec2:DescribeTags, used by the cis-rhel-9 v0.2.0 inventory control to attach scan provenance (these EC2 Describe actions have no resource-level scoping, so Resource=*, per #377). It cannot connect as any other database user, cannot assume any other role, and holds no AWS control-plane *write* permissions — its only control-plane access is the two non-mutating, read-only ec2:Describe* calls above. The inspec_scanner database user itself is granted SELECT on a narrow set of pg_catalog and information_schema tables only — no access to user data, no write permissions. Reference: NIST SP 800-53 AC-6, DISA SRG-APP-000062.",
+                "remarks": "IAM policy resource constraint pins the rds-db:connect action to a specific dbuser ARN; the ec2:Describe* inventory-enrichment statement (#377) is read-only with no resource scoping available. Database-level GRANTs applied via AWS/ECS/scripts/create-inspec-scanner-user.sh. pg_authid grant explicitly omitted — the password-hash-algorithm CIS control is checked via the cluster parameter group (SHOW password_encryption), not the hash table."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000048",
+                "control-id": "ia-2",
+                "description": "Identification and Authentication — IAM DB Auth for Scanner: The inspec_scanner PostgreSQL user authenticates exclusively via IAM database authentication (rds_iam grant), using short-lived tokens minted from the scanner role's STS credentials. No password is provisioned for the user; password-based auth is not possible for this identity. Tokens are valid for 15 minutes and scoped to the specific dbuser ARN in the IAM policy resource constraint. Reference: NIST SP 800-53 IA-2, DISA SRG-APP-000148.",
+                "remarks": "The role's rds-db:connect permission combined with the dbuser's rds_iam grant is the minimum configuration required for IAM DB auth on Aurora PostgreSQL. Cluster-level iam_database_authentication_enabled = true is set in the RDS module."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000049",
+                "control-id": "ac-2",
+                "description": "Account Management — DB Scanner Runner Role Split: The ephemeral runner module provisions two additional IAM identities with separated concerns. The instance profile role ({project}-{env}-db-scanner-runner-instance) is attached to the EC2 runner and holds only AmazonSSMManagedInstanceCore + read of the runner GitHub App credentials secret; it has no data-plane AWS access and is not a reachable identity from outside AWS. The orchestrator role ({project}-{env}-db-scanner-runner-orchestrator) is OIDC-trusted to sparc-validate's repo and holds only ASG scale + describe permissions scoped to the runner ASG ARN. Reference: NIST SP 800-53 AC-2, DISA SRG-APP-000023.",
+                "remarks": "The orchestrator role deliberately does NOT have GetSecretValue on the App key secret — the credentials are fetched by the runner instance at boot, not by the orchestrator. Keeps the orchestrator's blast radius tight. Terraform resources: aws_iam_role.runner_instance, aws_iam_role.runner_orchestrator (both in modules/iam/db_scanner_runner.tf — relocated from modules/db_scanner_runner/iam.tf in #238 per the IAM-locality rule). Auth uses GitHub App installation tokens (1h TTL minted at boot via JWT signed by App private key in Secrets Manager) rather than a long-lived PAT — see #190 for the architectural decision."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000050",
+                "control-id": "ac-6",
+                "description": "Least Privilege — Runner Orchestrator Scope: The orchestrator role's inline policy grants exactly three action sets: autoscaling:SetDesiredCapacity + UpdateAutoScalingGroup + DescribeAutoScalingGroups (the last is unscoped as IAM requires, but the scale-down actions are resource-scoped to the single db-scanner ASG ARN), and ec2:DescribeInstances read-only. The role cannot launch new ASGs, modify other autoscaling groups, terminate arbitrary instances, or access any data plane. Reference: NIST SP 800-53 AC-6, DISA SRG-APP-000062.",
+                "remarks": "Terraform resource: aws_iam_role_policy.runner_orchestrator with resource = aws_autoscaling_group.runner.arn on the scale-action statement."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000051",
+                "control-id": "ca-7",
+                "description": "Continuous Monitoring — sparc-validate Scanner AWS Config Evidence Grant (#226): An additional inline policy ('aws-config-read') is attached to the sparc-validate-scanner role to enable read-only access to AWS Config's compliance evaluation surface. This grants nine read-only Config actions (DescribeConfigRules, DescribeConfigRuleEvaluationStatus, GetComplianceDetailsByConfigRule, GetComplianceSummaryByConfigRule, GetComplianceDetailsByResource, DescribeConformancePacks, DescribeConformancePackCompliance, GetConformancePackComplianceDetails, DescribeConfigurationRecorders) so sparc-validate can call SAF CLI's aws_config2hdf converter and produce HDF artefacts from the conformance pack evaluations sparc-iac provisions. The grant complements (does not replace) the SecurityAudit + ViewOnlyAccess AWS-managed policies already attached to the role; it is opt-in via var.enable_aws_config_evidence_for_sparc_validate (default false) so adopters can stage the cross-repo enablement with sparc-validate#2. Resources are '*' because Config rules and conformance packs are account-scoped and the SAF tool walks the full evaluation surface. Reference: NIST SP 800-53 CA-7, DISA SRG-APP-000516.",
+                "remarks": "Terraform resources: aws_iam_role_policy.sparc_validate_aws_config (gated on var.enable_scanner_role && var.enable_aws_config_evidence_for_sparc_validate). Companion to sparc-validate#2; pairs with the existing AWS Config provisioning surface (recorder, rules, conformance packs) already managed by sparc-iac. Read-only — no Config control-plane modification capabilities granted."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000052",
+                "control-id": "ac-6",
+                "description": "Least Privilege — Optional Scanner Extra Service Reads (#234): An optional inline policy ('extra-service-reads') is attached to the sparc-validate-scanner role for adopters who have actually deployed services that sparc-validate's profiles cover but that SPARC does not operate by default. Opt-in via the scanner_extra_service_reads list-of-strings variable (default empty list = no policy resource created = identical posture to the baseline). Each entry in the list emits exactly one Allow statement granting <service>:Describe*, <service>:List*, <service>:Get* with Resource='*'. The valid entries are constrained by Terraform variable validation to ten services (workspaces-web, appstream, workdocs, cassandra, keyspaces, memorydb, timestream, simspaceweaver, lightsail, apprunner) — the surface that sparc-validate#86's expanded exec matrix covers. The variable's default empty list preserves least-privilege for adopters (including SPARC itself) who don't operate any of these services. Reference: NIST SP 800-53 AC-6, DISA SRG-APP-000062.",
+                "remarks": "Terraform resources: aws_iam_role_policy.sparc_validate_extra_reads (gated on var.enable_scanner_role && length(var.scanner_extra_service_reads) > 0; uses for-comprehension to emit one statement per requested service). Default-off keeps SPARC's posture unchanged; SPARC itself does not opt in to any of these services today. Adopter-side opt-in is the operating model — when SPARC or another adopter deploys, e.g., AppStream, the operator adds 'appstream' to scanner_extra_service_reads in env tfvars and the grant appears at next apply. Read-only — Describe/List/Get only, no mutating actions."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000053",
+                "control-id": "ac-6",
+                "description": "Least Privilege — Optional ECR Image Pull for Image-Level Audits (#236): An optional inline policy ('ecr-image-pull') is attached to the sparc-validate-scanner role to enable cinc-auditor's `docker://` target against SPARC's ECR-stored container images. Used by upcoming cis-docker and cis-nginx profiles to inspect image-immutable surface (nginx.conf, USER directive, file permissions, baseline OS posture). Two statements: (a) ecr:GetAuthorizationToken with Resource='*' (account-scoped per AWS API contract — the auth token is account-level, not resource-level); (b) ecr:BatchCheckLayerAvailability + ecr:GetDownloadUrlForLayer + ecr:BatchGetImage scoped to ECR repositories matching arn:aws:ecr:<region>:<account>:repository/<project>-<environment>-* (e.g., example-*). Resource scoping ensures the scanner role can only pull SPARC's own images, not other tenants' or unrelated workload images on the same account. Opt-in via var.enable_ecr_pull_for_sparc_validate (default false; SPARC prod opts in via env tfvars). Reference: NIST SP 800-53 AC-6, DISA SRG-APP-000062.",
+                "remarks": "Terraform resources: data.aws_iam_policy_document.sparc_validate_ecr_pull + aws_iam_role_policy.sparc_validate_ecr_pull (both gated on var.enable_scanner_role && var.enable_ecr_pull_for_sparc_validate). Companion to sparc-validate's cis-docker / cis-nginx profiles which run cinc-auditor exec with -t docker://<image>. The Fargate-immutable property means image-level audit IS the runtime audit for any image-determined check — no shell-into-container needed. Pull-only; no push, no mutate, no delete capabilities granted."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000057",
+                "control-id": "ac-2",
+                "description": "Account Management — container-build-sign Publisher Role Separation (#381, extended #387): A single distinct IAM role ({project}-{env}-container-build-sign-publisher) is provisioned for the external risk-sentinel/container-build-sign repo to publish signed images to ECR. It is separate from the sparc-iac-github-actions deploy role so the external repo's identity cannot reach the deploy role's permissions. Trust is OIDC-federated and scoped to per-image release tags only — sub StringLike on three explicit subjects: repo:{github_org}/container-build-sign:ref:refs/tags/{nginx-v*, vulcan-v*, heimdall-v*} — so it is assumable solely from a tag push on the upstream repo, never from a fork PR (which cannot push upstream tags) and never from a branch or pull_request ref. aud is pinned to sts.amazonaws.com. A single role with explicit per-repo grants is used rather than per-image roles; the tag↔repo binding is intentionally not strict (any trusted tag may push to any granted repo) so callers share one CONTAINER_BUILD_SIGN_ARN secret. Reference: NIST SP 800-53 AC-2, DISA SRG-APP-000023.",
+                "remarks": "Terraform resources: aws_iam_role.container_build_sign_publisher + data.aws_iam_policy_document.container_build_sign_publisher_trust (modules/iam/container_build_sign.tf). Gated on var.enable_container_build_sign_publisher (default false; SPARC prod opts in via env tfvars). Role created via the deploy role's existing sparc-* IAM management grants — no bootstrap/oidc change. The role ARN is handed to container-build-sign as the CONTAINER_BUILD_SIGN_ARN GitHub secret (the ARN + ECR_REGISTRY embed the account number and are stored as secrets, not vars)."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000058",
+                "control-id": "ac-6",
+                "description": "Least Privilege — container-build-sign Publisher Push Scope (#381, extended #387): The container-build-sign-publisher role holds exactly two ECR permission sets and nothing else: (a) ecr:GetAuthorizationToken with Resource='*' (account-scoped per AWS API contract — the auth token is account-level, not resource-level); (b) the push action set (ecr:BatchCheckLayerAvailability, InitiateLayerUpload, UploadLayerPart, CompleteLayerUpload, PutImage, BatchGetImage, GetDownloadUrlForLayer, DescribeRepositories) granted as three EXPLICIT, named, resource-scoped statements — one per repository ARN: arn:aws:ecr:<region>:<account>:repository/<project>-<environment>-nginx (example-nginx), repository/vulcan, and repository/heimdall2. No wildcard repo scope (no repository/*). It is push-only: no ecr:CreateRepository, DeleteRepository, SetRepositoryPolicy, or PutLifecyclePolicy (the repos exist and are managed by modules/ecr). It cannot push to, read, or mutate any other ECR repository, and has no non-ECR permissions. All three repos are IMMUTABLE, so a published tag cannot be overwritten. Reference: NIST SP 800-53 AC-6, DISA SRG-APP-000062.",
+                "remarks": "Terraform resources: data.aws_iam_policy_document.container_build_sign_publisher + aws_iam_role_policy.container_build_sign_publisher (modules/iam/container_build_sign.tf), gated on var.enable_container_build_sign_publisher. Repo ARNs constructed from deterministic names (#238) to avoid a cross-module cycle with modules/ecr — example-nginx is {project}-{env}-prefixed; vulcan and heimdall2 are unprefixed org-adopted standalone images (now managed in modules/ecr, hardened to IMMUTABLE + scan-on-push). Unblocks container-build-sign #18 (nginx) / #53 PR#54 (vulcan) / #52 (heimdall). Cosign signatures are verified against the ECR digest post-push by the consumer workflow."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000059",
+                "control-id": "ac-2",
+                "description": "Account Management — container-build-sign SCA-emit Role Separation (#399): A distinct IAM role ({project}-{env}-container-build-sign-sca-emit) is provisioned for the org Software Composition Analysis rollup, separate from BOTH the sparc-iac-github-actions deploy role and the tag-scoped container-build-sign-publisher. The separation is deliberate on the trust axis: the publisher is scoped to release tags (refs/tags/*-v*) precisely because it can push images, while the SCA-emit workflow runs on refs/heads/main (scheduled/dispatch) and must be read-only. Folding the two would force the push-capable role to accept main-branch trust — an unwanted expansion of its write surface. Trust: OIDC-federated, sub StringEquals repo:{github_org}/container-build-sign:ref:refs/heads/main; aud sts.amazonaws.com. Reference: NIST SP 800-53 AC-2, AC-5, DISA SRG-APP-000023.",
+                "remarks": "Terraform resources: aws_iam_role.container_build_sign_sca_emit + data.aws_iam_policy_document.container_build_sign_sca_emit_trust (modules/iam/container_build_sign.tf), gated on var.enable_container_build_sign_sca_emit (default false; SPARC prod opts in). The role ARN is handed to container-build-sign as the SCA_EMIT_ROLE_ARN GitHub secret. Part of the org SBOM/SCA rendezvous on s3://{artifacts-bucket}/sca/ (umbrella container-build-sign#12); each producer repo gets its own sca/<repo>/* prefix."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000060",
+                "control-id": "ac-6",
+                "description": "Least Privilege — container-build-sign SCA-emit Scope (#399): The container-build-sign-sca-emit role holds exactly four scoped permission sets: (a) ecr:GetAuthorizationToken with Resource='*' (account-level per AWS API); (b) READ-ONLY ECR (ecr:BatchGetImage, GetDownloadUrlForLayer, BatchCheckLayerAvailability) scoped by ARN to the three published repos (example-nginx, vulcan, heimdall2) — no push, no mutate; (c) WRITE-ONLY s3:PutObject scoped to arn:aws:s3:::{artifacts-bucket}/sca/container-build-sign/* (its own prefix only — cannot read, list, or write any other prefix or bucket); (d) kms:GenerateDataKey + kms:Decrypt conditioned on kms:ViaService=s3.<region>.amazonaws.com (Resource='*'), pre-positioned for the #145 CMK migration so SSE-KMS PutObject keeps working with zero rework — inert today under the bucket's aws/s3 managed key, and usable only for S3-mediated KMS calls (it cannot decrypt arbitrary keys). It has no non-ECR/S3/KMS permissions. Reference: NIST SP 800-53 AC-6, SC-28, DISA SRG-APP-000062.",
+                "remarks": "Terraform resources: data.aws_iam_policy_document.container_build_sign_sca_emit + aws_iam_role_policy.container_build_sign_sca_emit (modules/iam/container_build_sign.tf), gated on var.enable_container_build_sign_sca_emit. The ViaService-scoped KMS statement mirrors the scanner's DecryptComplianceArtifacts (#333); Resource stays '*' until the #145 CMK ARN exists, at which point #145 also adds the role to that CMK's key policy. Unblocks container-build-sign#12 / PR#62 (sca-emit-images.yml)."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000061",
+                "control-id": "ac-2",
+                "description": "Account Management — sparc-validate SCA-emit Role Separation (sparc-validate#202): A distinct IAM role ({project}-{env}-sparc-validate-sca-emit) is provisioned for sparc-validate's side of the org Software Composition Analysis rollup, separate from sparc-validate's runtime roles (the scanner and db-scanner, which run on the EC2 scanner box / via IAM DB auth and are read-only on the evidence bucket). The SCA producer is a CI activity (Syft over the repo's own Ruby Gemfile.lock + InSpec/cinc profile deps), so it gets its own OIDC-federated identity rather than reusing a runtime scanner role. Trust: OIDC-federated, sub StringLike repo:{github_org}/sparc-validate:* (mirrors sparc-validate's other OIDC roles — broad on the ref/environment axis so the producer works on push/cron/dispatch without OIDC-sub-flip brittleness); aud sts.amazonaws.com. Reference: NIST SP 800-53 AC-2, AC-5, DISA SRG-APP-000023.",
+                "remarks": "Terraform resources: aws_iam_role.sparc_validate_sca_emit + data.aws_iam_policy_document.sparc_validate_sca_emit_trust (modules/iam/sparc_validate_sca_emit.tf), gated on var.enable_sparc_validate_sca_emit (default false; SPARC prod opts in). The role ARN is handed to sparc-validate as a GitHub secret for its producer workflow. Part of the org SBOM/SCA rendezvous on s3://{artifacts-bucket}/sca/ (umbrella container-build-sign#12); each producer repo gets its own sca/<repo>/* prefix."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000062",
+                "control-id": "ac-6",
+                "description": "Least Privilege — sparc-validate SCA-emit Scope (sparc-validate#202): The sparc-validate-sca-emit role holds exactly two scoped permission sets and NO ECR (unlike the container-build-sign sca-emit, because sparc-validate scans SOURCE deps, not images): (a) WRITE-ONLY s3:PutObject scoped to arn:aws:s3:::{artifacts-bucket}/sca/sparc-validate/* (its own prefix only — cannot read, list, or write any other prefix or bucket); (b) kms:GenerateDataKey + kms:Decrypt conditioned on kms:ViaService=s3.<region>.amazonaws.com (Resource='*'), pre-positioned for the #145 CMK migration so SSE-KMS PutObject keeps working with zero rework — inert today under the bucket's aws/s3 managed key, and usable only for S3-mediated KMS calls (it cannot decrypt arbitrary keys). It has no other permissions. Reference: NIST SP 800-53 AC-6, SC-28, DISA SRG-APP-000062.",
+                "remarks": "Terraform resources: data.aws_iam_policy_document.sparc_validate_sca_emit + aws_iam_role_policy.sparc_validate_sca_emit (modules/iam/sparc_validate_sca_emit.tf), gated on var.enable_sparc_validate_sca_emit. The ViaService-scoped KMS statement mirrors the container-build-sign sca-emit (#399) and scanner #333; Resource stays '*' until the #145 CMK ARN exists, at which point #145 also adds the role to that CMK's key policy. Unblocks sparc-validate#202 (its producer workflow)."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000063",
+                "control-id": "ac-2",
+                "description": "Account Management — container-build-sign SCA-aggregate Role Separation (#434): A distinct IAM role ({project}-{env}-container-build-sign-sca-aggregate) is provisioned for the org SCA rollup's AGGREGATOR, separate from the per-publish write-own-prefix container-build-sign-sca-emit role (#399). The separation is deliberate on posture: -sca-emit writes only its own sca/container-build-sign/* prefix per publish, while -sca-aggregate is a scheduled read-ALL across sca/* + write to sca/_rollup/. Folding them would grant the emit identity cross-prefix read of every producer's SBOM — an unwanted privilege expansion. Trust: OIDC-federated, sub StringEquals repo:{github_org}/container-build-sign:ref:refs/heads/main (scheduled/dispatch); aud sts.amazonaws.com. Reference: NIST SP 800-53 AC-2, AC-5, AC-6, DISA SRG-APP-000023.",
+                "remarks": "Terraform resources: aws_iam_role.container_build_sign_sca_aggregate + data.aws_iam_policy_document.container_build_sign_sca_aggregate_trust (modules/iam/container_build_sign.tf), gated on var.enable_container_build_sign_sca_aggregate (default false; SPARC prod opts in). The role ARN is handed to container-build-sign as the SCA_AGGREGATE_ROLE_ARN GitHub secret. Unblocks the live org rollup (container-build-sign#12, sca-aggregate.yml)."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000064",
+                "control-id": "ac-6",
+                "description": "Least Privilege — container-build-sign SCA-aggregate Scope (#434): The container-build-sign-sca-aggregate role holds exactly four scoped permission sets: (a) s3:ListBucket on arn:aws:s3:::{artifacts-bucket} conditioned on s3:prefix=sca/* (can enumerate only the sca/ key space, not the whole bucket); (b) READ-ONLY s3:GetObject scoped to arn:aws:s3:::{artifacts-bucket}/sca/* (read every producer's SBOM — no write, no delete); (c) WRITE-ONLY s3:PutObject scoped to arn:aws:s3:::{artifacts-bucket}/sca/_rollup/* (publishes the aggregated rollup to its own prefix only); (d) kms:GenerateDataKey + kms:Decrypt conditioned on kms:ViaService=s3.<region>.amazonaws.com (Resource='*'), pre-positioned for the #145 CMK migration — inert today under the bucket's aws/s3 managed key, usable only for S3-mediated KMS calls. It cannot write any producer prefix, read outside sca/, or touch any other bucket. Reference: NIST SP 800-53 AC-6, SC-28, DISA SRG-APP-000062.",
+                "remarks": "Terraform resources: data.aws_iam_policy_document.container_build_sign_sca_aggregate + aws_iam_role_policy.container_build_sign_sca_aggregate (modules/iam/container_build_sign.tf), gated on var.enable_container_build_sign_sca_aggregate. The ViaService-scoped KMS statement mirrors -sca-emit (#399) / scanner #333; Resource stays '*' until the #145 CMK ARN exists, at which point #145 also adds the role to that CMK's key policy. Unblocks container-build-sign#12 (sca-aggregate.yml live rollup)."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000067",
+                "control-id": "ac-2",
+                "description": "Account Management — sparc-dast Emit Role Separation (#529): A distinct IAM role ({project}-{env}-sparc-dast-emit) is provisioned for the risk-sentinel/sparc-dast Burp Suite DAST producer, separate from every scanner, discovery, and SCA-emit identity — one principal, one purpose. sparc-dast runs `saf convert burpsuite2hdf` and writes only its own DAST-HDF evidence; giving it a dedicated OIDC-federated role (not a share of another repo's) keeps the audit story clean and confines the write surface. Trust: OIDC-federated, sub StringLike repo:{github_org}/sparc-dast:* (broad on the ref axis so the producer works on push/cron/dispatch without OIDC-sub-flip brittleness); aud sts.amazonaws.com. Reference: NIST SP 800-53 AC-2, AC-5, DISA SRG-APP-000023.",
+                "remarks": "Terraform resources: aws_iam_role.profile_emit[\"sparc-dast\"] + data.aws_iam_policy_document.profile_emit_trust[\"sparc-dast\"] (AWS/IAM/profile_emit.tf), gated on var.enable_profile_emit. sparc-dast was the first adopter of the canonical evidence layout (#537) and was folded into the per-repository for_each in #669; the role name and therefore the ARN are unchanged, so DAST_EMIT_ARN still resolves. Trust now pins the immutable repository_id rather than the plain sub claim (#662)."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000068",
+                "control-id": "ac-6",
+                "description": "Least Privilege — sparc-dast Emit Scope + Canonical Evidence Layout (#529 / #537): The sparc-dast-emit role holds exactly two scoped permission sets and NO ListBucket / cross-prefix read: (a) WRITE-ONLY s3:PutObject scoped to arn:aws:s3:::{artifacts-bucket}/{boundary}/*/sparc-dast/* — the canonical, boundary-first evidence layout {boundary}/{date|latest}/{repo}/{source}/, where the * covers date-or-latest and every source/file; it cannot read, list, or write any other repo's slot or any other bucket; (b) kms:GenerateDataKey + kms:Decrypt conditioned on kms:ViaService=s3.<region>.amazonaws.com (Resource='*'), pre-positioned for the #145 CMK migration — inert today under the bucket's aws/s3 managed key, usable only for S3-mediated KMS calls. As the first canonical-layout adopter it writes the new scheme only (no legacy prefix). The pre-existing emit roles (sparc-iac/sparc-validate/container-build-sign/sparc-app *-sca-emit + sparc-app-ci) were dual-granted an additive EvidenceCanonicalPut statement ({boundary}/*/{repo}/*) alongside their legacy {source}/{repo}/* prefixes so each producer migrates on its own schedule; the sca-aggregate role likewise gained canonical read ({boundary}/*/*/sca/*) beside its legacy sca/* read. #537 Phase 3 drops the legacy prefixes, collapsing each role to one canonical statement. Reference: NIST SP 800-53 AC-6, SC-28, DISA SRG-APP-000062.",
+                "remarks": "Terraform resources: data.aws_iam_policy_document.profile_emit[\"sparc-dast\"] + aws_iam_role_policy.profile_emit[\"sparc-dast\"] (AWS/IAM/profile_emit.tf, #669); dual-grant EvidenceCanonicalPut statements added to sparc_iac_sca_emit / sparc_validate_sca_emit / container_build_sign (sca-emit) / sparc_app_sca_emit / sparc_app_ci, and canonical read added to container_build_sign (sca-aggregate). New var.evidence_boundary (default 'sparc', the TF parallel to the EVIDENCE_BOUNDARY GitHub variable). Additive/backward-compatible transition (#537 Phase 1); Phase 2 reorganizes existing S3 objects into the canonical schema + updates the aggregator read path; Phase 3 tightens IAM to canonical-only."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000054",
+                "control-id": "ac-6",
+                "description": "Least Privilege — RDS IAM DB Auth for Scanner Role (#241): An inline policy ('rds-iam-db-connect') is attached to the sparc-validate-scanner role granting exactly one IAM action — rds-db:connect — scoped by resource ARN to the inspec_scanner PostgreSQL dbuser (arn:aws:rds-db:<region>:<account>:dbuser:*/inspec_scanner). The DbiResourceId segment is wildcarded so the policy survives DB rebuilds (point-in-time restore, blue/green promotion); the dbuser segment remains pinned, which combined with the DB-side `GRANT rds_iam TO inspec_scanner` confines the role to authenticating as that single read-only PostgreSQL user. The scanner role cannot connect as the application user (sparc_admin/sparc), cannot connect as any other dbuser, and has no other RDS data-plane permissions. Gated on var.enable_scanner_role && var.enable_rds_iam_auth (both default true) so non-prod stacks that disable RDS IAM auth automatically suppress the grant. Unblocks sparc-validate's cis-postgresql controls C-4.3, 4.4, 4.5, 4.6, 4.7, 4.10, 5.5, 6.11. Reference: NIST SP 800-53 AC-6, IA-2, DISA SRG-APP-000062, SRG-APP-000148.",
+                "remarks": "Terraform resources: data.aws_iam_policy_document.sparc_validate_rds_iam_connect + aws_iam_role_policy.sparc_validate_rds_iam_connect. Companion to the existing db-scanner-role split (statements 000046–000048) — this grant lives on the main scanner role so sparc-validate's current GitHub Actions workflow path can exercise IAM-DB auth without role-chaining. The DB-side rds_iam grant is provisioned by AWS/ECS/scripts/create-inspec-scanner-user.sh (idempotent)."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000055",
+                "control-id": "ac-17",
+                "description": "Remote Access — EC2/SSM Bootstrap Path Replacing ECS Exec (#243): The inspec_scanner PostgreSQL user is bootstrapped on the RDS cluster via an EC2-resident idempotent script (`/opt/bootstrap/bootstrap-inspec-scanner-runner.sh`) executed in two prod-acceptable invocation contexts: (a) first-boot path — runner user_data invokes the script during EC2 bootstrap, before the GitHub Actions runner registers, gated by an idempotent `SELECT 1 FROM pg_catalog.pg_roles` check; (b) on-demand path — operator or workflow triggers AWS Systems Manager Send Command against the `<project>-<environment>-inspec-scanner-bootstrap` SSM Document, which invokes the same script with the same idempotency contract. The path explicitly replaces the deprecated `create-inspec-scanner-user.sh` script that used `aws ecs execute-command` (ECS Exec) — ECS Exec is forbidden in prod and the legacy script is functionally dead there. No interactive shell access to the runner or to the Rails task is created at any point; SSM Send Command runs a fixed-content document with a single parameter (the DB credentials secret name, validated by regex). Reference: NIST SP 800-53 AC-17, AC-2, DISA SRG-APP-000142, SRG-APP-000023.",
+                "remarks": "Terraform resources: aws_ssm_document.inspec_scanner_bootstrap (modules/db_scanner_runner/ssm.tf), AWS/ECS/scripts/bootstrap-inspec-scanner-runner.sh, AWS/ECS/scripts/inspec_scanner.sql. Idempotent contract verified by the early-exit gate in the script: re-invocation against an already-bootstrapped cluster is a no-op. On bootstrap failure the EC2 runner shuts itself down (consistent with other failure paths in user_data.sh.tftpl) rather than registering a runner with broken DB-auth state — surfaces via the existing stuck-runner CloudWatch alarm. Legacy create-inspec-scanner-user.sh stamped DEPRECATED in-place; file retained for non-prod / historical reference."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000056",
+                "control-id": "ac-6",
+                "description": "Least Privilege — Runner Instance Profile Gains DB Credentials Read (#243, extended in #245): The db-scanner-runner instance profile role (`<project>-<environment>-db-scanner-runner-instance`) gains a second inline policy (`read-db-credentials`) granting `secretsmanager:GetSecretValue` scoped to a single secret ARN pattern: `arn:aws:secretsmanager:<region>:<account>:secret:<project>-<environment>/db-credentials-*`. The wildcard covers only the 6-char hash suffix Secrets Manager appends; the secret name segment is pinned to `db-credentials` so the role cannot reach any other secret. A conditional KMS-decrypt statement is emitted only when the secrets CMK is in use, scoped via `kms:ViaService = secretsmanager.<region>.amazonaws.com`. This is the only IAM grant required for the EC2/SSM bootstrap path to read admin DB credentials at first-boot. The existing `read-runner-app-key` policy (GitHub App credentials for runner registration) is preserved unchanged. The orchestrator role gains a separate `ssm-bootstrap-send-command` policy with three statements: (a) `ssm:SendCommand` scoped to the bootstrap SSM Document ARN; (b) `ssm:SendCommand` scoped to EC2 instance ARNs tagged with `aws:autoscaling:groupName = <project>-<environment>-db-scanner-runner`; (c) `ssm:GetCommandInvocation` with `Resource = '*'` so workflow steps can poll bootstrap completion via `aws ssm wait command-executed` and `aws ssm get-command-invocation` (#245). The orchestrator cannot invoke SendCommand against any other document or any instance outside the runner ASG, and AWS implicitly confines `GetCommandInvocation` results to the principal that issued the command — the wildcard resource scope cannot read other principals' invocations. Reference: NIST SP 800-53 AC-6, DISA SRG-APP-000062.",
+                "remarks": "Terraform resources: data.aws_iam_policy_document.runner_instance_db_credentials_read + aws_iam_role_policy.runner_instance_db_credentials_read + data.aws_iam_policy_document.runner_orchestrator_ssm + aws_iam_role_policy.runner_orchestrator_ssm (modules/iam/db_scanner_runner.tf). ARNs constructed from name_prefix+region+account per #238 IAM-locality + constructed-ARN pattern; no cross-module variable plumbing introduced. The `ssm:GetCommandInvocation` polling statement (#245) uses `Resource = '*'` because the SSM API has no ARN format for this action; AWS-side principal-scoping is the controlling guard. `ssm:ListCommandInvocations` deliberately NOT granted — Pattern A only needs targeted get-by-id polling, not enumeration."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000065",
+                "control-id": "ac-2",
+                "description": "Account Management — CI Role-Assumption Chain (#316): The single broad sparc-iac-github-actions OIDC identity (which was BOTH the OIDC-assumed principal AND the workload-management principal) is replaced by a two-link role-assumption chain that separates those concerns into distinct identities. ({project}-{env}-ci-trust) is the OIDC-assumed entry identity: GitHub Actions federates to it via sts:AssumeRoleWithWebIdentity, its trust is scoped to the same per-repo sub allowlist as the role it replaces (StringLike, no ':*' wildcard, so fork PRs producing a pull_request sub are excluded), aud is pinned to sts.amazonaws.com, and it holds NO workload permissions. ({project}-{env}-ci-execute) holds the deployment permissions and is assumable ONLY by ci-trust (an AWS principal, via configure-aws-credentials role-chaining), never directly by OIDC — so a fooled OIDC trust lands on a near-powerless identity that can do nothing but assume the execute role, and the privilege-bearing identity is unreachable from the federation boundary. This is the canonical AWS OIDC role-assumption pattern and enforces separation between the federated entry point and the privilege-bearing executor. Reference: NIST SP 800-53 AC-2, AC-5, DISA SRG-APP-000023.",
+                "remarks": "Terraform resources: aws_iam_role.ci_trust, aws_iam_role.ci_execute, data.aws_iam_policy_document.ci_trust_assume/ci_execute_assume, aws_iam_role_policy.ci_trust (AWS/IAM/ci_chain.tf), gated on var.enable_ci_chain (default false; true in prod tfvars). Built in #316 Phase 1 step 2; replaces sparc-iac-github-actions, which is retired in Phase 3 once the ~10 OIDC workflows cut over to the two-step assume (Phase 2). ci-trust's only permission is sts:AssumeRole on the ci-execute ARN; role-chained STS sessions are capped at 1h. AWS/IAM/ is the relocated top-level IAM module (formerly AWS/ECS/modules/iam, #316 Phase 1 step 1)."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000066",
+                "control-id": "ac-6",
+                "description": "Least Privilege — CI Chain Scope and Permissions Boundary (#316): ci-trust holds exactly one permission — sts:AssumeRole on the single ci-execute role ARN — and no workload access of any kind. ci-execute's deployment capability is the three soak-validated least-privilege managed policies carried over from the role it replaces ({project}-{env}-github-actions-{state,compute,platform}-policy, attached by ARN; AdministratorAccess is NOT attached — it was detached in #300), so its effective deploy permissions are unchanged and remain least-privilege. ci-execute additionally carries a PERMISSIONS BOUNDARY ({project}-{env}-ci-permissions-boundary) that caps its maximum privilege to the INTERSECTION of the boundary and its attached policies — an upper bound that, once ci-execute self-manages IAM, prevents it from granting itself more than the envelope allows. The boundary currently ships as a broad-union SEED: it enumerates the union of AWS services the deploy policies legitimately touch, at service scope, so it never narrows a real deploy while excluding every other service (it is NOT AdministratorAccess). Explicit self-escalation DENYs are already in force on the boundary: ci-execute cannot rewrite its own permission sources (iam:CreatePolicyVersion/DeletePolicy/DeletePolicyVersion/SetDefaultPolicyVersion on the boundary + the three deploy policies), remove or weaken its boundary (iam:DeleteRolePermissionsBoundary / iam:PutRolePermissionsBoundary to anything but this boundary), or alter the chain roles' grants and trust (iam:PutRolePolicy/DeleteRolePolicy/AttachRolePolicy/DetachRolePolicy/UpdateAssumeRolePolicy) — so it cannot grant itself more than the envelope allows. Resource-scoping of the ALLOW envelope toward {project}-{env}-* remains a future #316 tightening. The boundary + its policy document were relocated from AWS/IAM into bootstrap/oidc (#528/#536) so a single operator bootstrap apply owns both gates — the deploy policy grant AND the boundary ceiling — because ci-execute is denied from applying its own boundary; ses:* was added to the envelope for the #528 SES service. Reference: NIST SP 800-53 AC-6, AC-6.1, DISA SRG-APP-000062.",
+                "remarks": "Terraform resources: aws_iam_role.ci_execute (permissions_boundary = local.ci_chain_boundary_arn — the boundary ARN as a string) + aws_iam_role_policy_attachment.ci_execute_{state,compute,platform} (AWS/IAM/ci_chain.tf); aws_iam_policy.ci_permissions_boundary + data.aws_iam_policy_document.ci_permissions_boundary (bootstrap/oidc/ci_permissions_boundary.tf, relocated there in #528/#536 — ci-execute is denied from applying its own boundary, so it must be operator-applied alongside the deploy policies, not in the CI-deployed ECS state). The boundary is adopted into bootstrap state via an import block; the ECS side dropped it via a removed{ destroy=false } block (no destroy, same ARN, attachments untouched). The broad-union seed deliberately trips the CKV_AWS_107/108/109/110/111/356 + CKV2_AWS_40 checkov IAM checks (a permissions boundary is a ceiling, not a grant) — skipped inline with that rationale (now in bootstrap/oidc, outside the ECS checkov pattern)."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000073",
+                "control-id": "ac-3",
+                "description": "Access Enforcement — Evidence-bucket Role Conditions (#651): Access for both the profile-emit and evidence-reader families is enforced by policy condition rather than by convention. Assumption is gated by two trust conditions that must both hold: token.actions.githubusercontent.com:sub matching exactly one repository (StringLike repo:{github_org}/<repo>:* for emit; StringEquals repo:{github_org}/<repo>:ref:refs/heads/main for readers), and :aud StringEquals sts.amazonaws.com. Use is then gated by resource scoping in the inline policy — each emit role's s3:PutObject resource ARN names its own repository segment, so possession of a token from repository A cannot produce a write under repository B's prefix even though the roles are otherwise identical. There is no shared identity through which the fleet could reach each other's key space."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000074",
+                "control-id": "au-2",
+                "description": "Audit Events — Per-identity Evidence Attribution (#651): Because each profile-baseline repository assumes its own distinct role, and each control plane its own reader role, CloudTrail records the assuming principal per event and S3 data events attribute every PutObject and GetObject to a named repository rather than to a shared fleet identity. This is the primary reason the design uses sixteen roles instead of two: with one shared emit role every write in the evidence bucket would carry the same principal, and 'which repository produced this evidence, and when' would be unanswerable from the audit trail alone. Likewise, splitting the reader role per control plane keeps 'which control plane read this evidence' attributable when either sparc-validate or dev-sec-ops-baseline may drive the same sweep."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000075",
+                "control-id": "au-9",
+                "description": "Protection of Audit Information — Evidence Write Isolation (#651): The evidence bucket holds assessment records, so the ability to overwrite another producer's object is a threat to the integrity of the audit record itself, not merely an access-control untidiness. Each profile-emit role grants s3:PutObject on its own prefix ONLY, and grants no s3:DeleteObject, no DeleteObjectVersion and no cross-prefix write, so a compromised CI token in one baseline repository cannot clobber, truncate or forge evidence attributed to another. A single shared fleet role — the alternative considered and rejected — would have made every producer repository capable of rewriting every other's evidence with no distinguishing principal in the audit trail. The reader roles are read-only throughout and hold no mutating action at all."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000076",
+                "control-id": "sc-13",
+                "description": "Cryptographic Protection — ViaService-bound KMS Authorization (#651): The evidence bucket enforces SSE-KMS at the bucket policy — DenyUnencryptedEvidencePuts refuses any s3:PutObject under attestations/*, leveraged-systems/* or a canonical {boundary}/* prefix whose request omits x-amz-server-side-encryption: aws:kms (#721). The condition reads the REQUEST header, not the stored object, so default bucket encryption does not satisfy it and a producer must send the header explicitly. Because the deny makes the encrypted write mandatory, every emit role carries kms:GenerateDataKey and kms:Decrypt (GenerateDataKey for single-part PutObject, Decrypt for multipart) and every reader role carries kms:Decrypt. All KMS statements are conditioned on kms:ViaService = s3.{region}.amazonaws.com, which confines the grant to key use brokered by S3 in-region — the roles cannot call KMS directly to encrypt or decrypt arbitrary material. Resource is '*' rather than a key ARN because the bucket currently defaults to the AWS-managed aws/s3 key (no KMSMasterKeyID is set) whose ARN is not a stable identifier and whose key policy cannot be edited; the ViaService condition and the role's S3 resource scope are the effective boundary, and the statement remains correct without rework if the bucket is re-encrypted under a customer-managed CMK (#145)."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000077",
+                "control-id": "ia-2",
+                "description": "Identification and Authentication — Federated, Credential-less CI Identities (#651): All sixteen roles are assumed through GitHub's OIDC provider via sts:AssumeRoleWithWebIdentity. No long-lived AWS access key is issued to, or stored in, any evidence-producing repository or either control plane; each workflow run authenticates with a short-lived, workload-bound OIDC token and receives temporary STS credentials capped by max_session_duration = 3600. The identity is therefore bound to a repository and a ref rather than to a secret that could be exfiltrated from a runner or leaked in logs, and there is no credential material to rotate — which is also why one role per repository costs nothing to maintain relative to a shared role."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "6f97c47e-03b0-54a1-acbd-811b39ae5963",
+        "type": "service",
+        "title": "IAM Evidence-Emit Role (per producer repository)",
+        "description": "Canonical evidence-emit identity, one per producing repository. OIDC-federated, assumable only by its own repository, and write-only on that repository's canonical prefix <boundary>/*/<repo>/* with a ViaService-scoped KMS grant. Sixteen instances share this component because the capability is byte-identical; only the trusted repository differs. Instances are enumerated as system-implementation inventory-items referencing this component.",
+        "control-implementations": [
+          {
+            "uuid": "2acbbe5b-07ea-543a-8f01-d6a1ec0ef182",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "Controls implemented by the per-repository evidence-emit identity.",
+            "implemented-requirements": [
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000069",
+                "control-id": "ac-2",
+                "description": "Account Management — Profile-baseline Emit Role Separation (#651): One distinct IAM role per evidence-producing repository ({project}-{env}-<repo>-emit) is provisioned for evidence emission, rather than a single shared fleet role. The set is the profile-baseline fleet plus sparc-validate, and each repository gets ONE role covering all of its emissions rather than a separate identity per source (SCA, SonarQube, TruffleHog, InSpec). Each is OIDC-federated with trust StringLike repo:{github_org}/<repo>:* — broad on the ref/environment axis so emission works on push/cron/dispatch without the OIDC-sub-flip brittleness of a ref-pinned sub (#399), with the write surface as the real boundary. Per-repository identities are deliberate: an OIDC role carries no credential material to rotate, Terraform for_each generates every role from one definition so trust-policy drift is structurally impossible, and distinct identities give CloudTrail attribution of which repository wrote which evidence object plus independent revocation. A single shared role would additionally let a compromised token from any producer repository overwrite another's evidence — an evidence-integrity exposure, not merely an attribution gap."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000070",
+                "control-id": "ac-6",
+                "description": "Least Privilege — Profile-baseline Emit Scope (#651): Each profile-emit role holds exactly two statements and no more. (1) s3:PutObject confined to that repository's own canonical evidence prefix, arn:aws:s3:::{artifacts-bucket}/{boundary}/*/<repo>/* — write-only, with no ListBucket, no GetObject and no cross-prefix reach, so a repository can neither enumerate nor read another's evidence. (2) kms:GenerateDataKey and kms:Decrypt conditioned on kms:ViaService = s3.{region}.amazonaws.com, required because the evidence bucket enforces SSE-KMS; GenerateDataKey covers single-part PutObject and Decrypt covers multipart. The KMS statement uses Resource '*' scoped by ViaService rather than naming a key, because the bucket currently defaults to the AWS-managed aws/s3 key (no KMSMasterKeyID), whose key policy cannot be edited; this remains correct without rework if the bucket is later re-encrypted under a customer-managed CMK (#145)."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "0edb67e4-3d34-5ae0-bc5a-2fbadfd64256",
+        "type": "service",
+        "title": "IAM Evidence-Reader Role (per control plane)",
+        "description": "Evidence-store read identity, one per control-plane repository. Prefix-confined s3:ListBucket, s3:GetObject and kms:Decrypt across the canonical evidence key space, trust pinned to refs/heads/main. Read-only throughout, with no mutating action. Separate identities per caller so CloudTrail attributes which control plane read what.",
+        "control-implementations": [
+          {
+            "uuid": "7dc50810-2877-5a54-a0d7-1e9b101f02ae",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "Controls implemented by the evidence-reader identities.",
+            "implemented-requirements": [
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000071",
+                "control-id": "ac-2",
+                "description": "Account Management — Evidence-reader Role Separation (#651, dev-sec-ops-baseline#10): A distinct IAM role per control-plane repository ({project}-{env}-<repo>-evidence-reader; sparc-validate and dev-sec-ops-baseline today) is provisioned for the evidence_store surface, which reads HDF back out of the bucket to determine whether a scan ran and left current, attributable evidence. Two roles rather than one shared reader because either control plane may drive the sweep and it matters which did: distinct identities let CloudTrail attribute each read and allow either caller to be revoked without disturbing the other. Trust is OIDC-federated and pinned to sub StringEquals repo:{github_org}/<repo>:ref:refs/heads/main — deliberately tighter than the emit roles' wildcard, because a reader can see every repository's evidence. dev-sec-ops-baseline holds both an emit role and a reader role, as it participates in the fleet and operates the control plane."
+              },
+              {
+                "uuid": "a1b2c3d4-4444-4000-a000-000000000072",
+                "control-id": "ac-6",
+                "description": "Least Privilege — Evidence-reader Scope (#651): Each evidence-reader role holds exactly three statements, read-only throughout, with no PutObject, DeleteObject or any mutating action. (1) s3:ListBucket granted on the bucket ARN and confined by an s3:prefix condition to {boundary}/* — enumeration is required to answer a question about absence, and the prefix condition keeps the role out of the sca/, sonarqube/ and attestations/ key spaces it has no business listing. (2) s3:GetObject and s3:GetObjectVersion on {boundary}/* only. (3) kms:Decrypt conditioned on kms:ViaService = s3.{region}.amazonaws.com, without which GetObject on the SSE-KMS bucket fails as an AccessDenied that presents as a missing object rather than a missing key grant. Read reaches every repository's evidence by design: scoping it narrower would make the evidence store usable only from inside sparc-validate and defeat the stand-alone adoption path."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "5cdad7b2-df10-5802-80be-22feea0ad71a",
+        "type": "service",
+        "title": "IAM CI Trust/Execute Chain",
+        "description": "The two-role CI chain (#316): ci-trust is the OIDC-assumable entry point holding no execute permissions, and ci-execute is reachable only by role chaining from it and carries the apply-time authority. Splitting trust from execute means a trust-policy change cannot silently widen execute permissions, which is the failure the chain was introduced to prevent.",
+        "control-implementations": [
+          {
+            "uuid": "8dd41524-5699-56ce-aee9-bc58aab33250",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "Controls implemented by the CI trust/execute chain.",
+            "implemented-requirements": [
+              {
+                "uuid": "cdf9cdae-05bf-5be1-b225-a0ca9b689e38",
+                "control-id": "ac-2",
+                "description": "Account Management — CI Trust/Execute Separation (#316): CI authority is split across two roles rather than one. ci-trust is the only OIDC-assumable identity and holds no execute permissions; ci-execute carries apply-time authority and is reachable only by role chaining from ci-trust, never directly from a workflow token. A trust-policy change therefore cannot widen execute permissions, and an execute-permission change cannot widen who may assume."
+              },
+              {
+                "uuid": "298a7252-d295-50cd-b741-1f6bc5ba00b5",
+                "control-id": "ac-6",
+                "description": "Least Privilege — CI Chain Scope (#316): ci-trust's permissions are limited to assuming ci-execute; it can perform no AWS action of its own. ci-execute's authority is bounded by the resource-scoped statements in bootstrap/oidc/policy.tf — notably TerraformApplyIAM, which is confined to role/sparc-* so a role created outside that prefix fails at apply rather than being silently permitted."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

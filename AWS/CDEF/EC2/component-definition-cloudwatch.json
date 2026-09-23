@@ -1,0 +1,65 @@
+{
+  "component-definition": {
+    "uuid": "b1c2d3e4-1111-4000-a000-000000000006",
+    "metadata": {
+      "title": "SPARC EC2 CloudWatch Monitoring Component Definition",
+      "last-modified": "2026-03-20T00:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.2",
+      "roles": [
+        {
+          "id": "provider",
+          "title": "Infrastructure Provider"
+        }
+      ],
+      "parties": [
+        {
+          "uuid": "b1c2d3e4-0001-4000-a000-000000000001",
+          "type": "organization",
+          "name": "SPARC Platform Team"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "b1c2d3e4-2222-4000-a000-000000000006",
+        "type": "service",
+        "title": "AWS CloudWatch (EC2 Monitoring, Logging, Alarms)",
+        "description": "Centralized monitoring with VPC flow logs, CloudWatch agent OS metrics from EC2 instance, metric alarms across all infrastructure tiers (EC2, ALB, RDS, ElastiCache), and an auto-generated operations dashboard with EC2-specific metrics. Deployed via Terraform (AWS/EC2/modules/cloudwatch/). <!-- UPDATE: Insert dashboard URL, log group ARNs, and alarm ARNs for your deployment. -->",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["b1c2d3e4-0001-4000-a000-000000000001"]
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "b1c2d3e4-3333-4000-a000-000000000006",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST SP 800-53 Rev 5 control implementations for CloudWatch monitoring",
+            "implemented-requirements": [
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000050",
+                "control-id": "au-2",
+                "description": "Event Logging: VPC flow logs capture all network traffic (ACCEPT, REJECT) within the VPC at 60-second aggregation intervals, stored in a dedicated CloudWatch log group (/vpc/{project}-{env}/flow-logs) with configurable retention. The CloudWatch agent on the EC2 instance collects OS-level metrics (CPU, memory, disk utilization, network) and streams Docker container logs (NGINX access/error, Rails application) to CloudWatch Log Groups. Log metric filters extract NGINX 5xx counts and Rails ERROR counts into custom CloudWatch metrics for real-time monitoring. Reference: DISA SRG-APP-000089, CIS AWS 3.7.",
+                "remarks": "Terraform resources: aws_flow_log.main, aws_cloudwatch_log_group.vpc_flow, aws_cloudwatch_log_metric_filter.nginx_5xx, aws_cloudwatch_log_metric_filter.rails_error. CloudWatch agent config deployed via user-data."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000051",
+                "control-id": "si-4",
+                "description": "System Monitoring: CloudWatch alarms provide continuous automated monitoring across all infrastructure tiers: EC2 (CPU utilization high, status check failed — instance and system), ALB (5xx errors, latency high, unhealthy targets), RDS (CPU high, storage low, connections high), ElastiCache (CPU high, memory high), and application (NGINX 5xx rate, Rails error rate). EC2 status check alarms detect underlying hardware failures and host impairments. All alarms use configurable thresholds, evaluate over multiple periods to avoid false positives, and notify via SNS. Reference: DISA SRG-APP-000029, CIS AWS 4.1.",
+                "remarks": "EC2-specific alarms include StatusCheckFailed_Instance and StatusCheckFailed_System, which detect instance and infrastructure failures respectively. Alarms use 5-minute periods with 2-3 evaluation periods."
+              },
+              {
+                "uuid": "b1c2d3e4-4444-4000-a000-000000000052",
+                "control-id": "au-6",
+                "description": "Audit Record Review, Analysis, and Reporting: The CloudWatch dashboard ({project}-{env}-dashboard) provides a unified view of EC2 infrastructure health: EC2 CPU utilization, memory utilization (via CloudWatch agent), disk I/O, network in/out, ALB request count/latency/HTTP error breakdown (2xx/4xx/5xx), RDS CPU/connections, Redis CPU/memory, ALB healthy/unhealthy targets, and application error rates from log metric filters. The dashboard enables rapid triage during incidents and serves as the primary operational review tool. Reference: DISA SRG-APP-000100.",
+                "remarks": "Terraform resource: aws_cloudwatch_dashboard.main. Dashboard includes EC2 instance-level metrics from both CloudWatch default metrics and CloudWatch agent custom metrics."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

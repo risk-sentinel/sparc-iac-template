@@ -1,0 +1,27 @@
+{
+  "_comment": "Image signing policy (#385) — the per-image cosign identity the deploy gate (scripts/verify_images.sh, called from deploy-on-merge.yml / deploy.yml) enforces before a deploy proceeds. Each deployed ECS image is resolved tag -> @sha256 digest and cosign-verified against its identity_regexp + issuer; the SBOM attestation (.att) is verified when require_attestation is true. The gate fails closed. This file is account-free on purpose (the ECR registry is derived at runtime from sts:GetCallerIdentity) so the public sparc-iac-template mirror stays uniform. To rotate/add a signer, edit this file — see docs/dev/image_signing_gate.md.",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "images": [
+    {
+      "key": "sparc",
+      "repo": "example",
+      "tag_var": "sparc_image_tag",
+      "identity_regexp": "^https://github\\.com/risk-sentinel/sparc/\\.github/workflows/build-sign-publish\\.yml@refs/tags/v[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "require_attestation": true
+    },
+    {
+      "key": "nginx",
+      "repo": "example-nginx",
+      "tag_var": "nginx_image_tag",
+      "identity_regexp": "^https://github\\.com/risk-sentinel/container-build-sign/\\.github/workflows/build-sign-publish\\.yml@refs/tags/nginx-v[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "require_attestation": true
+    },
+    {
+      "key": "heimdall",
+      "repo": "heimdall2",
+      "tag_var": "heimdall_image_tag",
+      "identity_regexp": "^https://github\\.com/risk-sentinel/container-build-sign/\\.github/workflows/build-sign-publish\\.yml@refs/tags/heimdall-v[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "require_attestation": true
+    }
+  ]
+}
