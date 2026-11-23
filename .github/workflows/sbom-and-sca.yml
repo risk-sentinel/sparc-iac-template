@@ -47,7 +47,7 @@ jobs:
         run: mkdir -p sbom-output
 
       - name: Generate SBOM (Syft → CycloneDX JSON)
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
         with:
           path: '.'
           format: cyclonedx-json
@@ -71,7 +71,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload SBOM artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: cyclonedx-sbom
           path: sbom-output/cyclonedx.json
@@ -80,7 +80,7 @@ jobs:
 
       - name: Grype scan (primary, SBOM-driven)
         id: grype
-        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
+        uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
         with:
           sbom: sbom-output/cyclonedx.json
           severity-cutoff: critical
@@ -256,7 +256,7 @@ jobs:
 
       - name: Upload scan reports
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sca-reports
           path: sca-reports/
@@ -319,7 +319,7 @@ jobs:
 
       - name: Download SBOM artifact
         if: steps.cfg.outputs.configured == 'true'
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: cyclonedx-sbom
           path: sbom-output
